@@ -1,4 +1,4 @@
-# Smash Character Picker (v5.0)
+# Smash Character Picker (v6.0)
 
 A program designed to pick random matchups for the game Super Smash Bros. For those of us who don't like using the random character option, because it usually results in an unfair matchup. Instead, this program uses a tier list to create a matchup that is fair. Tier lists are defined in a `.txt` file. There are some additional settings to customize the experience, as well as some systems to ensure novel matchups are generated. Also includes a soundboard featuring 21 sound effects!
 
