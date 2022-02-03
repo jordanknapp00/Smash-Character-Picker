@@ -33,27 +33,27 @@ There is also the option as to whether or not SS or S tier characters are allowe
 
 Under the "Help" section of the menu bar, you see how the tier list must be formatted. An example tier list is also included in this repository. For posterity, the format is repeated below:
 
->All lines should contain comma-separated entries.
->Do not put spaces after the commas.
->Leave area after equals sign blank if N/A.
->Do not omit lines, or it will not load properly.
->Ensure that the lines are in this order, too.
+>All lines should contain comma-separated entries.  
+>Do not put spaces after the commas.  
+>Leave area after equals sign blank if N/A.  
+>Do not omit lines, or it will not load properly.  
+>Ensure that the lines are in this order, too.  
 
->doubS=
->tierS=
->tierA=
->tierB=
->tierC=
->tierD=
->tierE=
->tierF=
->p1Exc=
->p2Exc=
->p3Exc=
->p4Exc=
->p5Exc=
->p6Exc=
->p7Exc=
+>doubS=  
+>tierS=  
+>tierA=  
+>tierB=  
+>tierC=  
+>tierD=  
+>tierE=  
+>tierF=  
+>p1Exc=  
+>p2Exc=  
+>p3Exc=  
+>p4Exc=  
+>p5Exc=  
+>p6Exc=  
+>p7Exc=  
 >p8Exc=
 
 Under the "doubS" and "tierX" lines, simply put a comma-separated list containing each character in that tier. The "pXExc" lines contain each player's exclusion lists: a list of fighters that that particular player never wants to get. A player will never get a fighter that's on their exclusion list.
