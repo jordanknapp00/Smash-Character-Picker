@@ -31,8 +31,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-//TODO: add favorite player system
-
 public class Picker {
 
 	public static void main(String[] args) {
@@ -75,7 +73,8 @@ public class Picker {
 	//left panel components:
 	
 	//tier chance panel components
-	private JLabel tierChanceLabel;
+	private JLabel tierChanceLabel1;
+	private JLabel tierChanceLabel2;
 	private JSpinner SSTierSpinner;
 	private JLabel SSTierLabel;
 	private JSpinner STierSpinner;
@@ -92,7 +91,6 @@ public class Picker {
 	private JLabel ETierLabel;
 	private JSpinner FTierSpinner;
 	private JLabel FTierLabel;
-	private JCheckBox useCustomChances;
 	private JButton applyButton;
 
 	//cannot get panel components
@@ -124,12 +122,10 @@ public class Picker {
 	private ArrayList<String> gotten;
 	
 	//settings variables
-	private boolean usingCustomChances;
-	private int[] standardTierChances;
-	private int[] customTierChances;
+	private int[] tierChances;
+	private int[] newTierChances;
 	private boolean SSAllowedInCannotGetBuffer;
 	private boolean SAllowedInCannotGetBuffer;
-	private boolean customVerified;
 	private int cannotGetSize;
 	private boolean openedSoundPanel;
 	
@@ -182,29 +178,27 @@ public class Picker {
 		}
 		cannotGet = new CannotGetQueue();
 		numPlayers = 2;
-		usingCustomChances = false;
-		customTierChances = new int[8];
-		standardTierChances = new int[8];
-		standardTierChances[0] = 8;
-		standardTierChances[1] = 22;
-		standardTierChances[2] = 25;
-		standardTierChances[3] = 25;
-		standardTierChances[4] = 20;
-		standardTierChances[5] = 0;
-		standardTierChances[6] = 0;
-		standardTierChances[7] = 0;
-		customTierChances[0] = 5;
-		customTierChances[1] = 15;
-		customTierChances[2] = 25;
-		customTierChances[3] = 30;
-		customTierChances[4] = 25;
-		customTierChances[5] = 0;
-		customTierChances[6] = 0;
-		customTierChances[7] = 0;
+		newTierChances = new int[8];
+		tierChances = new int[8];
+		tierChances[0] = 10;
+		tierChances[1] = 20;
+		tierChances[2] = 25;
+		tierChances[3] = 25;
+		tierChances[4] = 20;
+		tierChances[5] = 0;
+		tierChances[6] = 0;
+		tierChances[7] = 0;
+		newTierChances[0] = 10;
+		newTierChances[1] = 20;
+		newTierChances[2] = 25;
+		newTierChances[3] = 25;
+		newTierChances[4] = 20;
+		newTierChances[5] = 0;
+		newTierChances[6] = 0;
+		newTierChances[7] = 0;
 		cannotGetSize = 5;
 		SSAllowedInCannotGetBuffer = false;
 		SAllowedInCannotGetBuffer = false;
-		customVerified = true;
 		openedSoundPanel = false;
 		individualCannotGet = new CannotGetQueue[8];
 		for(int at = 0; at < 8; at++) {
@@ -316,45 +310,38 @@ public class Picker {
 		bottomPanel.add(numPlayersSpinner, gc);
 		
 		//customChanceRules panel
-		tierChanceLabel = new JLabel("You can set custom chances for "
-				+ "each tier. Remember to hit apply!");
-		useCustomChances = new JCheckBox("Use custom chances");
-		useCustomChances.addActionListener(new UseCustomChancesButtonActionListener());
-		if(usingCustomChances) {
-			useCustomChances.setSelected(true);
-		}
-		if(!customVerified) {
-			useCustomChances.setEnabled(false);
-		}
-		SpinnerNumberModel SSmod = new SpinnerNumberModel(customTierChances[0], 0, 100, 1);
+		tierChanceLabel1 = new JLabel("You can set custom chances for "
+				+ "each tier.");
+		tierChanceLabel2 = new JLabel("Remember to hit apply!");
+		SpinnerNumberModel SSmod = new SpinnerNumberModel(tierChances[0], 0, 100, 1);
 		SSTierSpinner = new JSpinner(SSmod);
 		SSTierSpinner.addChangeListener(new ChangeListenerSS());
 		SSTierLabel = new JLabel("SS tier chance: ");
-		SpinnerNumberModel Smod = new SpinnerNumberModel(customTierChances[1], 0, 100, 1);
+		SpinnerNumberModel Smod = new SpinnerNumberModel(tierChances[1], 0, 100, 1);
 		STierSpinner = new JSpinner(Smod);
 		STierSpinner.addChangeListener(new ChangeListenerS());
 		STierLabel = new JLabel("S tier chance: ");
-		SpinnerNumberModel Amod = new SpinnerNumberModel(customTierChances[2], 0, 100, 1);
+		SpinnerNumberModel Amod = new SpinnerNumberModel(tierChances[2], 0, 100, 1);
 		ATierSpinner = new JSpinner(Amod);
 		ATierSpinner.addChangeListener(new ChangeListenerA());
 		ATierLabel = new JLabel("A tier chance: ");
-		SpinnerNumberModel Bmod = new SpinnerNumberModel(customTierChances[3], 0, 100, 1);
+		SpinnerNumberModel Bmod = new SpinnerNumberModel(tierChances[3], 0, 100, 1);
 		BTierSpinner = new JSpinner(Bmod);
 		BTierSpinner.addChangeListener(new ChangeListenerB());
 		BTierLabel = new JLabel("B tier chance: ");
-		SpinnerNumberModel Cmod = new SpinnerNumberModel(customTierChances[4], 0, 100, 1);
+		SpinnerNumberModel Cmod = new SpinnerNumberModel(tierChances[4], 0, 100, 1);
 		CTierSpinner = new JSpinner(Cmod);
 		CTierSpinner.addChangeListener(new ChangeListenerC());
 		CTierLabel = new JLabel("C tier chance: ");
-		SpinnerNumberModel Dmod = new SpinnerNumberModel(customTierChances[5], 0, 100, 1);
+		SpinnerNumberModel Dmod = new SpinnerNumberModel(tierChances[5], 0, 100, 1);
 		DTierSpinner = new JSpinner(Dmod);
 		DTierSpinner.addChangeListener(new ChangeListenerD());
 		DTierLabel = new JLabel("D tier chance: ");
-		SpinnerNumberModel Emod = new SpinnerNumberModel(customTierChances[6], 0, 100, 1);
+		SpinnerNumberModel Emod = new SpinnerNumberModel(tierChances[6], 0, 100, 1);
 		ETierSpinner = new JSpinner(Emod);
 		ETierSpinner.addChangeListener(new ChangeListenerE());
 		ETierLabel = new JLabel("E tier chance: ");
-		SpinnerNumberModel Fmod = new SpinnerNumberModel(customTierChances[7], 0, 100, 1);
+		SpinnerNumberModel Fmod = new SpinnerNumberModel(tierChances[7], 0, 100, 1);
 		FTierSpinner = new JSpinner(Fmod);
 		FTierSpinner.addChangeListener(new ChangeListenerF());
 		FTierLabel = new JLabel("F tier chance: ");
@@ -368,10 +355,10 @@ public class Picker {
 		gc.gridx = 0;
 		gc.gridy = 0;
 		gc.gridwidth = 2;
-		tierChancesPanel.add(tierChanceLabel, gc);
+		tierChancesPanel.add(tierChanceLabel1, gc);
 		gc.gridy = 1;
+		tierChancesPanel.add(tierChanceLabel2, gc);
 		gc.anchor = GridBagConstraints.CENTER;
-		tierChancesPanel.add(useCustomChances, gc);
 		gc.anchor = GridBagConstraints.LINE_END;
 		gc.gridwidth = 1;
 		gc.gridy = 2;
@@ -472,11 +459,12 @@ public class Picker {
 		frame.getContentPane().setLayout(new GridBagLayout());
 		gc.gridx = 0;
 		gc.gridy = 0;
-		gc.weightx = .50;
+		gc.weightx = .30;
 		gc.weighty = .85;
 		gc.anchor = GridBagConstraints.CENTER;
 		gc.fill = GridBagConstraints.BOTH;
 		frame.add(leftPanel, gc);
+		gc.weightx = 1;
 		gc.gridx = 1;
 		frame.add(rightPanel, gc);
 		gc.gridy = 1;
@@ -817,8 +805,8 @@ public class Picker {
 		private JButton bruhSoundEffectButton;
 		private JButton angerousNowButton;
 		private JButton theWorstButton;
+		private JButton excuseMeButton;
 		private JButton excuseMeWhatButton;
-		private JButton bscuseMeButton;
 		private JButton ghoulButton;
 		private JButton whatButton;
 		private JButton ohNoButton;
@@ -898,8 +886,8 @@ public class Picker {
 			angerousNowButton.addActionListener(new AngerousNowActionListener());
 			theWorstButton = new JButton("<html><center>This is... the<br>worst</center></html>");
 			theWorstButton.addActionListener(new TheWorstActionListener());
-			bscuseMeButton = new JButton("B'scuse me");
-			bscuseMeButton.addActionListener(new BscuseMeActionListener());
+			excuseMeButton = new JButton("<html><center>\"Excuse me!\"<br>- Arin</center></html>");
+			excuseMeButton.addActionListener(new ExcuseMeActionListener());
 			excuseMeWhatButton = new JButton("<html><center>Excuse me<br>whaaaat</center></html>");
 			excuseMeWhatButton.addActionListener(new ExcuseMeWhatActionListener());
 			ghoulButton = new JButton("Ghoul");
@@ -934,7 +922,7 @@ public class Picker {
 			soundboardPanel.add(bruhSoundEffectButton);
 			soundboardPanel.add(angerousNowButton);
 			soundboardPanel.add(theWorstButton);
-			soundboardPanel.add(bscuseMeButton);
+			soundboardPanel.add(excuseMeButton);
 			soundboardPanel.add(whatDuhHeckButton);
 			soundboardPanel.add(excuseMeWhatButton);
 			soundboardPanel.add(ghoulButton);
@@ -1204,10 +1192,10 @@ public class Picker {
 			}
 		}
 		
-		private class BscuseMeActionListener implements ActionListener {
+		private class ExcuseMeActionListener implements ActionListener {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/bscuseme.wav");
+					InputStream is = getClass().getResourceAsStream("/sounds/excuseme.wav");
 					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
 					Clip clip = AudioSystem.getClip();
 					clip.open(stream);
@@ -1398,13 +1386,7 @@ public class Picker {
 				}
 				results.append("Battle #" + numBattles + ":\n");
 				
-				int[] playerTiers = new int[numPlayers];
-				if(usingCustomChances) {
-					playerTiers = getPlayerTiers(customTierChances);
-				}
-				else {
-					playerTiers = getPlayerTiers(standardTierChances);
-				}
+				int playerTiers[] = getPlayerTiers();
 				
 				gotten.clear();
 				for(int player = 1; player <= numPlayers; player++) {
@@ -1479,41 +1461,41 @@ public class Picker {
 			}
 		}
 		
-		private int[] getPlayerTiers(int[] chances) {
+		private int[] getPlayerTiers() {
 			int tierChance = ThreadLocalRandom.current().nextInt(0, 101);
 			int tier = -1;
 			int sum = 0;
 			int[] playerTiers = new int[numPlayers];
 			
-			sum = chances[0];
+			sum = tierChances[0];
 			if(tierChance <= sum) {
 				tier = 0;
 			}
-			sum += chances[1];
+			sum += tierChances[1];
 			if(tierChance <= sum && tier == -1) {
 				tier = 1;
 			}
-			sum += chances[2];
+			sum += tierChances[2];
 			if(tierChance <= sum && tier == -1) {
 				tier = 2;
 			}
-			sum += chances[3];
+			sum += tierChances[3];
 			if(tierChance <= sum && tier == -1) {
 				tier = 3;
 			}
-			sum += chances[4];
+			sum += tierChances[4];
 			if(tierChance <= sum && tier == -1) {
 				tier = 4;
 			}
-			sum += chances[5];
+			sum += tierChances[5];
 			if(tierChance <= sum && tier == -1) {
 				tier = 5;
 			}
-			sum += chances[6];
+			sum += tierChances[6];
 			if(tierChance <= sum && tier == -1) {
 				tier = 6;
 			}
-			sum += chances[7];
+			sum += tierChances[7];
 			if(tierChance <= sum && tier == -1) {
 				tier = 7;
 			}
@@ -1524,7 +1506,7 @@ public class Picker {
 				if(adjust < 0) {
 					adjust = 0;
 				}
-				while(tierTurnedOff(adjust, chances)) {
+				while(tierTurnedOff(adjust, tierChances)) {
 					adjust++;
 				}
 				playerTiers[at] = adjust;
@@ -2056,13 +2038,13 @@ public class Picker {
 			}
 			else if(id == 1) {
 				String next = "";
-				int[] newTierChances = new int[8];
+				int[] fileTierChances = new int[8];
 				int numAt = 0;
 				
 				try {
 					for(int at = 0; at < toRead.length(); at++) {
 						if(toRead.charAt(at) == ',') {
-							newTierChances[numAt] = Integer.parseInt(next);
+							fileTierChances[numAt] = Integer.parseInt(next);
 							next = "";
 							numAt++;
 							at++;
@@ -2071,7 +2053,7 @@ public class Picker {
 							next += toRead.charAt(at);
 						}
 					}
-					newTierChances[numAt] = Integer.parseInt(next);
+					fileTierChances[numAt] = Integer.parseInt(next);
 				} catch(NumberFormatException e) {
 					int hour = ZonedDateTime.now().getHour();
 					int min = ZonedDateTime.now().getMinute();
@@ -2082,16 +2064,16 @@ public class Picker {
 				}
 				
 				for(int at = 0; at < 8; at++) {
-					customTierChances[at] = newTierChances[at];
+					newTierChances[at] = fileTierChances[at];
 				}
-				SSTierSpinner.setValue(customTierChances[0]);
-				STierSpinner.setValue(customTierChances[1]);
-				ATierSpinner.setValue(customTierChances[2]);
-				BTierSpinner.setValue(customTierChances[3]);
-				CTierSpinner.setValue(customTierChances[4]);
-				DTierSpinner.setValue(customTierChances[5]);
-				ETierSpinner.setValue(customTierChances[6]);
-				FTierSpinner.setValue(customTierChances[7]);
+				SSTierSpinner.setValue(newTierChances[0]);
+				STierSpinner.setValue(newTierChances[1]);
+				ATierSpinner.setValue(newTierChances[2]);
+				BTierSpinner.setValue(newTierChances[3]);
+				CTierSpinner.setValue(newTierChances[4]);
+				DTierSpinner.setValue(newTierChances[5]);
+				ETierSpinner.setValue(newTierChances[6]);
+				FTierSpinner.setValue(newTierChances[7]);
 				
 				applyButton.getActionListeners()[0].actionPerformed(null);
 				
@@ -2130,14 +2112,13 @@ public class Picker {
 		public void actionPerformed(ActionEvent e) {
 			int total = 0;
 			for(int at = 0; at < 8; at++) {
-				total += customTierChances[at];
+				total += newTierChances[at];
 			}
 			
 			if(total == 100) {
-				customVerified = true;
-				useCustomChances.setEnabled(true);
-				usingCustomChances = true;
-				useCustomChances.setSelected(true);
+				for(int x = 0; x < 8; x++) {
+					tierChances[x] = newTierChances[x];
+				}
 				JOptionPane.showMessageDialog(frame, "Custom chances"
 						+ " are valid and have been applied.", "Smash "
 						+ "Character Picker",
@@ -2149,26 +2130,16 @@ public class Picker {
 						+ "They currently add up to " + total + ".",
 						"Smash Character Picker",
 						JOptionPane.ERROR_MESSAGE);
+				SSTierSpinner.setValue(tierChances[0]);
+				STierSpinner.setValue(tierChances[1]);
+				ATierSpinner.setValue(tierChances[2]);
+				BTierSpinner.setValue(tierChances[3]);
+				CTierSpinner.setValue(tierChances[4]);
+				DTierSpinner.setValue(tierChances[5]);
+				ETierSpinner.setValue(tierChances[6]);
+				FTierSpinner.setValue(tierChances[7]);
 			}
 		}	
-	}
-	
-	private class UseCustomChancesButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if(usingCustomChances) {
-				usingCustomChances = false;
-			}
-			else {
-				usingCustomChances = true;
-			}
-		}	
-	}
-	
-	private void voidCustom() {
-		customVerified = false;
-		useCustomChances.setEnabled(false);
-		usingCustomChances = false;
-		useCustomChances.setSelected(false);
 	}
 	
 	private class AllowSSInCannotGetButtonActionListener implements ActionListener {
@@ -2201,57 +2172,49 @@ public class Picker {
 	
 	private class ChangeListenerSS implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
-			customTierChances[0] = (int) SSTierSpinner.getValue();
-			voidCustom();
+			newTierChances[0] = (int) SSTierSpinner.getValue();
 		}
 	}
 	
 	private class ChangeListenerS implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
-			customTierChances[1] = (int) STierSpinner.getValue();
-			voidCustom();
+			newTierChances[1] = (int) STierSpinner.getValue();
 		}
 	}
 	
 	private class ChangeListenerA implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
-			customTierChances[2] = (int) ATierSpinner.getValue();
-			voidCustom();
+			newTierChances[2] = (int) ATierSpinner.getValue();
 		}
 	}
 	
 	private class ChangeListenerB implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
-			customTierChances[3] = (int) BTierSpinner.getValue();
-			voidCustom();
+			newTierChances[3] = (int) BTierSpinner.getValue();
 		}
 	}
 	
 	private class ChangeListenerC implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
-			customTierChances[4] = (int) CTierSpinner.getValue();
-			voidCustom();
+			newTierChances[4] = (int) CTierSpinner.getValue();
 		}
 	}
 	
 	private class ChangeListenerD implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
-			customTierChances[5] = (int) DTierSpinner.getValue();
-			voidCustom();
+			newTierChances[5] = (int) DTierSpinner.getValue();
 		}
 	}
 	
 	private class ChangeListenerE implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
-			customTierChances[6] = (int) ETierSpinner.getValue();
-			voidCustom();
+			newTierChances[6] = (int) ETierSpinner.getValue();
 		}
 	}
 	
 	private class ChangeListenerF implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
-			customTierChances[7] = (int) FTierSpinner.getValue();
-			voidCustom();
+			newTierChances[7] = (int) FTierSpinner.getValue();
 		}
 	}
 	

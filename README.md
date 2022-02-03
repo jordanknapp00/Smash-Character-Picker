@@ -1,10 +1,10 @@
-# Smash Character Picker (v6.0)
+# Smash Character Picker (v6.4)
 
 A program designed to pick random matchups for the game Super Smash Bros. For those of us who don't like using the random character option, because it usually results in an unfair matchup. Instead, this program uses a tier list to create a matchup that is fair. Tier lists are defined in a `.txt` file. There are some additional settings to customize the experience, as well as some systems to ensure novel matchups are generated. Also includes a soundboard featuring 21 sound effects!
 
 ## Usage
 
-When you launch the program, the first order of business will be to load a tier list. Simply use the "Load" button in the bottom left corner of the window. Once you find your tier list file, if it is valid, the program will open it without issue. To learn how to format your tier list correctly, see the next section. When the tier list is loaded, you are now ready to generate matchups! Simply hit the "Generate" button, and a matchup will be generated. If you don't like the matchup you got, just use the "Skip" button. Normally players will never be allowed to get the same fighter twice in one session. But if you skip the battle, players will eventually be able to get that fighter again. See the section on the "Cannot Get" buffer for more details.
+When you launch the program, the first order of business will be to load a tier list. Simply use the "Load" button in the bottom left corner of the window. Once you find your tier list file, if it is valid, the program will open it without issue. To learn how to format your tier list correctly, see the next section. When the tier list is loaded, you are now ready to generate matchups! Simply hit the "Generate" button, and a matchup will be generated. If you don't like the matchup you got, just use the "Skip" button. Normally players will never be allowed to get the same fighter twice in one session. There are two exceptions to this: if that fighter is on that player's favorites list, or if you skip the battle. Those are the only situations where a player may get the same fighter twice in one session.
 
 ### Switching Fighters
 
@@ -18,7 +18,7 @@ See the example `tier list.txt` file for an example of how to format a tier list
 
 Each tier goes on its own line. Simply start the line with the name of the tier (i.e. "double s" or "mid c"). Each tier is split into three. For example, there is an upper A, mid A, and lower A. The only tier this does not apply to is double S, there is only one SS tier. Unlike previous versions of the program, you do not need to include *all* tiers, you only need to include the ones you're using. They can also be put in any order now. As mentioned, a line which defines a tier must start with the name of that tier. It should be followed by an equals sign with a space on either side of it. After that, you can start naming characters. Simple list each character, separated by a comma and space. Note that character names like "Bowser, Jr." will be registered as two different characters, "Bowser" and "Jr.", so be sure to not include a comma in any character's name.
 
-Each player also gets what is called an "exclusion list", which is the list of characters that they never want to be able to get. For those characters that you just can't stand.
+Each player gets what is called an "exclusion list", which is the list of characters that they never want to be able to get. For those characters that you just can't stand. A player will never get a fighter on their exclusion list, no matter what. Players also each have their own favorites list. Here, you can specify which fighters are your favorites, and a player *will* be able to get those fighters multiple times in a session. You'll still have to wait however many battles you've set the "Cannot Get" buffer to (see the section below for more details on that), however.
 
 Finally, various settings can be defined inside your tier list file, that way you don't have to change them every time you run the program. These are as follows:
 

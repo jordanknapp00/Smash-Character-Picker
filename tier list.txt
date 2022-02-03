@@ -1,19 +1,24 @@
-double s = Roy, Ness, Ganondorf, Byleth
-upper s = Palutena, Ike, Lucas
-mid s = Donkey Kong, Little Mac, Jigglypuff, Mr. Game & Watch
-upper a = Bowser, Young Link, Ridley
-mid a = Pikachu, Fox, Kirby, Lucina
-lower a = King K. Rool, Lucina, Cloud, Wolf, Mario, Chrom
-upper b = Link, Joker, Hero
-mid b = Incineroar, Terry, Toon Link
-lower b = Piranha Plant, Zero Suit Samus, Mewtwo, Captain Falcon
-upper c = Corrin, Simon, Pokemon Trainer, Lucario
+double s = Roy, Ness, Ganondorf, Byleth, Mr. Game & Watch, Luigi
+upper s = Palutena, Ike, Little Mac
+mid s = Jigglypuff, Pikachu, Bowser, Zelda
+lower s = Ridley, Lucas, Donkey Kong
+upper a = Lucina, Wolf, Mario
+mid a = Cloud, Terry, Chrom, R.O.B.
+lower a = King K. Rool, Toon Link, Incineroar
+upper b = Link, Hero, Mewtwo
+mid b = Joker, Captain Falcon, Young Link
+lower b = Corrin, Lucario, Falco
+upper c = Simon, Pokemon Trainer, Dr. Mario, Ken, Piranha Plant
 
-p1 exclude = Simon
-p2 exclude = Fox, Cloud, Chrom
-p3 exclude = Zero Suit Samus, Cloud, Jigglypuff, Chrom
+p1 exclude = Simon, Piranha Plant
+p2 exclude = Cloud
+p3 exclude = Lucario, Joker
 
-tier chances = 5, 20, 25, 30, 20, 0, 0, 0
+p1 favorite = Wolf, Lucina
+p2 favorite = Terry, Toon Link
+p3 favorite = Mario, Donkey Kong
+
+tier chances = 10, 20, 25, 25, 20, 0, 0, 0
 cannot get size = 7
 allow ss in cannot get = true
 allow s in cannot get = true
