@@ -1,0 +1,17 @@
+doubS=Ganondorf,King K. Rool,Roy,Palutena,Ness
+tierS=King Dedede,Zelda,Little Mac,Snake,Pichu,R.O.B.
+tierA=Pokemon Trainer,Donkey Kong,Lucas,Ike,Ridley,Link,Bowser,Cloud
+tierB=Peach,Young Link,Pikachu,Simon,Inkling,Isabelle,Toon Link,Kirby,Luigi,Yoshi
+tierC=Pit,Marth,Shulk,Greninja,Captain Falcon,Fox,Zero Suit Samus,Lucario
+tierD=
+tierE=
+tierF=
+lowTs=Incineroar,Mario,Wolf
+p1Exc=
+p2Exc=
+p3Exc=
+p4Exc=
+p5Exc=
+p6Exc=
+p7Exc=
+p8Exc=
