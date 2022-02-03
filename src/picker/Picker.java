@@ -14,12 +14,20 @@ import java.awt.event.WindowListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.imageio.ImageIO;
@@ -70,6 +78,7 @@ public class Picker {
 	private JButton soundBoardButton;
 	private JButton skipButton;
 	private JButton debugButton;
+	private JButton statsButton;
 	
 	//left panel components:
 	
@@ -122,6 +131,10 @@ public class Picker {
 	private GenerateButtonActionListener gbal = new GenerateButtonActionListener();
 	private ArrayList<String> gotten;
 	
+	private HashMap<String, double[]> stats;
+	private File statsFile;
+	private boolean needToSaveStats;
+	
 	//settings variables
 	private int[] tierChances;
 	private int[] newTierChances;
@@ -130,8 +143,12 @@ public class Picker {
 	private int cannotGetSize;
 	private boolean openedSoundPanel;
 	private boolean openedDebugPanel;
+	private boolean openedStatsPanel;
+	private boolean openedLookupPanel;
+	private boolean openedModPanel;
 	
 	private JTextArea debug;
+	private JTextArea statsOutput;
 	
 	//key for synchronization, hopefully prevent crashes
 	private static Object key = new Object();
@@ -143,11 +160,15 @@ public class Picker {
 		frame.setSize(835, 435);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
+		frame.addWindowListener(new PickerWindowListener());
 		
 		//Initialize TextAreas before setting look and feel
 		results = new JTextArea();
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
+		statsOutput = new JTextArea();
+		statsOutput.setEditable(false);
+		statsOutput.setFont(statsOutput.getFont().deriveFont(18f));
 		
 		//Set look and feel
 		try {
@@ -211,6 +232,11 @@ public class Picker {
 		skipping = false;
 		gotten = new ArrayList<String>();
 		openedDebugPanel = false;
+		openedStatsPanel = false;
+		stats = new HashMap<String, double[]>();
+		needToSaveStats = false;
+		openedLookupPanel = false;
+		openedModPanel = false;
 		
 		//initialize right panel
 		rightPanel = new JPanel();
@@ -285,6 +311,8 @@ public class Picker {
 			System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e);
 		}
 		
+		statsButton = new JButton("Stats");
+		statsButton.addActionListener(new StatsButtonActionListener());
 		debugButton = new JButton("Debug");
 		debugButton.addActionListener(new DebugButtonActionListener());
 		soundBoardButton = new JButton("Soundboard");
@@ -299,13 +327,13 @@ public class Picker {
 		gc.fill = GridBagConstraints.HORIZONTAL;
 		gc.anchor = GridBagConstraints.CENTER;
 		bottomPanel.add(loadButton, gc);
-		gc.weightx = .22;
+		gc.weightx = .1;
 		gc.gridx = 1;
 		bottomPanel.add(soundBoardButton, gc);
-		gc.weightx = 1;
+		gc.weightx = .67;
 		gc.gridx = 2;
 		bottomPanel.add(generateButton, gc);
-		gc.weightx = .1;
+		gc.weightx = .05;
 		gc.gridx = 3;
 		bottomPanel.add(skipButton, gc);
 		gc.gridx = 4;
@@ -317,6 +345,8 @@ public class Picker {
 		gc.gridx = 6;
 		gc.weightx = .05;
 		bottomPanel.add(numPlayersSpinner, gc);
+		gc.gridx = 7;
+		bottomPanel.add(statsButton, gc);
 		
 		//customChanceRules panel
 		tierChanceLabel1 = new JLabel("You can set custom chances for "
@@ -495,6 +525,784 @@ public class Picker {
 				
 		//Finally make it visible
 		frame.setVisible(true);
+		
+	}
+	
+	private class StatsButtonActionListener implements ActionListener {
+		private JFrame statsFrame;
+		private JPanel upperStatsPanel;
+		private JPanel lowerStatsPanel;
+		
+		private JLabel playerLabel;
+		private JSpinner winnerSpinner;
+		private JButton pickWinnerButton;
+		private JButton lookupButton;
+		private JButton reloadButton;
+		
+		private int selectedWinner;
+		private int battleWhenLastPressed;
+		private int lastSelectedWinner;
+		
+		//this warning is suppressed because it'll never actually cause a problem
+		//unless the user specifically does something stupid. under normal use
+		//it won't happen, and honestly i'm just tired of the warning.
+		@SuppressWarnings("unchecked")
+		public void actionPerformed(ActionEvent e) {
+			if(!fileLoaded) {
+				JOptionPane.showMessageDialog(frame, "You must load a tier list"
+						+ " file before you can use the stats panel.", "Smash "
+						+ "Character Picker", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			else if(openedStatsPanel) {
+				return;
+			}
+			
+			if(!needToSaveStats) {
+				statsFile = new File("smash stats.sel");
+				try {
+					if(statsFile.createNewFile()) {
+						JOptionPane.showMessageDialog(frame, "A stats file has not been detected in this folder. "
+								+ "One will now be created.", "Smash Character Picker",
+								JOptionPane.INFORMATION_MESSAGE);
+						for(int at = 0; at < 24; at++) {
+							for(String fighter: linesOfFile.get(at)) {
+								double[] freshDouble = new double[] {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+								stats.put(fighter, freshDouble);
+							}
+						}
+					}
+					else {
+						FileInputStream fis = new FileInputStream(statsFile);
+						ObjectInputStream ois = new ObjectInputStream(fis);
+						stats = (HashMap<String, double[]>) ois.readObject();
+						ois.close();
+						fis.close();
+						//add any new fighters if need be
+						for(int at = 0; at < 24; at++) {
+							for(String fighter: linesOfFile.get(at)) {
+								if(!stats.containsKey(fighter)) {
+									System.out.println("[DEBUG]: " + fighter + " was not found in the stats file. Adding them.");
+									debug.append("[DEBUG]: " + fighter + " was not found in the stats file. Adding them.\n");
+									double[] freshDouble = new double[] {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+									stats.put(fighter, freshDouble);
+								}
+							}
+						}
+					}
+				} catch (IOException e1) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e1);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e1 + "\n");
+					return;
+				} catch (ClassNotFoundException e1) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e1);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e1 + "\n");
+					return;
+				}
+				
+				System.out.println("[DEBUG]: The following data has been loaded as the stats file:");
+				debug.append("[DEBUG]: The following data has been loaded as the stats file:\n");
+				for(String fighter: stats.keySet()) {
+					System.out.print("         " + fighter + ",");
+					debug.append("         " + fighter + ",");
+					double[] statValues = stats.get(fighter);
+					for(int at = 0; at < 14; at++) {
+						System.out.print(statValues[at] + ",");
+						debug.append(statValues[at] + ",");
+					}
+					System.out.println(statValues[15]);
+					debug.append(statValues[15] + "\n");
+				}
+			}
+			
+			statsFrame = new JFrame("Smash Character Picker");
+			statsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			statsFrame.setSize(325, 435);
+			statsFrame.setResizable(false);
+			statsFrame.setLocation(frame.getX() + frame.getWidth(), frame.getY());
+			statsFrame.addWindowListener(new StatsWindowListener());
+			
+			upperStatsPanel = new JPanel();
+			upperStatsPanel.setLayout(new BorderLayout());
+			upperStatsPanel.setBorder(BorderFactory.createTitledBorder("Statistics"));
+			upperStatsPanel.add(statsOutput, BorderLayout.CENTER);
+			
+			lowerStatsPanel = new JPanel();
+			lowerStatsPanel.setLayout(new GridBagLayout());
+			playerLabel = new JLabel("Player: ");
+			SpinnerNumberModel winnerSpinnerModel = new SpinnerNumberModel(1, 1, 8, 1);
+			winnerSpinner = new JSpinner(winnerSpinnerModel);
+			winnerSpinner.addChangeListener(new WinnerSpinnerChangeListener());
+			pickWinnerButton = new JButton("Select winner");
+			pickWinnerButton.addActionListener(new PickWinnerActionListener());
+			lookupButton = new JButton("Look up stats");
+			lookupButton.addActionListener(new LookupActionListener());
+			reloadButton = new JButton("⭯");
+			reloadButton.addActionListener(new ReloadActionListener());
+			
+			GridBagConstraints gc = new GridBagConstraints();
+			gc.gridx = 0;
+			gc.gridy = 0;
+			gc.weighty = 1;
+			gc.weightx = .1;
+			gc.fill = GridBagConstraints.HORIZONTAL;
+			lowerStatsPanel.add(playerLabel, gc);
+			gc.gridx = 1;
+			gc.weightx = .05;
+			lowerStatsPanel.add(winnerSpinner, gc);
+			gc.gridx = 2;
+			gc.weightx = .3;
+			lowerStatsPanel.add(Box.createRigidArea(new Dimension(3, 0)), gc);
+			gc.gridx = 3;
+			gc.weightx = .35;
+			lowerStatsPanel.add(pickWinnerButton, gc);
+			gc.gridx = 4;
+			gc.weightx = .25;
+			lowerStatsPanel.add(lookupButton, gc);
+			gc.gridx = 5;
+			lowerStatsPanel.add(reloadButton, gc);
+			
+			gc.gridx = 0;
+			gc.gridy = 0;
+			gc.weightx = 1;
+			gc.weighty = .98;
+			gc.fill = GridBagConstraints.BOTH;
+			gc.anchor = GridBagConstraints.CENTER;
+			statsFrame.setLayout(new GridBagLayout());
+			JScrollPane scrollPane = new JScrollPane(upperStatsPanel);
+			scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			statsFrame.add(scrollPane, gc);
+			gc.gridy = 1;
+			gc.weighty = .02;
+			statsFrame.add(lowerStatsPanel, gc);
+			
+			openedStatsPanel = true;
+			selectedWinner = 1;
+			battleWhenLastPressed = -1;
+			needToSaveStats = true;
+			lastSelectedWinner = -1;
+			
+			statsFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
+			
+			statsFrame.setVisible(true);
+		}
+		
+		private class ReloadActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numBattles != 0) {
+					GenerateButtonActionListener gbal = new GenerateButtonActionListener();
+					gbal.updateStatsScreen();
+				}
+			}
+		}
+		
+		private class LookupActionListener implements ActionListener {
+			private JFrame lookupFrame;
+			private JPanel topPanel;
+			private JPanel midPanel;
+			private JPanel bottomPanel;
+			
+			private JTextField toLookUp;
+			private JButton lookupButton;
+			
+			private JComboBox<String> sortOptions;
+			private JButton sortButton;
+			
+			private JTextField toModify;
+			private JButton modifyButton;
+			
+			private int selectedOption;
+			
+			public void actionPerformed(ActionEvent e) {
+				if(openedLookupPanel) {
+					return;
+				}
+				
+				lookupFrame = new JFrame("Smash Character Picker");
+				lookupFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				lookupFrame.setSize(325, 200);
+				lookupFrame.setResizable(false);
+				lookupFrame.setLocationRelativeTo(frame);
+				
+				topPanel = new JPanel();
+				topPanel.setBorder(BorderFactory.createTitledBorder("Lookup"));
+				toLookUp = new JTextField(20);
+				toLookUp.addActionListener(new LookupButtonActionListener());
+				lookupButton = new JButton("Look up");
+				lookupButton.addActionListener(new LookupButtonActionListener());
+				topPanel.add(toLookUp);
+				topPanel.add(lookupButton);
+				
+				midPanel = new JPanel();
+				midPanel.setBorder(BorderFactory.createTitledBorder("Sort by"));
+				String[] options = {"Overall win rate", "P1 win rate", "P2 win rate",
+						"P3 win rate", "P4 win rate", "P5 win rate", "P6 win rate",
+						"P7 win rate", "P8 win rate", "Total battles"};
+				sortOptions = new JComboBox<String>(options);
+				sortOptions.setPreferredSize(new Dimension(200, 19));
+				sortOptions.addActionListener(new SortOptionsActionListener());
+				sortButton = new JButton("Sort");
+				sortButton.addActionListener(new SortButtonActionListener());
+				midPanel.add(sortOptions);
+				midPanel.add(sortButton);
+				
+				bottomPanel = new JPanel();
+				bottomPanel.setBorder(BorderFactory.createTitledBorder("Modify data"));
+				toModify = new JTextField(20);
+				toModify.addActionListener(new ModifyActionListener());
+				modifyButton = new JButton("Modify data");
+				modifyButton.addActionListener(new ModifyActionListener());
+				bottomPanel.add(toModify);
+				bottomPanel.add(modifyButton);
+				
+				lookupFrame.setLayout(new GridBagLayout());
+				GridBagConstraints gc = new GridBagConstraints();
+				gc.gridx = 0;
+				gc.gridy = 0;
+				gc.weightx = 1;
+				gc.weighty = .33;
+				gc.anchor = GridBagConstraints.CENTER;
+				gc.fill = GridBagConstraints.BOTH;
+				lookupFrame.add(topPanel, gc);
+				gc.gridy = 1;
+				lookupFrame.add(midPanel, gc);
+				gc.gridy = 2;
+				lookupFrame.add(bottomPanel, gc);
+				
+				selectedOption = 0;
+				
+				lookupFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
+				
+				lookupFrame.addWindowListener(new LookupWindowListener());
+				
+				lookupFrame.setVisible(true);
+				openedLookupPanel = true;
+			}
+			
+			private class LookupWindowListener implements WindowListener {
+				public void windowOpened(WindowEvent e) {
+				}
+
+				public void windowClosing(WindowEvent e) {
+					openedLookupPanel = false;
+				}
+
+				public void windowClosed(WindowEvent e) {
+				}
+
+				public void windowIconified(WindowEvent e) {
+				}
+
+				public void windowDeiconified(WindowEvent e) {
+				}
+
+				public void windowActivated(WindowEvent e) {
+				}
+
+				public void windowDeactivated(WindowEvent e) {
+				}
+			}
+			
+			private class ModifyActionListener implements ActionListener {
+				private JFrame modFrame;
+				
+				private JPanel modPanel;
+				private JLabel playerLabel;
+				private JSpinner player;
+				private JLabel winsLabel;
+				private JSpinner wins;
+				private JLabel battlesLabel;
+				private JSpinner battles;
+				private JTextField rename;
+				private JButton renameButton;
+				private JButton resetAll;
+				private JButton remove;
+				private JButton apply;
+				
+				private JLabel warningLabel;
+				
+				private int playerSelected;
+				private String newName;
+				private double[] newValues;
+				private String oldName;
+				
+				public void actionPerformed(ActionEvent e) {
+					if(openedModPanel) {
+						return;
+					}
+					
+					String modify = toModify.getText();
+					if(stats.containsKey(modify)) {
+						double[] fighterStats = stats.get(modify);
+						newName = modify;
+						oldName = modify;
+						newValues = new double[16];
+						
+						for(int at = 0; at < 16; at++) {
+							newValues[at] = fighterStats[at];
+						}
+						
+						playerSelected = 1;
+						
+						modFrame = new JFrame();
+						modFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+						modFrame.setSize(250, 230);
+						modFrame.setResizable(false);
+						modFrame.setLocationRelativeTo(frame);
+						
+						modPanel = new JPanel();
+						modPanel.setBorder(BorderFactory.createTitledBorder("Modify " + modify + " stats"));
+						
+						warningLabel = new JLabel("<html>WARNING: Once you hit apply,<br>changes are permanent!</html>");
+						
+						playerLabel = new JLabel("Select player: ");
+						SpinnerNumberModel playerModel = new SpinnerNumberModel(1, 1, 8, 1);
+						player = new JSpinner(playerModel);
+						player.addChangeListener(new PlayerChangeListener());
+						
+						winsLabel = new JLabel("Adjust number of wins: ");
+						SpinnerNumberModel winsModel = new SpinnerNumberModel(fighterStats[0], 0, 9999, 1);
+						wins = new JSpinner(winsModel);
+						wins.addChangeListener(new WinsChangeListener());
+						
+						battlesLabel = new JLabel("Adjust number of battles: ");
+						SpinnerNumberModel battleModel = new SpinnerNumberModel(fighterStats[1], 0, 9999, 1);
+						battles = new JSpinner(battleModel);
+						battles.addChangeListener(new BattlesChangeListener());
+						
+						rename = new JTextField(16);
+						renameButton = new JButton("Rename");
+						rename.addActionListener(new RenameActionListener());
+						renameButton.addActionListener(new RenameActionListener());
+						
+						resetAll = new JButton("Reset all stats");
+						resetAll.addActionListener(new ResetAllActionListener());
+						remove = new JButton("Remove character");
+						remove.addActionListener(new RemoveActionListener());
+						apply = new JButton("Apply changes");
+						apply.addActionListener(new ApplyActionListener());
+						
+						modPanel.setLayout(new GridBagLayout());
+						GridBagConstraints gc = new GridBagConstraints();
+						gc.gridx = 0;
+						gc.gridy = 0;
+						gc.anchor = GridBagConstraints.LINE_START;
+						gc.fill = GridBagConstraints.HORIZONTAL;
+						modPanel.add(playerLabel, gc);
+						gc.gridx = 1;
+						modPanel.add(player, gc);
+						gc.gridx = 0;
+						gc.gridy = 1;
+						modPanel.add(winsLabel, gc);
+						gc.gridx = 1;
+						modPanel.add(wins, gc);
+						gc.gridx = 0;
+						gc.gridy = 2;
+						modPanel.add(battlesLabel, gc);
+						gc.gridx = 1;
+						modPanel.add(battles, gc);
+						gc.gridx = 0;
+						gc.gridy = 3;
+						modPanel.add(rename, gc);
+						gc.gridx = 1;
+						modPanel.add(renameButton, gc);
+						gc.gridx = 0;
+						gc.gridy = 4;
+						gc.gridwidth = 2;
+						modPanel.add(resetAll, gc);
+						gc.gridy = 5;
+						modPanel.add(remove, gc);
+						gc.gridy = 6;
+						modPanel.add(apply, gc);
+						gc.gridy = 7;
+						gc.anchor = GridBagConstraints.CENTER;
+						modPanel.add(warningLabel, gc);
+						
+						modFrame.add(modPanel);
+						
+						modFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
+						
+						modFrame.addWindowListener(new ModWindowListener());
+						
+						modFrame.setVisible(true);
+						openedModPanel = true;
+					}
+					else if(modify != null) {
+						statsOutput.setText("Fighter " + modify + " not found!\n");
+					}
+				}
+				
+				private class ModWindowListener implements WindowListener {
+					public void windowOpened(WindowEvent e) {
+					}
+
+					public void windowClosing(WindowEvent e) {
+						openedModPanel = false;
+					}
+
+					public void windowClosed(WindowEvent e) {
+					}
+
+					public void windowIconified(WindowEvent e) {
+					}
+
+					public void windowDeiconified(WindowEvent e) {
+					}
+					
+					public void windowActivated(WindowEvent e) {
+					}
+
+					public void windowDeactivated(WindowEvent e) {
+					}
+				}
+				
+				private class ApplyActionListener implements ActionListener {
+					public void actionPerformed(ActionEvent e) {
+						//check for validity -- there can't be more wins than battles
+						for(int at = 0; at < 15; at += 2) {
+							if(newValues[at] > newValues[at + 1]) {
+								JOptionPane.showMessageDialog(modFrame, "There cannot be more wins than battles.",
+										"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+								return;
+							}
+						}
+						
+						stats.remove(oldName);
+						stats.put(newName, newValues);
+						JOptionPane.showMessageDialog(modFrame, "Stats updated. You can close the mod window now.",
+								"Smash Character Picker", JOptionPane.INFORMATION_MESSAGE);
+					}
+				}
+				
+				private class RemoveActionListener implements ActionListener {
+					public void actionPerformed(ActionEvent e) {
+						if(JOptionPane.showConfirmDialog(modFrame, "Are you sure you want to remove " + oldName + " from the system?", 
+								"Smash Character Picker", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE)
+								== JOptionPane.YES_OPTION) {
+							stats.remove(oldName);
+							JOptionPane.showMessageDialog(modFrame, oldName + " removed. You can close the mod window now.",
+									"Smash Character Picker", JOptionPane.INFORMATION_MESSAGE);
+						}
+					}
+				}
+				
+				private class ResetAllActionListener implements ActionListener {
+					public void actionPerformed(ActionEvent e) {
+						newName = oldName;
+						double[] oldStats = stats.get(oldName);
+						for(int at = 0; at < 16; at++) {
+							newValues[at] = oldStats[at];
+						}
+						wins.setValue(newValues[2 * (playerSelected - 1)]);
+						battles.setValue(newValues[2 * (playerSelected - 1) + 1]);
+					}
+				}
+				
+				private class RenameActionListener implements ActionListener {
+					public void actionPerformed(ActionEvent e) {
+						String toChange = rename.getText();
+						
+						if(stats.containsKey(toChange)) {
+							JOptionPane.showMessageDialog(modFrame, "There's already a character called " + toChange + ". "
+									+ "Characters cannot have duplicate names", "Smash Character Picker",
+									JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						else {
+							newName = toChange;
+							rename.setText("");
+						}
+					}
+				}
+				
+				private class BattlesChangeListener implements ChangeListener {
+					public void stateChanged(ChangeEvent e) {
+						newValues[2 * (playerSelected - 1) + 1] = (double) battles.getValue();
+					}
+				}
+				
+				private class WinsChangeListener implements ChangeListener {
+					public void stateChanged(ChangeEvent e) {
+						newValues[2 * (playerSelected - 1)] = (double) wins.getValue();
+					}
+				}
+				
+				private class PlayerChangeListener implements ChangeListener {
+					public void stateChanged(ChangeEvent e) {
+						playerSelected = (int) player.getValue();
+						wins.setValue(newValues[2 * (playerSelected - 1)]);
+						battles.setValue(newValues[2 * (playerSelected - 1) + 1]);
+					}
+				}
+			}
+			
+			private class SortButtonActionListener implements ActionListener {
+				public void actionPerformed(ActionEvent e) {
+					statsOutput.setText("");
+					ComparableArray[] data = new ComparableArray[stats.size()];
+					switch(selectedOption) {
+						case 0:
+							statsOutput.append("Sorted by overall win rate:\n");
+							data = getTotalStats(3);
+							break;
+						case 1:
+							statsOutput.append("Sorted by Player 1's win rate:\n");
+							data = getPlayerStats(0);
+							break;
+						case 2:
+							statsOutput.append("Sorted by Player 2's win rate:\n");
+							data = getPlayerStats(1);
+							break;
+						case 3:
+							statsOutput.append("Sorted by Player 3's win rate:\n");
+							data = getPlayerStats(2);
+							break;
+						case 4:
+							statsOutput.append("Sorted by Player 4's win rate:\n");
+							data = getPlayerStats(3);
+							break;
+						case 5:
+							statsOutput.append("Sorted by Player 5's win rate:\n");
+							data = getPlayerStats(4);
+							break;
+						case 6:
+							statsOutput.append("Sorted by Player 6's win rate:\n");
+							data = getPlayerStats(5);
+							break;
+						case 7:
+							statsOutput.append("Sorted by Player 7's win rate:\n");
+							data = getPlayerStats(6);
+							break;
+						case 8:
+							statsOutput.append("Sorted by Player 8's win rate:\n");
+							data = getPlayerStats(7);
+							break;
+						case 9:
+							statsOutput.append("Sorted by total battles:\n");
+							data = getTotalStats(2);
+							Arrays.sort(data);
+							data = reverse(data);
+							int at = 1;
+							for(ComparableArray arrAt: data) {
+								statsOutput.append(at + ". " + arrAt.getName() + " - " + arrAt.getBattles() + " battles\n");
+								at++;
+							}
+							return;
+						default:
+							statsOutput.append("Error, unrecognized sort ID.\n");
+							return;
+					}
+					
+					Arrays.sort(data);
+					data = reverse(data);
+					int at = 1;
+					for(ComparableArray arrAt: data) {
+						statsOutput.append(at + ". " + arrAt + "\n");
+						at++;
+					}
+				}
+				
+				private ComparableArray[] getTotalStats(int column) {
+					ComparableArray[] data = new ComparableArray[stats.size()];
+					int indexAt = 0;
+					for(String fighter: stats.keySet()) {
+						double totalWins = 0;
+						double totalBattles = 0;
+						double[] fighterStats = stats.get(fighter);
+						for(int at = 0; at < 8; at++) {
+							totalWins += fighterStats[2 * at];
+							totalBattles += fighterStats[2 * at + 1];
+						}
+						data[indexAt] = new ComparableArray(fighter, totalWins, totalBattles, column);
+						indexAt++;
+					}
+					
+					return data;
+				}
+				
+				private ComparableArray[] getPlayerStats(int player) {
+					ComparableArray[] data = new ComparableArray[stats.size()];
+					int at = 0;
+					for(String fighter: stats.keySet()) {
+						double[] fighterStats = stats.get(fighter);
+						data[at] = new ComparableArray(fighter, fighterStats[2 * player], fighterStats[2 * player + 1], 3);
+						at++;
+					}
+					
+					return data;
+				}
+				
+				private ComparableArray[] reverse(ComparableArray[] start) {
+					ComparableArray[] retArr = new ComparableArray[start.length];
+					int j = start.length;
+					for(int at = 0; at < start.length; at++) {
+						retArr[j - 1] = start[at];
+						j--;
+					}
+					
+					return retArr;
+				}
+			}
+			
+			private class SortOptionsActionListener implements ActionListener {
+				public void actionPerformed(ActionEvent e) {
+					selectedOption = sortOptions.getSelectedIndex();
+				}		
+			}
+			
+			private class LookupButtonActionListener implements ActionListener {
+				public void actionPerformed(ActionEvent e) {
+					statsOutput.setText("");
+					String lookup = toLookUp.getText();
+					if(stats.containsKey(lookup)) {
+						statsOutput.append("Stats for " + lookup + ":\n");
+						double[] fighterStats = stats.get(lookup);
+						double totalWins = 0;
+						double totalFights = 0;
+						for(int at = 0; at < 8; at++) {
+							totalWins += fighterStats[2 * at];
+							totalFights += fighterStats[2 * at + 1];
+							statsOutput.append("Player " + (at + 1) + " W%: " + printDouble((fighterStats[2 * at] / fighterStats[2 * at + 1]) * 100) + "% (" + (int)fighterStats[2 * at] + "/" + (int)fighterStats[2 * at + 1] + ")\n");
+						}
+						statsOutput.append("Overall W%: " + printDouble((totalWins / totalFights) * 100) + "% (" + (int)totalWins + "/" + (int)totalFights + ")\n");
+					}
+					else if(lookup != null) {
+						statsOutput.append("Fighter " + lookup + " not found!\n");
+					}
+				}
+			}
+		}
+		
+		private class PickWinnerActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numBattles == battleWhenLastPressed) {
+					stats.get(gotten.get(lastSelectedWinner - 1))[2 * (lastSelectedWinner - 1)]--;
+					stats.get(gotten.get(selectedWinner - 1))[2 * (selectedWinner - 1)]++;
+					lastSelectedWinner = selectedWinner;
+					GenerateButtonActionListener gbal = new GenerateButtonActionListener();
+					gbal.updateStatsScreen();
+				}
+				else if(numBattles == 0) {
+					JOptionPane.showMessageDialog(frame, "There has to be a battle before there can be a winner.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+				else {
+					battleWhenLastPressed = numBattles;
+					lastSelectedWinner = selectedWinner;
+					for(int at = 0; at < numPlayers; at++) {
+						if((at + 1) == selectedWinner) {
+							stats.get(gotten.get(at))[2 * at]++;
+							stats.get(gotten.get(at))[2 * at + 1]++;
+						}
+						else {
+							stats.get(gotten.get(at))[2 * at + 1]++;
+						}
+					}
+					GenerateButtonActionListener gbal = new GenerateButtonActionListener();
+					gbal.updateStatsScreen();
+				}
+			}
+		}
+		
+		private class WinnerSpinnerChangeListener implements ChangeListener {
+			public void stateChanged(ChangeEvent e) {
+				selectedWinner = (int) winnerSpinner.getValue();
+			}
+		}
+		
+		private class StatsWindowListener implements WindowListener {
+
+			public void windowOpened(WindowEvent e) {
+			}
+
+			public void windowClosing(WindowEvent e) {
+				openedStatsPanel = false;
+			}
+
+			public void windowClosed(WindowEvent e) {
+			}
+
+			public void windowIconified(WindowEvent e) {
+			}
+
+			public void windowDeiconified(WindowEvent e) {
+			}
+
+			public void windowActivated(WindowEvent e) {
+			}
+
+			public void windowDeactivated(WindowEvent e) {
+			}
+		}
+	}
+	
+	//package visibility, allowing ComparableArray to use this method
+	static String printDouble(double num) {
+		if(num >= 0) {
+			return new BigDecimal(String.valueOf(num)).setScale(2, RoundingMode.FLOOR).toString();
+		}
+		else if(num < 0) {
+			return new BigDecimal(String.valueOf(num)).setScale(2, RoundingMode.CEILING).toString();
+		}
+		else {
+			return "NaN";
+		}
+	}
+	
+	private class PickerWindowListener implements WindowListener {
+
+		public void windowOpened(WindowEvent e) {
+		}
+
+		public void windowClosing(WindowEvent e) {
+			if(needToSaveStats) {
+				try {
+					FileOutputStream fos = new FileOutputStream(statsFile);
+					ObjectOutputStream oos = new ObjectOutputStream(fos);
+					oos.writeObject(stats);
+					oos.close();
+					fos.close();
+				} catch (FileNotFoundException e1) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e1);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e1 + "\n");
+					JOptionPane.showMessageDialog(frame, "FileNotFoundException in saving stats file.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+				} catch (IOException e1) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e1);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e1 + "\n");
+					JOptionPane.showMessageDialog(frame, "IOException in saving stats file.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
+
+		public void windowClosed(WindowEvent e) {
+		}
+
+		public void windowIconified(WindowEvent e) {
+		}
+
+		public void windowDeiconified(WindowEvent e) {
+		}
+
+		public void windowActivated(WindowEvent e) {
+		}
+
+		public void windowDeactivated(WindowEvent e) {
+		}
 		
 	}
 	
@@ -732,6 +1540,8 @@ public class Picker {
 				for(int at = 0; at < numPlayers; at++) {
 					results.append("Player " + (at + 1) + " got " + gotten.get(at) + ", " + tierToString(individualCannotGet[at].getLastTier()) + ".\n");
 				}
+				GenerateButtonActionListener gbal = new GenerateButtonActionListener();
+				gbal.updateStatsScreen();
 				
 				player1Box.setSelected(false);
 				player2Box.setSelected(false);
@@ -906,14 +1716,14 @@ public class Picker {
 			soundboardFrame.setSize(325, 435);
 			soundboardFrame.setResizable(false);
 			
-			//determine where soundboard should go, either left or right side
+			//soundboard now always goes on left side, because stats goes on right side
 			int xPos = frame.getX() - soundboardFrame.getWidth();
 			
 			if(xPos < 0) {
 				xPos = frame.getX() + frame.getWidth();
 			}
 			
-			soundboardFrame.setLocation(xPos, frame.getY());
+			soundboardFrame.setLocation(frame.getX() - soundboardFrame.getWidth(), frame.getY());
 			soundboardFrame.addWindowListener(new SoundboardWindowListener());
 			
 			//Set look and feel
@@ -1020,6 +1830,7 @@ public class Picker {
 			
 			soundboardFrame.setVisible(true);
 			openedSoundPanel = true;
+			
 		}
 		
 		private class SoundboardWindowListener implements WindowListener {
@@ -1557,7 +2368,34 @@ public class Picker {
 				System.out.println("[DEBUG]: Nobody can get " + cannotGet);
 				debug.append("[DEBUG]: Nobody can get " + cannotGet + "\n");
 				
+				//gonna use that as reasonable metric of whether or not the stats
+				//window must be updated
+				if(needToSaveStats) {
+					updateStatsScreen();
+				}
+				
 				skipping = false;
+			}
+		}
+		
+		public void updateStatsScreen() {
+			statsOutput.setText("");
+			statsOutput.append("Stats for this battle:\n");
+			for(int at = 0; at < numPlayers; at++) {
+				double[] statsForFighter = stats.get(gotten.get(at));
+				double playerBattlesWon = statsForFighter[2 * at];
+				double playerBattlesFought = statsForFighter[2 * at  + 1];
+				double totalBattlesWon = 0;
+				double totalBattlesFought = 0;
+				for(int pAt = 0; pAt < 8; pAt++) {
+					totalBattlesWon += statsForFighter[2 * pAt];
+					totalBattlesFought += statsForFighter[2 * pAt + 1];
+				}
+				statsOutput.append("P" + (at + 1) + " W%: " + 
+							printDouble((playerBattlesWon / playerBattlesFought) * 100) + 
+							"% (" + (int)playerBattlesWon + "/" + (int)playerBattlesFought + "). Total W%: " + 
+							printDouble((totalBattlesWon / totalBattlesFought) * 100) + "% (" + 
+							(int)totalBattlesWon + "/" + (int)totalBattlesFought + ").\n");
 			}
 		}
 		
