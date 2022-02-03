@@ -69,6 +69,7 @@ public class Picker {
 	private JButton loadButton;
 	private JButton soundBoardButton;
 	private JButton skipButton;
+	private JButton debugButton;
 	
 	//left panel components:
 	
@@ -128,6 +129,9 @@ public class Picker {
 	private boolean SAllowedInCannotGetBuffer;
 	private int cannotGetSize;
 	private boolean openedSoundPanel;
+	private boolean openedDebugPanel;
+	
+	private JTextArea debug;
 	
 	//key for synchronization, hopefully prevent crashes
 	private static Object key = new Object();
@@ -136,7 +140,7 @@ public class Picker {
 		//initialize main frame
 		frame = new JFrame("Smash Character Picker");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(760, 435);
+		frame.setSize(835, 435);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
 		
@@ -173,7 +177,7 @@ public class Picker {
 		//initialize fields
 		fileLoaded = false;
 		linesOfFile = new ArrayList<ArrayList<String>>();
-		for(int at = 0; at < 37; at++) {
+		for(int at = 0; at < 39; at++) {
 			linesOfFile.add(new ArrayList<String>());
 		}
 		cannotGet = new CannotGetQueue();
@@ -206,6 +210,7 @@ public class Picker {
 		}
 		skipping = false;
 		gotten = new ArrayList<String>();
+		openedDebugPanel = false;
 		
 		//initialize right panel
 		rightPanel = new JPanel();
@@ -213,7 +218,7 @@ public class Picker {
 		GridBagConstraints gc = new GridBagConstraints();
 		rightPanel.setLayout(new BorderLayout());
 		rightPanel.add(results);
-		rightPanel.setPreferredSize(new Dimension(350, 260));
+		rightPanel.setPreferredSize(new Dimension(425, 260));
 		
 		//initialize far right panel
 		farRightPanel = new JPanel();
@@ -280,6 +285,8 @@ public class Picker {
 			System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e);
 		}
 		
+		debugButton = new JButton("Debug");
+		debugButton.addActionListener(new DebugButtonActionListener());
 		soundBoardButton = new JButton("Soundboard");
 		soundBoardButton.addActionListener(new SoundBoardButtonActionListener());
 		generateButton.addActionListener(gbal);
@@ -302,10 +309,12 @@ public class Picker {
 		gc.gridx = 3;
 		bottomPanel.add(skipButton, gc);
 		gc.gridx = 4;
+		bottomPanel.add(debugButton, gc);
+		gc.gridx = 5;
 		gc.weightx = .03;
 		gc.fill = GridBagConstraints.NONE;
 		bottomPanel.add(numPlayersLabel, gc);
-		gc.gridx = 5;
+		gc.gridx = 6;
 		gc.weightx = .05;
 		bottomPanel.add(numPlayersSpinner, gc);
 		
@@ -477,6 +486,9 @@ public class Picker {
 		gc.gridx = 2;
 		gc.gridwidth = 1;
 		frame.add(farRightPanel, gc);
+		
+		debug = new JTextArea(5, 101);
+		debug.setEditable(false);
 		
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
@@ -736,48 +748,52 @@ public class Picker {
 			private String tierToString(int tier) {
 				switch(tier) {
 					case 0:
-						return "Double S tier";
+						return "Upper Double S tier";
 					case 1:
-						return "Upper S tier";
+						return "Double S tier";
 					case 2:
-						return "Mid S tier";
+						return "Lower Double S tier";
 					case 3:
-						return "Lower S tier";
+						return "Upper S tier";
 					case 4:
-						return "Upper A tier";
+						return "Mid S tier";
 					case 5:
-						return "Mid A tier";
+						return "Lower S tier";
 					case 6:
-						return "Lower A tier";
+						return "Upper A tier";
 					case 7:
-						return "Upper B tier";
+						return "Mid A tier";
 					case 8:
-						return "Mid B tier";
+						return "Lower A tier";
 					case 9:
-						return "Lower B tier";
+						return "Upper B tier";
 					case 10:
-						return "Upper C tier";
+						return "Mid B tier";
 					case 11:
-						return "Mid C tier";
+						return "Lower B tier";
 					case 12:
-						return "Lower C tier";
+						return "Upper C tier";
 					case 13:
-						return "Upper D tier";
+						return "Mid C tier";
 					case 14:
-						return "Mid D tier";
+						return "Lower C tier";
 					case 15:
-						return "Lower D tier";
+						return "Upper D tier";
 					case 16:
-						return "Upper E tier";
+						return "Mid D tier";
 					case 17:
-						return "Mid E tier";
+						return "Lower D tier";
 					case 18:
-						return "Lower E tier";
+						return "Upper E tier";
 					case 19:
-						return "Upper F tier";
+						return "Mid E tier";
 					case 20:
-						return "Mid F tier";
+						return "Lower E tier";
 					case 21:
+						return "Upper F tier";
+					case 22:
+						return "Mid F tier";
+					case 23:
 						return "Lower F tier";
 					default:
 						return "Invalid tier";
@@ -794,6 +810,63 @@ public class Picker {
 		
 	}
 	
+	private class DebugButtonActionListener implements ActionListener {
+		private JFrame debugFrame;
+		private JPanel debugPanel;
+		
+		public void actionPerformed(ActionEvent e) {
+			if(openedDebugPanel) {
+				return;
+			}
+			
+			debugFrame = new JFrame("Debug");
+			debugFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			debugFrame.setSize(835, 200);
+			debugFrame.setResizable(false);
+			
+			debugFrame.setLocation(frame.getX(), (int) (frame.getY() + 2 * debugFrame.getHeight() + 30));
+			debugFrame.addWindowListener(new DebugWindowListener());
+			
+			debugPanel = new JPanel();
+			debugPanel.setLayout(new BorderLayout());
+			debugPanel.add(debug, BorderLayout.LINE_START);
+			JScrollPane scrollPane = new JScrollPane(debugPanel);
+			scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			debugFrame.add(scrollPane);
+			
+			debug.append("[DEBUG]: You've opened the debug panel.\n");
+			
+			debugFrame.setVisible(true);
+			openedDebugPanel = true;
+		}
+		
+		private class DebugWindowListener implements WindowListener {
+			public void windowOpened(WindowEvent e) {
+			}
+
+			public void windowClosing(WindowEvent e) {
+				openedDebugPanel = false;
+				debug.append("[DEBUG]: You've closed the debug panel.\n");
+			}
+
+			public void windowClosed(WindowEvent e) {
+			}
+
+			public void windowIconified(WindowEvent e) {
+			}
+
+			public void windowDeiconified(WindowEvent e) {
+			}
+
+			public void windowActivated(WindowEvent e) {
+			}
+
+			public void windowDeactivated(WindowEvent e) {
+			}
+			
+		}
+	}
+	
 	private class SoundBoardButtonActionListener implements ActionListener {
 		private JFrame soundboardFrame;
 		private JPanel soundboardPanel;
@@ -806,19 +879,19 @@ public class Picker {
 		private JButton angerousNowButton;
 		private JButton theWorstButton;
 		private JButton excuseMeButton;
-		private JButton excuseMeWhatButton;
+		private JButton bscuseMeButton;
 		private JButton ghoulButton;
 		private JButton whatButton;
-		private JButton ohNoButton;
 		private JButton thatMakesMeFeelAngryButton;
 		private JButton daringTodayButton;
 		private JButton vsauceButton;
-		private JButton okMomButton;
 		private JButton despiseHimButton;
 		private JButton whatDuhHeckButton;
 		private JButton cheaterButton;
 		private JButton ohMyGodButton;
 		private JButton doingStringsButton;
+		private JButton churlishButton;
+		private JButton chicanerousButton;
 		
 		public void actionPerformed(ActionEvent e) {
 			
@@ -851,21 +924,25 @@ public class Picker {
 				int min = ZonedDateTime.now().getMinute();
 				int sec = ZonedDateTime.now().getSecond();
 				System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e4);
+				debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e4 + "\n");
 			} catch (InstantiationException e4) {
 				int hour = ZonedDateTime.now().getHour();
 				int min = ZonedDateTime.now().getMinute();
 				int sec = ZonedDateTime.now().getSecond();
 				System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e4);
+				debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e4 + "\n");
 			} catch (IllegalAccessException e4) {
 				int hour = ZonedDateTime.now().getHour();
 				int min = ZonedDateTime.now().getMinute();
 				int sec = ZonedDateTime.now().getSecond();
 				System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e4);
+				debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e4 + "\n");
 			} catch (UnsupportedLookAndFeelException e4) {
 				int hour = ZonedDateTime.now().getHour();
 				int min = ZonedDateTime.now().getMinute();
 				int sec = ZonedDateTime.now().getSecond();
 				System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e4);
+				debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e4 + "\n");
 			}
 			
 			//do the rest of it
@@ -888,22 +965,18 @@ public class Picker {
 			theWorstButton.addActionListener(new TheWorstActionListener());
 			excuseMeButton = new JButton("<html><center>\"Excuse me!\"<br>- Arin</center></html>");
 			excuseMeButton.addActionListener(new ExcuseMeActionListener());
-			excuseMeWhatButton = new JButton("<html><center>Excuse me<br>whaaaat</center></html>");
-			excuseMeWhatButton.addActionListener(new ExcuseMeWhatActionListener());
+			bscuseMeButton = new JButton("B'scuse me");
+			bscuseMeButton.addActionListener(new BscuseMeActionListener());
 			ghoulButton = new JButton("Ghoul");
 			ghoulButton.addActionListener(new GhoulActionListener());
 			whatButton = new JButton("What");
 			whatButton.addActionListener(new WhatActionListener());
-			ohNoButton = new JButton("Ohh nooo");
-			ohNoButton.addActionListener(new OhNoActionListener());
 			thatMakesMeFeelAngryButton = new JButton("<html><center>That makes me<br>feel angry!</center></html>");
 			thatMakesMeFeelAngryButton.addActionListener(new MakesMeFeelAngryActionListener());
 			daringTodayButton = new JButton("<html><center>Daring today,<br>aren't we?</center></html>");
 			daringTodayButton.addActionListener(new DaringTodayActionListener());
 			vsauceButton = new JButton("<html><center>Vsauce<br>uhhowhaaa</center></html>");
 			vsauceButton.addActionListener(new VsauceActionListener());
-			okMomButton = new JButton("Okay mom");
-			okMomButton.addActionListener(new OkMomActionListener());
 			despiseHimButton = new JButton("I despise him!");
 			despiseHimButton.addActionListener(new DespiseHimActionListener());
 			whatDuhHeckButton = new JButton("<html><center>What duh heck is up with dis game</center></html>");
@@ -914,6 +987,10 @@ public class Picker {
 			ohMyGodButton.addActionListener(new OhMyGodActionListener());
 			doingStringsButton = new JButton("<html>This dude's<br>doing strings</html>");
 			doingStringsButton.addActionListener(new DoingStringsActionListener());
+			churlishButton = new JButton("<html>Insubordinate<br>and churlish</html>");
+			churlishButton.addActionListener(new ChurlishActionListener());
+			chicanerousButton = new JButton("<html><center>Mischievous and deceitful, chicanerous and deplorable</center></html>");
+			chicanerousButton.addActionListener(new ChicanerousActionListener());
 			
 			soundboardPanel.add(doItAgainButton);
 			soundboardPanel.add(neutralAerialButton);
@@ -923,19 +1000,19 @@ public class Picker {
 			soundboardPanel.add(angerousNowButton);
 			soundboardPanel.add(theWorstButton);
 			soundboardPanel.add(excuseMeButton);
+			soundboardPanel.add(bscuseMeButton);
 			soundboardPanel.add(whatDuhHeckButton);
-			soundboardPanel.add(excuseMeWhatButton);
 			soundboardPanel.add(ghoulButton);
 			soundboardPanel.add(whatButton);
-			soundboardPanel.add(ohNoButton);
 			soundboardPanel.add(thatMakesMeFeelAngryButton);
 			soundboardPanel.add(daringTodayButton);
 			soundboardPanel.add(vsauceButton);
-			soundboardPanel.add(okMomButton);
 			soundboardPanel.add(despiseHimButton);
 			soundboardPanel.add(cheaterButton);
 			soundboardPanel.add(ohMyGodButton);
 			soundboardPanel.add(doingStringsButton);
+			soundboardPanel.add(churlishButton);
+			soundboardPanel.add(chicanerousButton);
 			
 			soundboardFrame.getContentPane().add(soundboardPanel);
 			
@@ -943,7 +1020,6 @@ public class Picker {
 			
 			soundboardFrame.setVisible(true);
 			openedSoundPanel = true;
-			
 		}
 		
 		private class SoundboardWindowListener implements WindowListener {
@@ -971,6 +1047,42 @@ public class Picker {
 			}
 		}
 		
+		private class ChurlishActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					InputStream is = getClass().getResourceAsStream("/sounds/churlish.wav");
+					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
+					Clip clip = AudioSystem.getClip();
+					clip.open(stream);
+					clip.start();
+				} catch(Exception ex) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
+				}
+			}
+		}
+		
+		private class ChicanerousActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					InputStream is = getClass().getResourceAsStream("/sounds/chicanerous.wav");
+					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
+					Clip clip = AudioSystem.getClip();
+					clip.open(stream);
+					clip.start();
+				} catch(Exception ex) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
+				}
+			}
+		}
+		
 		private class DoingStringsActionListener implements ActionListener {
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -984,6 +1096,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1001,6 +1114,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1035,6 +1149,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1052,6 +1167,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1069,23 +1185,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-				}
-			}
-		}
-		
-		private class OkMomActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/okmom.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1103,6 +1203,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1120,6 +1221,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1137,23 +1239,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-				}
-			}
-		}
-		
-		private class OhNoActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/ohno.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1171,6 +1257,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1188,6 +1275,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1205,14 +1293,15 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
 		
-		private class ExcuseMeWhatActionListener implements ActionListener {
+		private class BscuseMeActionListener implements ActionListener {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/excusemewhat.wav");
+					InputStream is = getClass().getResourceAsStream("/sounds/bscuseme.wav");
 					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
 					Clip clip = AudioSystem.getClip();
 					clip.open(stream);
@@ -1222,6 +1311,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1256,6 +1346,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1273,6 +1364,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1290,6 +1382,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1307,6 +1400,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1324,6 +1418,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1341,6 +1436,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1358,6 +1454,7 @@ public class Picker {
 					int min = ZonedDateTime.now().getMinute();
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
 				}
 			}
 		}
@@ -1399,7 +1496,7 @@ public class Picker {
 					//basically, remove excluded characters, ones from the cannot
 					//get queue, and ones already gotten
 					for(String currentlyAt: linesOfFile.get(tier)) {
-						if(!linesOfFile.get(player + 21).contains(currentlyAt) &&
+						if(!linesOfFile.get(player + 23).contains(currentlyAt) &&
 						   !cannotGet.contains(currentlyAt) &&
 						   !gotten.contains(currentlyAt) &&
 						   !individualCannotGet[player - 1].contains(currentlyAt)) {
@@ -1429,6 +1526,7 @@ public class Picker {
 					}
 				}
 				
+				debug.append("===BATTLE #" + numBattles + "===\n");
 				//then add to queue
 				for(int playerAt = 0; playerAt < gotten.size(); playerAt++) {
 					int tier = playerTiers[playerAt];
@@ -1437,25 +1535,27 @@ public class Picker {
 						individualCannotGet[playerAt].removeLast();
 					}
 					
-					if(tier == 0 && SSAllowedInCannotGetBuffer) {
+					if(tier < 3 && SSAllowedInCannotGetBuffer) {
 						cannotGet.add(gotten.get(playerAt), tier);
 					}
-					else if(tier > 0 && tier < 4 && SAllowedInCannotGetBuffer) {
+					else if(tier >= 3 && tier <= 5 && SAllowedInCannotGetBuffer) {
 						cannotGet.add(gotten.get(playerAt), tier);
 					}
-					else if(tier >= 4) {
+					else if(tier >= 6) {
 						cannotGet.add(gotten.get(playerAt), tier);
 					}
 					
 					//if the gotten character is a favorite, don't add it to the
 					//cannot get for rest of session queue
-					if(!linesOfFile.get(30 + playerAt).contains(gotten.get(playerAt))) {
+					if(!linesOfFile.get(32 + playerAt).contains(gotten.get(playerAt))) {
 						individualCannotGet[playerAt].add(gotten.get(playerAt), tier);
 					}
 					System.out.println("[DEBUG]: Player " + (playerAt + 1) + " cannot get " + individualCannotGet[playerAt]);
+					debug.append("[DEBUG]: Player " + (playerAt + 1) + " cannot get " + individualCannotGet[playerAt] + "\n");
 				}
 				
 				System.out.println("[DEBUG]: Nobody can get " + cannotGet);
+				debug.append("[DEBUG]: Nobody can get " + cannotGet + "\n");
 				
 				skipping = false;
 			}
@@ -1516,28 +1616,28 @@ public class Picker {
 		}
 
 		private boolean tierTurnedOff(int tier, int[] chances) {
-			if(tier == 0 && chances[0] == 0) {
+			if((tier == 0 || tier == 1 || tier == 2) && chances[0] == 0) {
 				return true;
 			}
-			else if((tier == 1 || tier == 2 || tier == 3) && chances[1] == 0) {
+			else if((tier == 3 || tier == 4 || tier == 5) && chances[1] == 0) {
 				return true;
 			}
-			else if((tier == 4 || tier == 5 || tier == 6) && chances[2] == 0) {
+			else if((tier == 6 || tier == 7 || tier == 8) && chances[2] == 0) {
 				return true;
 			}
-			else if((tier == 7 || tier == 8 || tier == 9) && chances[3] == 0) {
+			else if((tier == 9 || tier == 10 || tier == 11) && chances[3] == 0) {
 				return true;
 			}
-			else if((tier == 10 || tier == 11 || tier == 12) && chances[4] == 0) {
+			else if((tier == 12 || tier == 13 || tier == 14) && chances[4] == 0) {
 				return true;
 			}
-			else if((tier == 13 || tier == 14 || tier == 15) && chances[5] == 0) {
+			else if((tier == 15 || tier == 16 || tier == 17) && chances[5] == 0) {
 				return true;
 			}
-			else if((tier == 16 || tier == 17 || tier == 18) && chances[6] == 0) {
+			else if((tier == 18 || tier == 19 || tier == 20) && chances[6] == 0) {
 				return true;
 			}
-			else if((tier == 19 || tier == 20 || tier == 21) && chances[7] == 0) {
+			else if((tier == 21 || tier == 22 || tier == 23) && chances[7] == 0) {
 				return true;
 			}
 			else {
@@ -1548,48 +1648,52 @@ public class Picker {
 		private String tierToString(int tier) {
 			switch(tier) {
 				case 0:
-					return "Double S tier";
+					return "Upper Double S tier";
 				case 1:
-					return "Upper S tier";
+					return "Double S tier";
 				case 2:
-					return "Mid S tier";
+					return "Lower Double S tier";
 				case 3:
-					return "Lower S tier";
+					return "Upper S tier";
 				case 4:
-					return "Upper A tier";
+					return "Mid S tier";
 				case 5:
-					return "Mid A tier";
+					return "Lower S tier";
 				case 6:
-					return "Lower A tier";
+					return "Upper A tier";
 				case 7:
-					return "Upper B tier";
+					return "Mid A tier";
 				case 8:
-					return "Mid B tier";
+					return "Lower A tier";
 				case 9:
-					return "Lower B tier";
+					return "Upper B tier";
 				case 10:
-					return "Upper C tier";
+					return "Mid B tier";
 				case 11:
-					return "Mid C tier";
+					return "Lower B tier";
 				case 12:
-					return "Lower C tier";
+					return "Upper C tier";
 				case 13:
-					return "Upper D tier";
+					return "Mid C tier";
 				case 14:
-					return "Mid D tier";
+					return "Lower C tier";
 				case 15:
-					return "Lower D tier";
+					return "Upper D tier";
 				case 16:
-					return "Upper E tier";
+					return "Mid D tier";
 				case 17:
-					return "Mid E tier";
+					return "Lower D tier";
 				case 18:
-					return "Lower E tier";
+					return "Upper E tier";
 				case 19:
-					return "Upper F tier";
+					return "Mid E tier";
 				case 20:
-					return "Mid F tier";
+					return "Lower E tier";
 				case 21:
+					return "Upper F tier";
+				case 22:
+					return "Mid F tier";
+				case 23:
 					return "Lower F tier";
 				default:
 					return "Invalid tier";
@@ -1600,28 +1704,28 @@ public class Picker {
 			int change = ThreadLocalRandom.current().nextInt(-1, 2);
 			
 			if(tier == 0) {
-				return 0;
+				return 1 + change;
 			}
 			else if(tier == 1) {
-				return 2 + change;
+				return 4 + change;
 			}
 			else if(tier == 2) {
-				return 5 + change;
+				return 7 + change;
 			}
 			else if(tier == 3) {
-				return 8 + change;
+				return 10 + change;
 			}
 			else if(tier == 4) {
-				return 11 + change;
+				return 13 + change;
 			}
 			else if(tier == 5) {
-				return 14 + change;
+				return 16 + change;
 			}
 			else if(tier == 6) {
-				return 17 + change;
+				return 19 + change;
 			}
 			else {
-				return 20 + change;
+				return 22 + change;
 			}
 		}
 	}
@@ -1636,7 +1740,7 @@ public class Picker {
 				}
 				else {
 					linesOfFile.clear();
-					for(int at = 0; at < 29; at++) {
+					for(int at = 0; at < 39; at++) {
 						linesOfFile.add(new ArrayList<String>());
 
 					}
@@ -1644,7 +1748,7 @@ public class Picker {
 			}
 			
 			JFileChooser fileChooser = new JFileChooser(".");
-			FileNameExtensionFilter filter = new FileNameExtensionFilter(".txt files", "txt");
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Documents (*.txt)", "txt");
 			fileChooser.setFileFilter(filter);
 			int r = fileChooser.showOpenDialog(frame);
 			
@@ -1658,44 +1762,46 @@ public class Picker {
 				BufferedReader in = new BufferedReader(new FileReader(tierListFile));
 				
 				//file structure is as follows:
-				//double S 	index 0
-				//upper S	index 1
-				//mid S		index 2
-				//lower S	index 3
-				//upper A	index 4
-				//mid A		index 5
-				//lower A	index 6
-				//upper B	index 7
-				//mid B		index 8
-				//lower B	index 9
-				//upper C	index 10
-				//mid C		index 11
-				//lower C	index 12
-				//upper D	index 13
-				//mid D		index 14
-				//lower D	index 15
-				//upper E	index 16
-				//mid E		index 17
-				//lower E	index 18
-				//upper F	index 19
-				//mid F		index 20
-				//lower F	index 21
-				//p1exc		index 22
-				//p2exc		index 23
-				//p3exc		index 24
-				//p4exc		index 25
-				//p5exc		index 26
-				//p6exc		index 27
-				//p7exc		index 28
-				//p8exc		index 29
-				//p1fav		index 30
-				//p2fav		index 31
-				//p3fav		index 32
-				//p4fav		index 33
-				//p5fav		index 34
-				//p6fav		index 35
-				//p7fav		index 36
-				//p8fav		index 37
+				//upper double S 	index 0
+				//mid double S		index 1
+				//lower double S	index 2
+				//upper S			index 3
+				//mid S				index 4
+				//lower S			index 5
+				//upper A			index 6
+				//mid A				index 7
+				//lower A			index 8
+				//upper B			index 9
+				//mid B				index 10
+				//lower B			index 11
+				//upper C			index 12
+				//mid C				index 13
+				//lower C			index 14
+				//upper D			index 15
+				//mid D				index 16
+				//lower D			index 17
+				//upper E			index 18
+				//mid E				index 19
+				//lower E			index 20
+				//upper F			index 21
+				//mid F				index 22
+				//lower F			index 23
+				//p1exc				index 24
+				//p2exc				index 25
+				//p3exc				index 26
+				//p4exc				index 27
+				//p5exc				index 28
+				//p6exc				index 29
+				//p7exc				index 30
+				//p8exc				index 31
+				//p1fav				index 32
+				//p2fav				index 33
+				//p3fav				index 34
+				//p4fav				index 35
+				//p5fav				index 36
+				//p6fav				index 37
+				//p7fav				index 38
+				//p8fav				index 39
 				
 				//read first line
 				String lineAt = in.readLine();
@@ -1712,119 +1818,125 @@ public class Picker {
 							next = next.substring(0, next.length() - 1);
 							next = next.toLowerCase();
 							switch(next) {
-								case "double s":
+								case "upper double s":
 									readLine(0, at, lineAt);
 									break;
-								case "upper s":
+								case "mid double s":
 									readLine(1, at, lineAt);
 									break;
-								case "mid s":
+								case "lower double s":
 									readLine(2, at, lineAt);
 									break;
-								case "lower s":
+								case "upper s":
 									readLine(3, at, lineAt);
 									break;
-								case "upper a":
+								case "mid s":
 									readLine(4, at, lineAt);
 									break;
-								case "mid a":
+								case "lower s":
 									readLine(5, at, lineAt);
 									break;
-								case "lower a":
+								case "upper a":
 									readLine(6, at, lineAt);
 									break;
-								case "upper b":
+								case "mid a":
 									readLine(7, at, lineAt);
 									break;
-								case "mid b":
+								case "lower a":
 									readLine(8, at, lineAt);
 									break;
-								case "lower b":
+								case "upper b":
 									readLine(9, at, lineAt);
 									break;
-								case "upper c":
+								case "mid b":
 									readLine(10, at, lineAt);
 									break;
-								case "mid c":
+								case "lower b":
 									readLine(11, at, lineAt);
 									break;
-								case "lower c":
+								case "upper c":
 									readLine(12, at, lineAt);
 									break;
-								case "upper d":
+								case "mid c":
 									readLine(13, at, lineAt);
 									break;
-								case "mid d":
+								case "lower c":
 									readLine(14, at, lineAt);
 									break;
-								case "lower d":
+								case "upper d":
 									readLine(15, at, lineAt);
 									break;
-								case "upper e":
+								case "mid d":
 									readLine(16, at, lineAt);
 									break;
-								case "mid e":
+								case "lower d":
 									readLine(17, at, lineAt);
 									break;
-								case "lower e":
+								case "upper e":
 									readLine(18, at, lineAt);
 									break;
-								case "upper f":
+								case "mid e":
 									readLine(19, at, lineAt);
 									break;
-								case "mid f":
+								case "lower e":
 									readLine(20, at, lineAt);
 									break;
-								case "lower f":
+								case "upper f":
 									readLine(21, at, lineAt);
 									break;
-								case "p1 exclude":
+								case "mid f":
 									readLine(22, at, lineAt);
 									break;
-								case "p2 exclude":
+								case "lower f":
 									readLine(23, at, lineAt);
 									break;
-								case "p3 exclude":
+								case "p1 exclude":
 									readLine(24, at, lineAt);
 									break;
-								case "p4 exclude":
+								case "p2 exclude":
 									readLine(25, at, lineAt);
 									break;
-								case "p5 exclude":
+								case "p3 exclude":
 									readLine(26, at, lineAt);
 									break;
-								case "p6 exclude":
+								case "p4 exclude":
 									readLine(27, at, lineAt);
 									break;
-								case "p7 exclude":
+								case "p5 exclude":
 									readLine(28, at, lineAt);
 									break;
-								case "p8 exclude":
+								case "p6 exclude":
 									readLine(29, at, lineAt);
 									break;
-								case "p1 favorite":
+								case "p7 exclude":
 									readLine(30, at, lineAt);
 									break;
-								case "p2 favorite":
+								case "p8 exclude":
 									readLine(31, at, lineAt);
 									break;
-								case "p3 favorite":
+								case "p1 favorite":
 									readLine(32, at, lineAt);
 									break;
-								case "p4 favorite":
+								case "p2 favorite":
 									readLine(33, at, lineAt);
 									break;
-								case "p5 favorite":
+								case "p3 favorite":
 									readLine(34, at, lineAt);
 									break;
-								case "p6 favorite":
+								case "p4 favorite":
 									readLine(35, at, lineAt);
 									break;
-								case "p7 favorite":
+								case "p5 favorite":
 									readLine(36, at, lineAt);
 									break;
-								case "p8 favorite":
+								case "p6 favorite":
 									readLine(37, at, lineAt);
+									break;
+								case "p7 favorite":
+									readLine(38, at, lineAt);
+									break;
+								case "p8 favorite":
+									readLine(39, at, lineAt);
 									break;
 								case "tier chances":
 									readSetting(1, at, lineAt);
@@ -1864,6 +1976,7 @@ public class Picker {
 				int min = ZonedDateTime.now().getMinute();
 				int sec = ZonedDateTime.now().getSecond();
 				System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e);
+				debug.append("[" + hour + ":" + min + ":" + sec + "]: " + e + "\n");
 				results.append("File " + tierListFile.getName() + " not found!\n");
 				fileLoaded = false;
 				return;
@@ -1872,6 +1985,7 @@ public class Picker {
 				int min = ZonedDateTime.now().getMinute();
 				int sec = ZonedDateTime.now().getSecond();
 				System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ioe);
+				debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ioe + "\n");
 				results.append("IOException in reading " + tierListFile.getName() + ".\n"
 						+ "This means it is not a valid tier list file.\n" +
 						"Please load a valid tier list file.\n");
@@ -1882,14 +1996,25 @@ public class Picker {
 			//printing out debug info in case anything ever goes wrong
 			GenerateButtonActionListener gbal = new GenerateButtonActionListener();
 			System.out.println("[DEBUG]: The following data has been loaded as the current tier list:");
-			for(int at = 0; at < 22; at++) {
-				System.out.println("         " + gbal.tierToString(at) + ":\t\t" + linesOfFile.get(at));
+			debug.append("[DEBUG]: The following data has been loaded as the current tier list:\n");
+			for(int at = 0; at < 24; at++) {
+				String tierAt = gbal.tierToString(at);
+				if(tierAt.equals("Upper Double S tier") || tierAt.equals("Lower Double S tier")) {
+					System.out.println("         " + gbal.tierToString(at) + ":\t" + linesOfFile.get(at));
+					debug.append("         " + gbal.tierToString(at) + ":\t" + linesOfFile.get(at) + "\n");
+				}
+				else {
+					System.out.println("         " + gbal.tierToString(at) + ":\t\t" + linesOfFile.get(at));
+					debug.append("         " + gbal.tierToString(at) + ":\t\t" + linesOfFile.get(at) + "\n");
+				}
 			}
-			for(int at = 22; at < 30; at++) {
-				System.out.println("         Player " + (at - 21) + " exclude:\t" + linesOfFile.get(at));
+			for(int at = 24; at < 32; at++) {
+				System.out.println("         Player " + (at - 23) + " exclude:\t" + linesOfFile.get(at));
+				debug.append("         Player " + (at - 23) + " exclude:\t" + linesOfFile.get(at) + "\n");
 			}
-			for(int at = 30; at < 38; at++) {
-				System.out.println("         Player " + (at - 29) + " favorites:\t" + linesOfFile.get(at));
+			for(int at = 32; at < 40; at++) {
+				System.out.println("         Player " + (at - 31) + " favorites:\t" + linesOfFile.get(at));
+				debug.append("         Player " + (at - 31) + " favorites:\t" + linesOfFile.get(at) + "\n");
 			}
 			
 			fileLoaded = true;
@@ -1918,6 +2043,9 @@ public class Picker {
 					System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 							+ "New 'cannot get size' of " + toRead + " is not "
 							+ "valid.");
+					debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+							+ "New 'cannot get size' of " + toRead + " is not "
+							+ "valid.\n");
 					return;
 				}
 				
@@ -1932,6 +2060,9 @@ public class Picker {
 					System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 							+ "New 'cannot get size' of " + toRead + "is not " +
 							"valid.");
+					debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+							+ "New 'cannot get size' of " + toRead + "is not " +
+							"valid.\n");
 				}
 			}
 			else if(id == 3) {
@@ -1957,6 +2088,9 @@ public class Picker {
 						System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 								+ "New 'ss allowed in cannot get' value of " +
 								toRead + " is not valid.");
+						debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+								+ "New 'ss allowed in cannot get' value of " +
+								toRead + " is not valid.\n");
 						return;
 					}
 					
@@ -1969,6 +2103,9 @@ public class Picker {
 					System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 							+ "New 'ss allowed in cannot get' value of " +
 							toRead + " is not valid.");
+					debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+							+ "New 'ss allowed in cannot get' value of " +
+							toRead + " is not valid.\n");
 				}
 			}
 			else if(id == 4) {
@@ -1994,6 +2131,9 @@ public class Picker {
 						System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 								+ "New 's allowed in cannot get' value of " +
 								toRead + " is not valid.");
+						debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+								+ "New 's allowed in cannot get' value of " +
+								toRead + " is not valid.\n");
 						return;
 					}
 					
@@ -2006,6 +2146,9 @@ public class Picker {
 					System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 							+ "New 's allowed in cannot get' value of " +
 							toRead + " is not valid.");
+					debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+							+ "New 's allowed in cannot get' value of " +
+							toRead + " is not valid.\n");
 				}
 			}
 			else if(id == 5) {
@@ -2020,6 +2163,9 @@ public class Picker {
 					System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 							+ "New 'number of players' value of " + toRead +
 							" is not valid.");
+					debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+							+ "New 'number of players' value of " + toRead +
+							" is not valid.\n");
 					return;
 				}
 				
@@ -2034,6 +2180,9 @@ public class Picker {
 					System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 							+ "New 'number of players' value of " + toRead +
 							" is not valid.");
+					debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+							+ "New 'number of players' value of " + toRead +
+							" is not valid.\n");
 				}
 			}
 			else if(id == 1) {
@@ -2060,6 +2209,8 @@ public class Picker {
 					int sec = ZonedDateTime.now().getSecond();
 					System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 							+ next + " is not a valid tier chance.");
+					debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+							+ next + " is not a valid tier chance.\n");
 					return;
 				}
 				
@@ -2085,6 +2236,8 @@ public class Picker {
 				int sec = ZonedDateTime.now().getSecond();
 				System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
 						+ id + " is not a valid setting id!");
+				debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+						+ id + " is not a valid setting id!\n");
 			}
 		}
 		

@@ -1,6 +1,8 @@
-# Smash Character Picker (v6.4)
+# Smash Character Picker (v7.0)
 
 A program designed to pick random matchups for the game Super Smash Bros. For those of us who don't like using the random character option, because it usually results in an unfair matchup. Instead, this program uses a tier list to create a matchup that is fair. Tier lists are defined in a `.txt` file. There are some additional settings to customize the experience, as well as some systems to ensure novel matchups are generated. Also includes a soundboard featuring 21 sound effects!
+
+New in this version is a debug menu. See the last section for more details.
 
 ## Usage
 
@@ -16,7 +18,7 @@ If you and another player wish to swap which fighter you got, you can do so usin
 
 See the example `tier list.txt` file for an example of how to format a tier list. For posterity, the format is also described here.
 
-Each tier goes on its own line. Simply start the line with the name of the tier (i.e. "double s" or "mid c"). Each tier is split into three. For example, there is an upper A, mid A, and lower A. The only tier this does not apply to is double S, there is only one SS tier. Unlike previous versions of the program, you do not need to include *all* tiers, you only need to include the ones you're using. They can also be put in any order now. As mentioned, a line which defines a tier must start with the name of that tier. It should be followed by an equals sign with a space on either side of it. After that, you can start naming characters. Simple list each character, separated by a comma and space. Note that character names like "Bowser, Jr." will be registered as two different characters, "Bowser" and "Jr.", so be sure to not include a comma in any character's name.
+Each tier goes on its own line. Simply start the line with the name of the tier (i.e. "upper double s" or "mid c"). Each tier is essentially split into three sub-tiers. For example, there is an upper A, mid A, and lower A. It is not necessary to include *all* tiers in the file, you only need to include the ones you're using. They can also be listed in any order. As mentioned, a line which defines a tier must start with the name of that tier. It should be followed by an equals sign with a space on either side of it. After that, you can start naming characters. Simply list each character, separated by a comma and space. Note that character names like "Bowser, Jr." will be registered as two different characters, "Bowser" and "Jr.", so be sure to not include a comma in any character's name.
 
 Each player gets what is called an "exclusion list", which is the list of characters that they never want to be able to get. For those characters that you just can't stand. A player will never get a fighter on their exclusion list, no matter what. Players also each have their own favorites list. Here, you can specify which fighters are your favorites, and a player *will* be able to get those fighters multiple times in a session. You'll still have to wait however many battles you've set the "Cannot Get" buffer to (see the section below for more details on that), however.
 
@@ -27,6 +29,8 @@ Finally, various settings can be defined inside your tier list file, that way yo
 - `allow ss in cannot get = ` This setting can be either `true` or `false`. Determines whether or not SS tier characters are allowed in the "Cannot Get" queue.
 - `allow s in cannot get = ` This setting can be either `true` or `false`. The same as the above setting, but for S tier characters.
 - `players = ` will allow you to set the number of players. A number between 2 and 8 is required.
+
+See the provided tier list file for an example of how to format it.
 
 ## Changing Options
 
@@ -43,3 +47,7 @@ For example, let's say that we're using a buffer size of 5, and in the first bat
 There is also the option as to whether or not SS or S tier characters are allowed in the "Cannot Get" buffer. If your SS or S tiers are particularly small, you may not want to include them in the "Cannot Get" buffer. Or perhaps you find the best characters in the game to be the most fun, so you don't want to limit the number of times you can play them.
 
 **Note**: You do not want to make the "Cannot Get" buffer size too big, otherwise the program may freeze. The program may encounter a situation in which there are no characters to choose from, because they're all in the "Cannot Get" buffer. In that case, the program will freeze. Be sure to set your buffer size carefully. Essentially, you want to ensure there are always enough valid characters to choose from for each player at all times.
+
+## Debug Menu
+
+The debug menu simply allows you to inspect some of what's happening inside the program. At certain points in execution (such as after a file is loaded or whenver a battle is generated), important info about the tier list and various buffers is printed to the debug menu. And whenever an error occurs, that is also printed to the debug window.
