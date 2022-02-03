@@ -1,14 +1,25 @@
 package picker;
 
+import java.awt.AWTEvent;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedInputStream;
@@ -28,6 +39,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.imageio.ImageIO;
@@ -40,6 +52,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class Picker {
+	//TODO (maybe): Consider a new interface. Could it be better in some way?
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -131,6 +144,7 @@ public class Picker {
 	private GenerateButtonActionListener gbal = new GenerateButtonActionListener();
 	private ArrayList<String> gotten;
 	
+	//stats variables
 	private HashMap<String, double[]> stats;
 	private File statsFile;
 	private boolean needToSaveStats;
@@ -152,6 +166,11 @@ public class Picker {
 	
 	//key for synchronization, hopefully prevent crashes
 	private static Object key = new Object();
+	
+	//timer to see how long it took to generate the characters
+	//mostly just for the fun of it
+	private static long startGen;
+	private static long endGen;
 	
 	public Picker() {
 		//initialize main frame
@@ -254,6 +273,7 @@ public class Picker {
 		farRightPanel.setToolTipText("Select 2 players and hit the switch button, " +
 									 "and they will switch fighters.");
 		
+		//initialize switch manager and all its associated components
 		SwitchManager sm = new SwitchManager();
 		player1Box = new JCheckBox("Player 1");
 		player1Box.addActionListener(sm.new Player1BoxActionListener());
@@ -291,13 +311,34 @@ public class Picker {
 		farRightPanel.add(player8Box);
 		farRightPanel.add(Box.createRigidArea(new Dimension(0, 110)));
 		farRightPanel.add(switchButton);
+		//disable literally everything in the far right panel until a battle has
+		//been generated. it's kinda buggy before then. well, it can be a little
+		//buggy regardless, but it exclusively throws errors without there
+		//actualy being anything to switch
+		farRightPanel.setEnabled(false);
+		player1Box.setEnabled(false);
+		player2Box.setEnabled(false);
+		player3Box.setEnabled(false);
+		player4Box.setEnabled(false);
+		player5Box.setEnabled(false);
+		player6Box.setEnabled(false);
+		player7Box.setEnabled(false);
+		player8Box.setEnabled(false);
+		switchButton.setEnabled(false);
 		
 		//Initialize bottom panel
 		bottomPanel = new JPanel();
 		bottomPanel.setLayout(new GridBagLayout());
 		generateButton = new JButton("Generate");
 		skipButton = new JButton("Skip");
-		skipButton.addActionListener(new SkipButtonActionListener());
+		skipButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(numBattles != 0) {
+					skipping = true;
+					gbal.actionPerformed(null);
+				}
+			}
+		});
 		
 		//attempt to set up the load button correctly
 		loadButton = new JButton("Load");
@@ -321,7 +362,11 @@ public class Picker {
 		loadButton.addActionListener(new LoadButtonActionListener());
 		SpinnerNumberModel spinner = new SpinnerNumberModel(2, 2, 8, 1);
 		numPlayersSpinner = new JSpinner(spinner);
-		numPlayersSpinner.addChangeListener(new NumPlayersChangeListener());
+		numPlayersSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				numPlayers = (int) numPlayersSpinner.getValue();
+			}
+		});
 		numPlayersLabel = new JLabel("Number of players: ");
 		gc.weightx = .03;
 		gc.fill = GridBagConstraints.HORIZONTAL;
@@ -354,35 +399,67 @@ public class Picker {
 		tierChanceLabel2 = new JLabel("Remember to hit apply!");
 		SpinnerNumberModel SSmod = new SpinnerNumberModel(tierChances[0], 0, 100, 1);
 		SSTierSpinner = new JSpinner(SSmod);
-		SSTierSpinner.addChangeListener(new ChangeListenerSS());
+		SSTierSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				newTierChances[0] = (int) SSTierSpinner.getValue();
+			}
+		});
 		SSTierLabel = new JLabel("SS tier chance: ");
 		SpinnerNumberModel Smod = new SpinnerNumberModel(tierChances[1], 0, 100, 1);
 		STierSpinner = new JSpinner(Smod);
-		STierSpinner.addChangeListener(new ChangeListenerS());
+		STierSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				newTierChances[1] = (int) STierSpinner.getValue();
+			}
+		});
 		STierLabel = new JLabel("S tier chance: ");
 		SpinnerNumberModel Amod = new SpinnerNumberModel(tierChances[2], 0, 100, 1);
 		ATierSpinner = new JSpinner(Amod);
-		ATierSpinner.addChangeListener(new ChangeListenerA());
+		ATierSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				newTierChances[2] = (int) ATierSpinner.getValue();
+			}
+		});
 		ATierLabel = new JLabel("A tier chance: ");
 		SpinnerNumberModel Bmod = new SpinnerNumberModel(tierChances[3], 0, 100, 1);
 		BTierSpinner = new JSpinner(Bmod);
-		BTierSpinner.addChangeListener(new ChangeListenerB());
+		BTierSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				newTierChances[3] = (int) BTierSpinner.getValue();
+			}
+		});
 		BTierLabel = new JLabel("B tier chance: ");
 		SpinnerNumberModel Cmod = new SpinnerNumberModel(tierChances[4], 0, 100, 1);
 		CTierSpinner = new JSpinner(Cmod);
-		CTierSpinner.addChangeListener(new ChangeListenerC());
+		CTierSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				newTierChances[4] = (int) CTierSpinner.getValue();
+			}
+		});
 		CTierLabel = new JLabel("C tier chance: ");
 		SpinnerNumberModel Dmod = new SpinnerNumberModel(tierChances[5], 0, 100, 1);
 		DTierSpinner = new JSpinner(Dmod);
-		DTierSpinner.addChangeListener(new ChangeListenerD());
+		DTierSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				newTierChances[5] = (int) DTierSpinner.getValue();
+			}
+		});
 		DTierLabel = new JLabel("D tier chance: ");
 		SpinnerNumberModel Emod = new SpinnerNumberModel(tierChances[6], 0, 100, 1);
 		ETierSpinner = new JSpinner(Emod);
-		ETierSpinner.addChangeListener(new ChangeListenerE());
+		ETierSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				newTierChances[6] = (int) ETierSpinner.getValue();
+			}
+		});
 		ETierLabel = new JLabel("E tier chance: ");
 		SpinnerNumberModel Fmod = new SpinnerNumberModel(tierChances[7], 0, 100, 1);
 		FTierSpinner = new JSpinner(Fmod);
-		FTierSpinner.addChangeListener(new ChangeListenerF());
+		FTierSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				newTierChances[7] = (int) FTierSpinner.getValue();
+			}
+		});
 		FTierLabel = new JLabel("F tier chance: ");
 		applyButton = new JButton("Apply tier chance settings");
 		applyButton.addActionListener(new ApplyButtonActionListener());
@@ -448,7 +525,11 @@ public class Picker {
 				+ "buffer: ");
 		SpinnerNumberModel bleh = new SpinnerNumberModel(cannotGetSize, 0, 15, 1);
 		cannotGetSizeSpinner = new JSpinner(bleh);
-		cannotGetSizeSpinner.addChangeListener(new CannotGetSizeChangeListener());
+		cannotGetSizeSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				cannotGetSize = (int) cannotGetSizeSpinner.getValue();
+			}
+		});
 		cannotGetSizeLabel.setToolTipText("<html>If this is set too high, the "
 				+ "program could freeze, because there may be no valid "
 				+ "fighters left for it to pick.<br>5 is the recommended size. "
@@ -456,11 +537,29 @@ public class Picker {
 				+ "tiers are allowed in this buffer.</html>");
 		allowSSInCannotGet = new JCheckBox("Allow SS tiers in \"Cannot "
 				+ "get\" buffer");
-		allowSSInCannotGet.addActionListener(new AllowSSInCannotGetButtonActionListener());
+		allowSSInCannotGet.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(SSAllowedInCannotGetBuffer) {
+					SSAllowedInCannotGetBuffer = false;
+				}
+				else {
+					SSAllowedInCannotGetBuffer = true;
+				}
+			}
+		});
 		allowSSInCannotGet.setSelected(SSAllowedInCannotGetBuffer);
 		allowSInCannotGet = new JCheckBox("Allow S tiers in \"Cannot "
 				+ "get\" buffer");
-		allowSInCannotGet.addActionListener(new AllowSInCannotGetButtonActionListener());
+		allowSInCannotGet.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(SAllowedInCannotGetBuffer) {
+					SAllowedInCannotGetBuffer = false;
+				}
+				else {
+					SAllowedInCannotGetBuffer = true;
+				}
+			}
+		});
 		allowSInCannotGet.setSelected(SAllowedInCannotGetBuffer);
 		cannotGetPanel = new JPanel();
 		cannotGetPanel.setBorder(BorderFactory.createTitledBorder("\"Cannot get\" buffer settings"));
@@ -517,17 +616,65 @@ public class Picker {
 		gc.gridwidth = 1;
 		frame.add(farRightPanel, gc);
 		
-		debug = new JTextArea(5, 101);
+		debug = new JTextArea(5, 99);
 		debug.setEditable(false);
 		
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
+		
+		//Allow dragging and dropping a tier list file
+		DropTarget fileDropTarget = new DropTarget() {
+			private static final long serialVersionUID = 1L;
+
+			public synchronized void drop(DropTargetDropEvent evt) {
+				try {
+					if(evt.getTransferable().isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+						evt.acceptDrop(DnDConstants.ACTION_COPY);
+						@SuppressWarnings("unchecked")
+						List<File> droppedFiles = (List<File>) evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+						LoadButtonActionListener lbal = new LoadButtonActionListener();
+						for(File at: droppedFiles) {
+							lbal.readFile(at);
+						}
+					}
+					else {
+						evt.rejectDrop();
+					}
+				} catch(Exception ex) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec +"]: "
+							+ " Exception in drag/drop file system!");
+					debug.append("[" + hour + ":" + min + ":" + sec +"]: "
+							+ " Exception in drag/drop file system!.\n");
+					return;
+				}
+			}
+		};
+		
+		//not ideal, because you can't drag a file over the text area this way.
+		//highly annoying, but not really fixable without duplicating the last
+		//20 or so lines of code
+		frame.setDropTarget(fileDropTarget);
 				
 		//Finally make it visible
 		frame.setVisible(true);
 		
+		//check for a 'tier list.txt' file in the directory of the program
+		//load it automatically if it exists
+		File tierListMaybe = new File("tier list.txt");
+		if(tierListMaybe.exists()) {
+			if(JOptionPane.showConfirmDialog(frame, "Found 'tier list.txt' file.\n"
+						+ "Load it?", "Smash Character Picker",
+						JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+				LoadButtonActionListener lbal = new LoadButtonActionListener();
+				lbal.readFile(tierListMaybe);
+			}
+		}
 	}
 	
+	//TODO: Allow loading a different stats file
 	private class StatsButtonActionListener implements ActionListener {
 		private JFrame statsFrame;
 		private JPanel upperStatsPanel;
@@ -638,13 +785,24 @@ public class Picker {
 			playerLabel = new JLabel("Player: ");
 			SpinnerNumberModel winnerSpinnerModel = new SpinnerNumberModel(1, 1, 8, 1);
 			winnerSpinner = new JSpinner(winnerSpinnerModel);
-			winnerSpinner.addChangeListener(new WinnerSpinnerChangeListener());
+			winnerSpinner.addChangeListener(new ChangeListener() {
+				public void stateChanged(ChangeEvent e) {
+					selectedWinner = (int) winnerSpinner.getValue();
+				}
+			});
 			pickWinnerButton = new JButton("Select winner");
 			pickWinnerButton.addActionListener(new PickWinnerActionListener());
 			lookupButton = new JButton("Look up stats");
 			lookupButton.addActionListener(new LookupActionListener());
 			reloadButton = new JButton("⭯");
-			reloadButton.addActionListener(new ReloadActionListener());
+			reloadButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					if(numBattles != 0) {
+						GenerateButtonActionListener gbal = new GenerateButtonActionListener();
+						gbal.updateStatsScreen();
+					}
+				}
+			});
 			
 			GridBagConstraints gc = new GridBagConstraints();
 			gc.gridx = 0;
@@ -693,15 +851,6 @@ public class Picker {
 			statsFrame.setVisible(true);
 		}
 		
-		private class ReloadActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(numBattles != 0) {
-					GenerateButtonActionListener gbal = new GenerateButtonActionListener();
-					gbal.updateStatsScreen();
-				}
-			}
-		}
-		
 		private class LookupActionListener implements ActionListener {
 			private JFrame lookupFrame;
 			private JPanel topPanel;
@@ -741,9 +890,10 @@ public class Picker {
 				
 				midPanel = new JPanel();
 				midPanel.setBorder(BorderFactory.createTitledBorder("Sort by"));
-				String[] options = {"Overall win rate", "P1 win rate", "P2 win rate",
-						"P3 win rate", "P4 win rate", "P5 win rate", "P6 win rate",
-						"P7 win rate", "P8 win rate", "Total battles"};
+				String[] options = {"Fighters' overall win rate", "Players' overall win rate", 
+						"P1 win rate", "P2 win rate", "P3 win rate", "P4 win rate", 
+						"P5 win rate", "P6 win rate", "P7 win rate", "P8 win rate", 
+						"Total battles"};
 				sortOptions = new JComboBox<String>(options);
 				sortOptions.setPreferredSize(new Dimension(200, 19));
 				sortOptions.addActionListener(new SortOptionsActionListener());
@@ -1048,42 +1198,49 @@ public class Picker {
 					ComparableArray[] data = new ComparableArray[stats.size()];
 					switch(selectedOption) {
 						case 0:
-							statsOutput.append("Sorted by overall win rate:\n");
+							statsOutput.append("Sorted by fighters' overall win rate:\n");
 							data = getTotalStats(3);
 							break;
 						case 1:
+							statsOutput.append("Players' overall win rate:\n");
+							data = getPlayerWinrateStats();
+							for(int at = 0; at < 8; at++) {
+								statsOutput.append(data[at] + "\n");
+							}
+							return;
+						case 2:
 							statsOutput.append("Sorted by Player 1's win rate:\n");
 							data = getPlayerStats(0);
 							break;
-						case 2:
+						case 3:
 							statsOutput.append("Sorted by Player 2's win rate:\n");
 							data = getPlayerStats(1);
 							break;
-						case 3:
+						case 4:
 							statsOutput.append("Sorted by Player 3's win rate:\n");
 							data = getPlayerStats(2);
 							break;
-						case 4:
+						case 5:
 							statsOutput.append("Sorted by Player 4's win rate:\n");
 							data = getPlayerStats(3);
 							break;
-						case 5:
+						case 6:
 							statsOutput.append("Sorted by Player 5's win rate:\n");
 							data = getPlayerStats(4);
 							break;
-						case 6:
+						case 7:
 							statsOutput.append("Sorted by Player 6's win rate:\n");
 							data = getPlayerStats(5);
 							break;
-						case 7:
+						case 8:
 							statsOutput.append("Sorted by Player 7's win rate:\n");
 							data = getPlayerStats(6);
 							break;
-						case 8:
+						case 9:
 							statsOutput.append("Sorted by Player 8's win rate:\n");
 							data = getPlayerStats(7);
 							break;
-						case 9:
+						case 10:
 							statsOutput.append("Sorted by total battles:\n");
 							data = getTotalStats(2);
 							Arrays.sort(data);
@@ -1106,6 +1263,22 @@ public class Picker {
 						statsOutput.append(at + ". " + arrAt + "\n");
 						at++;
 					}
+				}
+				
+				private ComparableArray[] getPlayerWinrateStats() {
+					ComparableArray[] data = new ComparableArray[8];
+					for(int indexAt = 0; indexAt < 8; indexAt++) {
+						double totalWins = 0;
+						double totalBattles = 0;
+						for(String fighter: stats.keySet()) {
+							double[] fighterStats = stats.get(fighter);
+							totalWins += fighterStats[2 * indexAt];
+							totalBattles += fighterStats[2 * indexAt + 1];
+						}
+						data[indexAt] = new ComparableArray("P" + (indexAt + 1) + " W%", totalWins, totalBattles, 3);
+					}
+					
+					return data;
 				}
 				
 				private ComparableArray[] getTotalStats(int column) {
@@ -1181,7 +1354,7 @@ public class Picker {
 		
 		private class PickWinnerActionListener implements ActionListener {
 			public void actionPerformed(ActionEvent e) {
-				if(numBattles == battleWhenLastPressed) {
+				if(numBattles == battleWhenLastPressed && !(selectedWinner > numPlayers)) {
 					stats.get(gotten.get(lastSelectedWinner - 1))[2 * (lastSelectedWinner - 1)]--;
 					stats.get(gotten.get(selectedWinner - 1))[2 * (selectedWinner - 1)]++;
 					lastSelectedWinner = selectedWinner;
@@ -1192,6 +1365,10 @@ public class Picker {
 					JOptionPane.showMessageDialog(frame, "There has to be a battle before there can be a winner.",
 							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
 					return;
+				}
+				else if(selectedWinner > numPlayers) {
+					JOptionPane.showMessageDialog(frame, "Player " + selectedWinner + " cannot win, there are only "
+							+ numPlayers + " players.", "Smash Character Picker", JOptionPane.WARNING_MESSAGE);
 				}
 				else {
 					battleWhenLastPressed = numBattles;
@@ -1208,12 +1385,6 @@ public class Picker {
 					GenerateButtonActionListener gbal = new GenerateButtonActionListener();
 					gbal.updateStatsScreen();
 				}
-			}
-		}
-		
-		private class WinnerSpinnerChangeListener implements ChangeListener {
-			public void stateChanged(ChangeEvent e) {
-				selectedWinner = (int) winnerSpinner.getValue();
 			}
 		}
 		
@@ -1612,14 +1783,6 @@ public class Picker {
 		}
 	}
 	
-	private class SkipButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			skipping = true;
-			gbal.actionPerformed(null);
-		}
-		
-	}
-	
 	private class DebugButtonActionListener implements ActionListener {
 		private JFrame debugFrame;
 		private JPanel debugPanel;
@@ -1632,14 +1795,14 @@ public class Picker {
 			debugFrame = new JFrame("Debug");
 			debugFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			debugFrame.setSize(835, 200);
-			debugFrame.setResizable(false);
+			debugFrame.setResizable(true);
 			
 			debugFrame.setLocation(frame.getX(), (int) (frame.getY() + 2 * debugFrame.getHeight() + 30));
 			debugFrame.addWindowListener(new DebugWindowListener());
 			
 			debugPanel = new JPanel();
 			debugPanel.setLayout(new BorderLayout());
-			debugPanel.add(debug, BorderLayout.LINE_START);
+			debugPanel.add(debug);
 			JScrollPane scrollPane = new JScrollPane(debugPanel);
 			scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 			debugFrame.add(scrollPane);
@@ -1684,11 +1847,11 @@ public class Picker {
 		private JButton doItAgainButton;
 		private JButton neutralAerialButton;
 		private JButton trashManButton;
-		private JButton pikachuBustedButton;
+		private JButton yodaNoButton;
 		private JButton bruhSoundEffectButton;
 		private JButton angerousNowButton;
 		private JButton theWorstButton;
-		private JButton excuseMeButton;
+		private JButton sureManButton;
 		private JButton bscuseMeButton;
 		private JButton ghoulButton;
 		private JButton whatButton;
@@ -1760,56 +1923,68 @@ public class Picker {
 			soundboardPanel.setLayout(new GridLayout(0, 3));
 			
 			doItAgainButton = new JButton("Do it again");
-			doItAgainButton.addActionListener(new DoItAgainActionListener());
+			doItAgainButton.addActionListener(new SingleSoundButton("/sounds/doitagain.wav"));
 			neutralAerialButton = new JButton("Neutral aerial");
-			neutralAerialButton.addActionListener(new NeutralAerialActionListener());
+			neutralAerialButton.addActionListener(new SingleSoundButton("/sounds/neutralaerial.wav"));
 			trashManButton = new JButton("Trash man");
-			trashManButton.addActionListener(new TrashManActionListener());
-			pikachuBustedButton = new JButton("Pikachu busted");
-			pikachuBustedButton.addActionListener(new PikachuBustedActionListener());
+			trashManButton.addActionListener(new SingleSoundButton("/sounds/trashman.wav"));
+			yodaNoButton = new JButton("Yoda no");
+			yodaNoButton.addActionListener(new SingleSoundButton("/sounds/yodano.wav"));
 			bruhSoundEffectButton = new JButton("Bruh");
-			bruhSoundEffectButton.addActionListener(new BruhSoundEffectActionListener());
+			bruhSoundEffectButton.addActionListener(new SingleSoundButton("/sounds/bruh.wav"));
 			angerousNowButton = new JButton("<html><center>I am be<br>angerous now</center></html>");
-			angerousNowButton.addActionListener(new AngerousNowActionListener());
+			angerousNowButton.addActionListener(new SingleSoundButton("/sounds/angerousnow.wav"));
 			theWorstButton = new JButton("<html><center>This is... the<br>worst</center></html>");
-			theWorstButton.addActionListener(new TheWorstActionListener());
-			excuseMeButton = new JButton("<html><center>\"Excuse me!\"<br>- Arin</center></html>");
-			excuseMeButton.addActionListener(new ExcuseMeActionListener());
+			theWorstButton.addActionListener(new SingleSoundButton("/sounds/thisistheworst.wav"));
+			sureManButton = new JButton("<html><center>Yeah, sure<br>man</center></html>");
+			sureManButton.addActionListener(new SingleSoundButton("/sounds/sureman.wav"));
 			bscuseMeButton = new JButton("B'scuse me");
-			bscuseMeButton.addActionListener(new BscuseMeActionListener());
-			ghoulButton = new JButton("Ghoul");
-			ghoulButton.addActionListener(new GhoulActionListener());
+			bscuseMeButton.addActionListener(new SingleSoundButton("/sounds/bscuseme.wav"));
 			whatButton = new JButton("What");
-			whatButton.addActionListener(new WhatActionListener());
+			whatButton.addActionListener(new SingleSoundButton("/sounds/what.wav"));
 			thatMakesMeFeelAngryButton = new JButton("<html><center>That makes me<br>feel angry!</center></html>");
-			thatMakesMeFeelAngryButton.addActionListener(new MakesMeFeelAngryActionListener());
+			thatMakesMeFeelAngryButton.addActionListener(new SingleSoundButton("/sounds/makesmefeelangry.wav"));
 			daringTodayButton = new JButton("<html><center>Daring today,<br>aren't we?</center></html>");
-			daringTodayButton.addActionListener(new DaringTodayActionListener());
+			daringTodayButton.addActionListener(new SingleSoundButton("/sounds/daringtoday.wav"));
 			vsauceButton = new JButton("<html><center>Vsauce<br>uhhowhaaa</center></html>");
-			vsauceButton.addActionListener(new VsauceActionListener());
+			vsauceButton.addActionListener(new SingleSoundButton("/sounds/pancake.wav"));
 			despiseHimButton = new JButton("I despise him!");
-			despiseHimButton.addActionListener(new DespiseHimActionListener());
+			despiseHimButton.addActionListener(new SingleSoundButton("/sounds/despisehim.wav"));
 			whatDuhHeckButton = new JButton("<html><center>What duh heck is up with dis game</center></html>");
-			whatDuhHeckButton.addActionListener(new WhatDuhHeckActionListener());
-			cheaterButton = new JButton("Cheater!");
-			cheaterButton.addActionListener(new CheaterActionListener());
+			whatDuhHeckButton.addActionListener(new SingleSoundButton("/sounds/whatduhheck.wav"));
 			ohMyGodButton = new JButton("Oh my GOD");
-			ohMyGodButton.addActionListener(new OhMyGodActionListener());
+			ohMyGodButton.addActionListener(new SingleSoundButton("/sounds/ohmygod.wav"));
 			doingStringsButton = new JButton("<html>This dude's<br>doing strings</html>");
-			doingStringsButton.addActionListener(new DoingStringsActionListener());
+			doingStringsButton.addActionListener(new SingleSoundButton("/sounds/doingstrings.wav"));
 			churlishButton = new JButton("<html>Insubordinate<br>and churlish</html>");
-			churlishButton.addActionListener(new ChurlishActionListener());
+			churlishButton.addActionListener(new SingleSoundButton("/sounds/churlish.wav"));
 			chicanerousButton = new JButton("<html><center>Mischievous and deceitful, chicanerous and deplorable</center></html>");
-			chicanerousButton.addActionListener(new ChicanerousActionListener());
+			chicanerousButton.addActionListener(new SingleSoundButton("/sounds/chicanerous.wav"));
+			
+			String[] ghoulSounds = new String[] {"/sounds/ghoul1.wav", "/sounds/ghoul2.wav",
+					"/sounds/ghoul3.wav", "/sounds/ghoul4.wav"
+			};
+			String[] ghoulNames = new String[] {"Ghoul 1", "Ghoul 2", "Ghoul 3", "Ghoul 4"};
+			ghoulButton = new JButton("Ghoul");
+			ghoulButton.addMouseListener(new MultiSoundButton(ghoulSounds, ghoulNames));
+			
+			String[] cheatSounds = new String[] {"/sounds/cheat1.wav", "/sounds/cheat2.wav",
+					"/sounds/cheat3.wav", "/sounds/cheat4.wav", "/sounds/cheat5.wav"
+			};
+			String[] cheatNames = new String[] {"Cheater, don't you do that!", "Cheater!",
+					"Cheeeet", "Cheater! 2", "Cheat"
+			};
+			cheaterButton = new JButton("Cheater!");
+			cheaterButton.addMouseListener(new MultiSoundButton(cheatSounds, cheatNames));
 			
 			soundboardPanel.add(doItAgainButton);
 			soundboardPanel.add(neutralAerialButton);
 			soundboardPanel.add(trashManButton);
-			soundboardPanel.add(pikachuBustedButton);
+			soundboardPanel.add(yodaNoButton);
 			soundboardPanel.add(bruhSoundEffectButton);
 			soundboardPanel.add(angerousNowButton);
 			soundboardPanel.add(theWorstButton);
-			soundboardPanel.add(excuseMeButton);
+			soundboardPanel.add(sureManButton);
 			soundboardPanel.add(bscuseMeButton);
 			soundboardPanel.add(whatDuhHeckButton);
 			soundboardPanel.add(ghoulButton);
@@ -1857,11 +2032,17 @@ public class Picker {
 			public void windowOpened(WindowEvent e) {
 			}
 		}
-		
-		private class ChurlishActionListener implements ActionListener {
+
+		private class SingleSoundButton implements ActionListener {
+			private String soundLocation;
+			
+			public SingleSoundButton(String sound) {
+				soundLocation = sound;
+			}
+			
 			public void actionPerformed(ActionEvent e) {
 				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/churlish.wav");
+					InputStream is = getClass().getResourceAsStream(soundLocation);
 					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
 					Clip clip = AudioSystem.getClip();
 					clip.open(stream);
@@ -1876,403 +2057,132 @@ public class Picker {
 			}
 		}
 		
-		private class ChicanerousActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/chicanerous.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
+		private class MultiSoundButton implements MouseListener {
+			private int soundSelected;
+			private String[] soundList;
+			
+			private JPopupMenu menu;
+			
+			public MultiSoundButton(String[] soundList, String[] soundNames) {
+				this.soundList = soundList;
+				
+				soundSelected = -1;
+				
+				menu = new JPopupMenu();
+				
+				JRadioButtonMenuItem rand = new JRadioButtonMenuItem("Random");
+				rand.addActionListener(new MenuItemActionListener(-1));
+				rand.setSelected(true);
+				
+				ButtonGroup bg = new ButtonGroup();
+				bg.add(rand);
+				menu.add(rand);
+				
+				for(int at = 0; at < soundList.length; at++) {
+					JRadioButtonMenuItem button = new JRadioButtonMenuItem(soundNames[at]);
+					button.addActionListener(new MenuItemActionListener(at));
+					bg.add(button);
+					menu.add(button);
 				}
 			}
-		}
-		
-		private class DoingStringsActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/doingstrings.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
+			
+			private class MenuItemActionListener implements ActionListener {
+				private int setTo;
+				
+				public MenuItemActionListener(int setTo) {
+					this.setTo = setTo;
+				}
+				
+				public void actionPerformed(ActionEvent e) {
+					soundSelected = setTo;
 				}
 			}
-		}
-		
-		private class OhMyGodActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/ohmygod.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class CheaterActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					int cheatNum = ThreadLocalRandom.current().nextInt(1, 6);
-					InputStream is;
-					switch(cheatNum) {
-						case 1:
-							is = getClass().getResourceAsStream("/sounds/cheat1.wav");
-							break;
-						case 2:
-							is = getClass().getResourceAsStream("/sounds/cheat2.wav");
-							break;
-						case 3:
-							is = getClass().getResourceAsStream("/sounds/cheat3.wav");
-							break;
-						case 4:
-							is = getClass().getResourceAsStream("/sounds/cheat4.wav");
-							break;
-						default:
-							is = getClass().getResourceAsStream("/sounds/cheat5.wav");						
+			
+			public void mouseClicked(MouseEvent e) {
+				if(SwingUtilities.isLeftMouseButton(e)) {
+					int soundToPlay;
+					if(soundSelected == -1) {
+						soundToPlay = ThreadLocalRandom.current().nextInt(0, soundList.length);
 					}
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class DespiseHimActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/despisehim.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class WhatDuhHeckActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/whatduhheck.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class VsauceActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/pancake.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class DaringTodayActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/daringtoday.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class MakesMeFeelAngryActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/makesmefeelangry.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class AngerousNowActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/angerousnow.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class TheWorstActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/thisistheworst.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class ExcuseMeActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/excuseme.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class BscuseMeActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/bscuseme.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		private class GhoulActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					int ghoulNum = ThreadLocalRandom.current().nextInt(1, 5);
-					InputStream is;
-					switch(ghoulNum) {
-						case 1:
-							is = getClass().getResourceAsStream("/sounds/ghoul1.wav");
-							break;
-						case 2:
-							is = getClass().getResourceAsStream("/sounds/ghoul2.wav");
-							break;
-						case 3:
-							is = getClass().getResourceAsStream("/sounds/ghoul3.wav");
-							break;
-						case 4:
-							is = getClass().getResourceAsStream("/sounds/ghoul4.wav");
-							break;
-						default:
-							is = getClass().getResourceAsStream("/sounds/ghoul1.wav");						
+					else {
+						soundToPlay = soundSelected;
 					}
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
+					
+					try {
+						InputStream is;
+						is = getClass().getResourceAsStream(soundList[soundToPlay]);
+						AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
+						Clip clip = AudioSystem.getClip();
+						clip.open(stream);
+						clip.start();
+					} catch(Exception ex) {
+						int hour = ZonedDateTime.now().getHour();
+						int min = ZonedDateTime.now().getMinute();
+						int sec = ZonedDateTime.now().getSecond();
+						System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+						debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
+					}
+				}
+				else if(SwingUtilities.isRightMouseButton(e)) {
+					armPopup();
+					Point mousePos = MouseInfo.getPointerInfo().getLocation();
+					menu.setLocation(mousePos.x, mousePos.y);
+					menu.setVisible(true);
 				}
 			}
-		}
-		
-		private class WhatActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/what.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
+			
+			private void armPopup() {
+			    if(menu != null) {
+			        Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+			            public void eventDispatched(AWTEvent event) {
+			                if(event instanceof MouseEvent) {
+			                    MouseEvent m = (MouseEvent)event;
+			                    if(m.getID() == MouseEvent.MOUSE_CLICKED) {
+			                        menu.setVisible(false);
+			                        Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+			                    }
+			                }
+			                if(event instanceof WindowEvent) {
+			                    WindowEvent we = (WindowEvent)event;
+			                    if(we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_STATE_CHANGED) {
+			                        menu.setVisible(false);
+			                        Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+			                    }
+			                }
+			            }
+			        }, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK);
+			    }
 			}
-		}
-		
-		private class DoItAgainActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/doitagain.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
+
+			public void mousePressed(MouseEvent e) {
 			}
-		}
-		
-		private class NeutralAerialActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/neutralaerial.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
+
+			public void mouseReleased(MouseEvent e) {
 			}
-		}
-		
-		public class TrashManActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/trashman.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
+
+			public void mouseEntered(MouseEvent e) {
 			}
-		}
-		
-		public class PikachuBustedActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/pikachubusted.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
-			}
-		}
-		
-		public class BruhSoundEffectActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {		
-				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/bruh.wav");
-					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
-					Clip clip = AudioSystem.getClip();
-					clip.open(stream);
-					clip.start();
-				} catch(Exception ex) {
-					int hour = ZonedDateTime.now().getHour();
-					int min = ZonedDateTime.now().getMinute();
-					int sec = ZonedDateTime.now().getSecond();
-					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
-					debug.append("[" + hour + ":" + min + ":" + sec + "]: " + ex + "\n");
-				}
+
+			public void mouseExited(MouseEvent e) {
 			}
 		}
 	}
 	
+	//TODO (maybe): Take a look at the RNG process. Can we check for which battles are possible first?
 	private class GenerateButtonActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			//to keep track of how long the generation of this battle took,
+			//start by recording the start time
+			//note that we only do this if the ActionEvent is NOT null. if it's
+			//null, that means that we're calling actionPerformed() from within
+			//itself, meaning that no valid characters were found on earlier
+			//tries. we want to include the entire generation process in our
+			//timekeeping, so we only want the start to be set when the button
+			//is first pressed
+			if(e != null) {
+				startGen = System.currentTimeMillis();
+			}
+			
 			//synchronize entire generation process in hopes of fixing program
 			//hangups, which i'm just assuming are caused by threading, because
 			//of how swing works... it wasn't the case but i'm keeping it anyway
@@ -2293,6 +2203,9 @@ public class Picker {
 					numBattles++;
 				}
 				results.append("Battle #" + numBattles + ":\n");
+				
+				System.out.println("===BATTLE #" + numBattles + "===");
+				debug.append("===BATTLE #" + numBattles + "===\n");
 				
 				int playerTiers[] = getPlayerTiers();
 				
@@ -2320,6 +2233,9 @@ public class Picker {
 						if(!skipping) {
 							numBattles--;
 						}
+						
+						System.err.println("There were no valid characters, retrying...\n");
+						debug.append("There were no valid characters, retrying...\n");
 						actionPerformed(null);
 						return;
 					}
@@ -2331,13 +2247,12 @@ public class Picker {
 				}
 				
 				//remove from cannot get queue first
-				for(int at = 0; at < numPlayers; at++) {
-					if(cannotGet.size() > (cannotGetSize * numPlayers)) {
+				if(cannotGet.size() >= (cannotGetSize * numPlayers)) {
+					for(int at = 0; at < numPlayers; at++) {
 						cannotGet.removeFirst();
 					}
 				}
 				
-				debug.append("===BATTLE #" + numBattles + "===\n");
 				//then add to queue
 				for(int playerAt = 0; playerAt < gotten.size(); playerAt++) {
 					int tier = playerTiers[playerAt];
@@ -2375,6 +2290,26 @@ public class Picker {
 				}
 				
 				skipping = false;
+				
+				//the last thing we're gonna do is enable all the switch panel
+				//stuff, now that it won't cause errors and whatnot.
+				farRightPanel.setEnabled(true);
+				player1Box.setEnabled(true);
+				player2Box.setEnabled(true);
+				player3Box.setEnabled(true);
+				player4Box.setEnabled(true);
+				player5Box.setEnabled(true);
+				player6Box.setEnabled(true);
+				player7Box.setEnabled(true);
+				player8Box.setEnabled(true);
+				switchButton.setEnabled(true);
+				
+				//to keep track of how long the generation of this battle took,
+				//note the end time
+				endGen = System.currentTimeMillis();
+				double delta = endGen - startGen;
+				System.out.println("[DEBUG]: Generation of this battle took " + delta + "ms");
+				debug.append("[DEBUG]: Generation of this battle took " + delta + "ms\n");				
 			}
 		}
 		
@@ -2439,14 +2374,39 @@ public class Picker {
 			}
 			tier = convertToTierNum(tier);
 			
+			System.out.println("The starting tier is " + tierToString(tier) + "\n");
+			debug.append("The starting tier is " + tierToString(tier) + "\n");
+			
 			for(int at = 0; at < numPlayers; at++) {
-				int adjust = tier + ThreadLocalRandom.current().nextInt(-2, 1);
+				//TODO: Add customizable chances for adjustment
+				//right now there's a 50% chance of the same tier,
+				//and 25% each for an bump of 1 or 2 tiers
+				int adjust = ThreadLocalRandom.current().nextInt(0, 4);
+				
+				if(adjust == 0) {
+					adjust = -2;
+				}
+				else if(adjust == 1) {
+					adjust = -1;
+				}
+				else {
+					adjust = 0;
+				}
+				
+				int oldadj = adjust;
+				adjust = tier + adjust;
+				
 				if(adjust < 0) {
 					adjust = 0;
 				}
 				while(tierTurnedOff(adjust, tierChances)) {
 					adjust++;
 				}
+				if(adjust != tier) {
+					System.out.println("Player " + at + " has been adjusted (adjval " + oldadj + "), getting " + tierToString(adjust));
+					debug.append("Player " + at + " has been adjusted (adjval " + oldadj + "), getting " + tierToString(adjust) + "\n");
+				}
+				
 				playerTiers[at] = adjust;
 			}
 			
@@ -2580,7 +2540,6 @@ public class Picker {
 					linesOfFile.clear();
 					for(int at = 0; at < 39; at++) {
 						linesOfFile.add(new ArrayList<String>());
-
 					}
 				}
 			}
@@ -2802,7 +2761,9 @@ public class Picker {
 					}
 					//if any lines are found that aren't valid, stop reading
 					//file and throw an error
-					if(!foundEqual && !next.equals("")) {
+					//should allow for comments to be added as long as they
+					//start with a #
+					if(!foundEqual && !next.equals("") && !(next.charAt(0) == '#')) {
 						in.close();
 						throw new IOException();
 					}
@@ -3114,6 +3075,15 @@ public class Picker {
 						+ " are valid and have been applied.", "Smash "
 						+ "Character Picker",
 						JOptionPane.INFORMATION_MESSAGE);
+				debug.append("[DEBUG]: You've updated the tier chances.\n");
+				debug.append("         SS Tier: " + tierChances[0] + "%\n");
+				debug.append("         S Tier:  " + tierChances[1] + "%\n");
+				debug.append("         A Tier:  " + tierChances[2] + "%\n");
+				debug.append("         B Tier:  " + tierChances[3] + "%\n");
+				debug.append("         C Tier:  " + tierChances[4] + "%\n");
+				debug.append("         D Tier:  " + tierChances[5] + "%\n");
+				debug.append("         E Tier:  " + tierChances[6] + "%\n");
+				debug.append("         F Tier:  " + tierChances[7] + "%\n");
 			}
 			else {
 				JOptionPane.showMessageDialog(frame, "Your custom "
@@ -3131,88 +3101,5 @@ public class Picker {
 				FTierSpinner.setValue(tierChances[7]);
 			}
 		}	
-	}
-	
-	private class AllowSSInCannotGetButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if(SSAllowedInCannotGetBuffer) {
-				SSAllowedInCannotGetBuffer = false;
-			}
-			else {
-				SSAllowedInCannotGetBuffer = true;
-			}
-		}		
-	}
-	
-	private class AllowSInCannotGetButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if(SAllowedInCannotGetBuffer) {
-				SAllowedInCannotGetBuffer = false;
-			}
-			else {
-				SAllowedInCannotGetBuffer = true;
-			}
-		}	
-	}
-	
-	private class NumPlayersChangeListener implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			numPlayers = (int) numPlayersSpinner.getValue();
-		}
-	}
-	
-	private class ChangeListenerSS implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			newTierChances[0] = (int) SSTierSpinner.getValue();
-		}
-	}
-	
-	private class ChangeListenerS implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			newTierChances[1] = (int) STierSpinner.getValue();
-		}
-	}
-	
-	private class ChangeListenerA implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			newTierChances[2] = (int) ATierSpinner.getValue();
-		}
-	}
-	
-	private class ChangeListenerB implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			newTierChances[3] = (int) BTierSpinner.getValue();
-		}
-	}
-	
-	private class ChangeListenerC implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			newTierChances[4] = (int) CTierSpinner.getValue();
-		}
-	}
-	
-	private class ChangeListenerD implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			newTierChances[5] = (int) DTierSpinner.getValue();
-		}
-	}
-	
-	private class ChangeListenerE implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			newTierChances[6] = (int) ETierSpinner.getValue();
-		}
-	}
-	
-	private class ChangeListenerF implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			newTierChances[7] = (int) FTierSpinner.getValue();
-		}
-	}
-	
-	private class CannotGetSizeChangeListener implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			cannotGetSize = (int) cannotGetSizeSpinner.getValue();
-		}
-	}
-
+	}	
 }

@@ -1,0 +1,33 @@
+#This is a tier list based on r/SmashBrosUltimate's 2021 tier list
+#This also demonstrates that comments can be added to tier lists
+#Any line that isn't a recognized tier or setting will cause errors unless it starts with a #
+#Oh yeah, blank lines are fine, too
+
+#Note: The program is not necessarily intended to have gaps in the tier list like this one does. For example, you'll notice that there's no Mid S Tier, there's just upper and lower.
+#This tier list may not be ideal for actually running the program, I just put it here in case someone feels like playing with a "real" tier list, rather than the one me and my
+#brothers use
+
+upper s = Pikachu, Joker, Pyra/Mythra, Wolf, Palutena, R.O.B., Peach
+lower s = Roy, Zero Suit Samus, Pokemon Trainer, Mr. Game & Watch, Min Min, Snake, Mario, Lucina
+upper a = Shulk, Pac-Man, Wario, Diddy Kong, Fox, Sephiroth, Sonic, Chrom, Steve, Sora, Kazuya
+lower a = Olimar, Young Link, Greninja, Ness, Sheik, Terry, Cloud, Inkling, Mega Man, Yoshi, Captain Falcon
+upper b = Samus, Falco, Pichu, Link, Ken, Byleth, Bowser
+mid b = Luigi, Hero, Wii Fit Trainer, Ryu, Ike, Mii Brawler, Rosalina & Luma, Toon Link, Marth, Bayonetta, Mewtwo, Lucas, Corrin, Dark Pit
+lower b = Meta Knight, Duck Hunt, Robin, Banjo & Kazooie, Villager, Richter, Mii Gunner, Zelda, Jigglypuff, Bowser Jr., Ridley 
+upper c = Ice Climbers, Mii Swordfighter, King K. Rool, Lucario, Incineroar
+lower c = Piranha Plant, King Dedede, Donkey Kong, Kirby, Isabelle
+upper d = Dr. Mario, Ganondorf, Little Mac
+
+#I'll include some settings down here as an example of how they work
+tier chances = 0, 20, 20, 25, 20, 15, 0, 0
+cannot get size = 12
+allow s in cannot get = true
+#The following is a default setting. I put it here anyways
+players = 2
+
+#You could define some favorites and exlusions down here if you want
+#Right now this does the equivalent of not including them at all
+p1 favorite = 
+p1 exclude = 
+p2 favorite = 
+p2 exclude = 
