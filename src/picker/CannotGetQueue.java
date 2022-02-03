@@ -120,6 +120,37 @@ public class CannotGetQueue {
 		tiersOfCantGet.removeFirst();
 	}
 	
+	/** Removes last elements from both <code>Queues</code>.
+	 */
+	public void removeLast() {
+		charsCantGet.removeLast();
+		tiersOfCantGet.removeLast();
+	}
+	
+	/** Gets the last elements of <code>tiersOfCantGet</code>, removes it from
+	 * 	the queue, and returns it.
+	 * 
+	 * @return	The last element of <code>tiersOfCantGet</code>.
+	 */
+	public int getAndRemoveLastTier() {
+		int toReturn = tiersOfCantGet.getLast();
+		charsCantGet.removeLast();
+		tiersOfCantGet.removeLast();
+		return toReturn;
+	}
+	
+	/** Gets the last elements of <code>charsCantGet</code>, removes it from the
+	 * 	queue, and returns it.
+	 * 
+	 * @return	The last element of <code>charsCantGet</code>.
+	 */
+	public String getAndRemoveLastChar() {
+		String toReturn = charsCantGet.getLast();
+		charsCantGet.removeLast();
+		tiersOfCantGet.removeLast();
+		return toReturn;
+	}
+	
 	/** Just returns the first element of <code>tiersOfCantGet</code>, without
 	 * 	removing it.
 	 * 
@@ -127,6 +158,14 @@ public class CannotGetQueue {
 	 */
 	public int getFirstTier() {
 		return tiersOfCantGet.getFirst();
+	}
+	
+	/** Just returns the last elements of <code>tiersOfCanotGet</code>, without
+	 * 	removing it.
+	 * @return	The last entry of <code>tiersOfCantGet</code>.
+	 */
+	public int getLastTier() {
+		return tiersOfCantGet.getLast();
 	}
 	
 	public String toString() {

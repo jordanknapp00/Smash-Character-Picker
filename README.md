@@ -1,10 +1,16 @@
 # Smash Character Picker (v5.0)
 
-A program designed to pick random matchups for the game Super Smash Bros. For those of us who don't like using the random character option, because it usually results in an unfair matchup. Instead, this program uses a tier list to create a matchup that is fair. Tier lists are defined in a `.txt` file. There are some additional settings to customize the experience, as well as some systems to ensure novel matchups are generated. This version also includes a soundboard featuring 18 sound effects!
+A program designed to pick random matchups for the game Super Smash Bros. For those of us who don't like using the random character option, because it usually results in an unfair matchup. Instead, this program uses a tier list to create a matchup that is fair. Tier lists are defined in a `.txt` file. There are some additional settings to customize the experience, as well as some systems to ensure novel matchups are generated. Also includes a soundboard featuring 21 sound effects!
 
 ## Usage
 
-When you launch the program, the first order of business will be to load a tier list. Simply use the "Load" button in the bottom left corner of the window. Once you find your tier list file, if it is valid, the program will open it without issue. To learn how to format your tier list correctly, see the next section. When the tier list is loaded, you are now ready to generate matchups! Simply hit the "Generate" button, and a matchup will be generated. If desired, some settings can be changed using the panel on the left side of the window. Finally, you can open up the soundboard using the button on the bottom of the window.
+When you launch the program, the first order of business will be to load a tier list. Simply use the "Load" button in the bottom left corner of the window. Once you find your tier list file, if it is valid, the program will open it without issue. To learn how to format your tier list correctly, see the next section. When the tier list is loaded, you are now ready to generate matchups! Simply hit the "Generate" button, and a matchup will be generated. If you don't like the matchup you got, just use the "Skip" button. Normally players will never be allowed to get the same fighter twice in one session. But if you skip the battle, players will eventually be able to get that fighter again. See the section on the "Cannot Get" buffer for more details.
+
+### Switching Fighters
+
+If you and another player wish to swap which fighter you got, you can do so using the switch panel on the right side of the window. Simply select the two players who wish to swap and hit the "Switch" button. Simple as that.
+
+**Note**: Hitting the "Switch" button without any players selected can cause errors. It shouldn't actually affect the program in any way, but it is still not advisable to use the switch panel in ways that are not intended by the developer.
 
 ## Tier List Format
 
@@ -30,9 +36,9 @@ The other settings deal with the "Cannot Get" buffer, which is detailed below.
 
 ### The "Cannot Get" Buffer
 
-In order to ensure novel matchups, the program employs what I call the "Cannot Get" buffer. Essentially, this is a buffer which contains all the fighters that have been played in the last X number of battles, with X being the size of the "Cannot Get" buffer. The buffer ensures that *nobody* will be able to get a fighter that has already been played within the last X number of battles. In previous versions of the program, each player had their own "Cannot Get" buffer, where only they couldn't get the same fighter within a span of X battles. Now the "Cannot Get" buffer is universal for all players.
+In order to ensure novel matchups, the program employs what I call the "Cannot Get" buffer. Essentially, this is a buffer which contains all the fighters that have been played in the last X number of battles, with X being the size of the "Cannot Get" buffer. The buffer ensures that *nobody* will be able to get a fighter that has already been played within the last X number of battles. There is also an individual list for each player consisting of all the fighters they've gotten during the session. A player will *never* be able to get the same fighter twice during the same session, unless the "Skip" button was used.
 
-For example, let's say that we're using a buffer size of 5, and in the first battle, player 1 gets Mario and player 2 gets Luigi. *Neither* player will be able to get Mario or Luigi until battle number 6.
+For example, let's say that we're using a buffer size of 5, and in the first battle, player 1 gets Mario and player 2 gets Luigi. *Neither* player will be able to get Mario or Luigi until battle number 6. However, player 1 will not be able to get Mario *for the rest of the session*, and player 2 will not be able to get Luigi again *for the rest of the session*.
 
 There is also the option as to whether or not SS or S tier characters are allowed in the "Cannot Get" buffer. If your SS or S tiers are particularly small, you may not want to include them in the "Cannot Get" buffer. Or perhaps you find the best characters in the game to be the most fun, so you don't want to limit the number of times you can play them.
 

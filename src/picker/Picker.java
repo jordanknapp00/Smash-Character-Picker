@@ -31,6 +31,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+//TODO: add favorite player system
+
 public class Picker {
 
 	public static void main(String[] args) {
@@ -54,6 +56,10 @@ public class Picker {
 	private JPanel tierChancesPanel;
 	private JPanel cannotGetPanel;
 	private JPanel bottomPanel;
+	private JPanel farRightPanel;
+	
+	//blank label for alignment and stuff
+	private JLabel blank = new JLabel(" ");
 	
 	//right panel components
 	private JTextArea results;
@@ -64,6 +70,7 @@ public class Picker {
 	private JLabel numPlayersLabel;
 	private JButton loadButton;
 	private JButton soundBoardButton;
+	private JButton skipButton;
 	
 	//left panel components:
 	
@@ -87,13 +94,23 @@ public class Picker {
 	private JLabel FTierLabel;
 	private JCheckBox useCustomChances;
 	private JButton applyButton;
-	
-	
+
 	//cannot get panel components
 	private JLabel cannotGetSizeLabel;
 	private JSpinner cannotGetSizeSpinner;
 	private JCheckBox allowSSInCannotGet;
 	private JCheckBox allowSInCannotGet;
+	
+	//far right panel components
+	private JCheckBox player1Box;
+	private JCheckBox player2Box;
+	private JCheckBox player3Box;
+	private JCheckBox player4Box;
+	private JCheckBox player5Box;
+	private JCheckBox player6Box;
+	private JCheckBox player7Box;
+	private JCheckBox player8Box;
+	private JButton switchButton;
 	
 	// * OTHER FIELDS * \\
 	private boolean fileLoaded;
@@ -101,6 +118,10 @@ public class Picker {
 	private int numBattles;
 	private CannotGetQueue cannotGet;
 	private int numPlayers;
+	private CannotGetQueue[] individualCannotGet;
+	private boolean skipping;
+	private GenerateButtonActionListener gbal = new GenerateButtonActionListener();
+	private ArrayList<String> gotten;
 	
 	//settings variables
 	private boolean usingCustomChances;
@@ -119,7 +140,7 @@ public class Picker {
 		//initialize main frame
 		frame = new JFrame("Smash Character Picker");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(725, 435);
+		frame.setSize(760, 435);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
 		
@@ -153,61 +174,10 @@ public class Picker {
 			System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e);
 		}
 		
-		//initialize right panel
-		rightPanel = new JPanel();
-		rightPanel.setBorder(BorderFactory.createTitledBorder("Results"));
-		GridBagConstraints gc = new GridBagConstraints();
-		rightPanel.setLayout(new BorderLayout());
-		rightPanel.add(results);
-		rightPanel.setPreferredSize(new Dimension(350, 260));
-		
-		//Initialize bottom panel
-		bottomPanel = new JPanel();
-		bottomPanel.setLayout(new GridBagLayout());
-		generateButton = new JButton("Generate");
-		
-		//attempt to set up the load button correctly
-		loadButton = new JButton("Load");
-		try {
-			Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
-			loadButton.setIcon(new ImageIcon(loadImage));
-		} catch (IOException e) {
-			int hour = ZonedDateTime.now().getHour();
-			int min = ZonedDateTime.now().getMinute();
-			int sec = ZonedDateTime.now().getSecond();
-			System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e);
-		}
-		
-		soundBoardButton = new JButton("Soundboard");
-		soundBoardButton.addActionListener(new SoundBoardButtonActionListener());
-		generateButton.addActionListener(new GenerateButtonActionListener());
-		loadButton.addActionListener(new LoadButtonActionListener());
-		SpinnerNumberModel spinner = new SpinnerNumberModel(2, 2, 8, 1);
-		numPlayersSpinner = new JSpinner(spinner);
-		numPlayersSpinner.addChangeListener(new NumPlayersChangeListener());
-		numPlayersLabel = new JLabel("Number of players: ");
-		gc.weightx = .03;
-		gc.fill = GridBagConstraints.HORIZONTAL;
-		gc.anchor = GridBagConstraints.CENTER;
-		bottomPanel.add(loadButton, gc);
-		gc.weightx = .22;
-		gc.gridx = 1;
-		bottomPanel.add(soundBoardButton, gc);
-		gc.weightx = .6;
-		gc.gridx = 2;
-		bottomPanel.add(generateButton, gc);
-		gc.gridx = 3;
-		gc.weightx = .1;
-		gc.fill = GridBagConstraints.NONE;
-		bottomPanel.add(numPlayersLabel, gc);
-		gc.gridx = 4;
-		gc.weightx = .05;
-		bottomPanel.add(numPlayersSpinner, gc);
-		
 		//initialize fields
 		fileLoaded = false;
 		linesOfFile = new ArrayList<ArrayList<String>>();
-		for(int at = 0; at < 29; at++) {
+		for(int at = 0; at < 37; at++) {
 			linesOfFile.add(new ArrayList<String>());
 		}
 		cannotGet = new CannotGetQueue();
@@ -236,6 +206,114 @@ public class Picker {
 		SAllowedInCannotGetBuffer = false;
 		customVerified = true;
 		openedSoundPanel = false;
+		individualCannotGet = new CannotGetQueue[8];
+		for(int at = 0; at < 8; at++) {
+			individualCannotGet[at] = new CannotGetQueue();
+		}
+		skipping = false;
+		gotten = new ArrayList<String>();
+		
+		//initialize right panel
+		rightPanel = new JPanel();
+		rightPanel.setBorder(BorderFactory.createTitledBorder("Results"));
+		GridBagConstraints gc = new GridBagConstraints();
+		rightPanel.setLayout(new BorderLayout());
+		rightPanel.add(results);
+		rightPanel.setPreferredSize(new Dimension(350, 260));
+		
+		//initialize far right panel
+		farRightPanel = new JPanel();
+		farRightPanel.setBorder(BorderFactory.createTitledBorder("Switch"));
+		farRightPanel.setLayout(new BoxLayout(farRightPanel, BoxLayout.Y_AXIS));
+		farRightPanel.setPreferredSize(new Dimension(40, 260));
+		farRightPanel.setToolTipText("Select 2 players and hit the switch button, " +
+									 "and they will switch fighters.");
+		
+		SwitchManager sm = new SwitchManager();
+		player1Box = new JCheckBox("Player 1");
+		player1Box.addActionListener(sm.new Player1BoxActionListener());
+		player2Box = new JCheckBox("Player 2");
+		player2Box.addActionListener(sm.new Player2BoxActionListener());
+		player3Box = new JCheckBox("Player 3");
+		player3Box.addActionListener(sm.new Player3BoxActionListener());
+		player4Box = new JCheckBox("Player 4");
+		player4Box.addActionListener(sm.new Player4BoxActionListener());
+		player5Box = new JCheckBox("Player 5");
+		player5Box.addActionListener(sm.new Player5BoxActionListener());
+		player6Box = new JCheckBox("Player 6");
+		player6Box.addActionListener(sm.new Player6BoxActionListener());
+		player7Box = new JCheckBox("Player 7");
+		player7Box.addActionListener(sm.new Player7BoxActionListener());
+		player8Box = new JCheckBox("Player 8");
+		player8Box.addActionListener(sm.new Player8BoxActionListener());
+		switchButton = new JButton("Switch");
+		switchButton.addActionListener(sm.new SwitchButtonActionListener());
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 25)));
+		farRightPanel.add(player1Box);
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+		farRightPanel.add(player2Box);
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+		farRightPanel.add(player3Box);
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+		farRightPanel.add(player4Box);
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+		farRightPanel.add(player5Box);
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+		farRightPanel.add(player6Box);
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+		farRightPanel.add(player7Box);
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+		farRightPanel.add(player8Box);
+		farRightPanel.add(Box.createRigidArea(new Dimension(0, 110)));
+		farRightPanel.add(switchButton);
+		
+		//Initialize bottom panel
+		bottomPanel = new JPanel();
+		bottomPanel.setLayout(new GridBagLayout());
+		generateButton = new JButton("Generate");
+		skipButton = new JButton("Skip");
+		skipButton.addActionListener(new SkipButtonActionListener());
+		
+		//attempt to set up the load button correctly
+		loadButton = new JButton("Load");
+		try {
+			Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
+			loadButton.setIcon(new ImageIcon(loadImage));
+		} catch (IOException e) {
+			int hour = ZonedDateTime.now().getHour();
+			int min = ZonedDateTime.now().getMinute();
+			int sec = ZonedDateTime.now().getSecond();
+			System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + e);
+		}
+		
+		soundBoardButton = new JButton("Soundboard");
+		soundBoardButton.addActionListener(new SoundBoardButtonActionListener());
+		generateButton.addActionListener(gbal);
+		loadButton.addActionListener(new LoadButtonActionListener());
+		SpinnerNumberModel spinner = new SpinnerNumberModel(2, 2, 8, 1);
+		numPlayersSpinner = new JSpinner(spinner);
+		numPlayersSpinner.addChangeListener(new NumPlayersChangeListener());
+		numPlayersLabel = new JLabel("Number of players: ");
+		gc.weightx = .03;
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		gc.anchor = GridBagConstraints.CENTER;
+		bottomPanel.add(loadButton, gc);
+		gc.weightx = .22;
+		gc.gridx = 1;
+		bottomPanel.add(soundBoardButton, gc);
+		gc.weightx = 1;
+		gc.gridx = 2;
+		bottomPanel.add(generateButton, gc);
+		gc.weightx = .1;
+		gc.gridx = 3;
+		bottomPanel.add(skipButton, gc);
+		gc.gridx = 4;
+		gc.weightx = .03;
+		gc.fill = GridBagConstraints.NONE;
+		bottomPanel.add(numPlayersLabel, gc);
+		gc.gridx = 5;
+		gc.weightx = .05;
+		bottomPanel.add(numPlayersSpinner, gc);
 		
 		//customChanceRules panel
 		tierChanceLabel = new JLabel("You can set custom chances for "
@@ -334,7 +412,6 @@ public class Picker {
 		gc.gridy = 10;
 		gc.gridwidth = 2;
 		gc.anchor = GridBagConstraints.CENTER;
-		JLabel blank = new JLabel(" ");
 		tierChancesPanel.add(blank, gc);
 		gc.gridy = 11;
 		tierChancesPanel.add(applyButton, gc);
@@ -406,14 +483,326 @@ public class Picker {
 		gc.gridx = 0;
 		gc.weightx = 1;
 		gc.weighty = .15;
-		gc.gridwidth = 2;
+		gc.gridwidth = 3;
 		frame.add(bottomPanel, gc);
+		gc.gridy = 0;
+		gc.gridx = 2;
+		gc.gridwidth = 1;
+		frame.add(farRightPanel, gc);
 		
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
 				
 		//Finally make it visible
 		frame.setVisible(true);
+		
+	}
+	
+	private class SwitchManager {
+		private int numSelected;
+		private ArrayList<Integer> selected;
+		
+		private SwitchManager() {
+			numSelected = 0;
+			selected = new ArrayList<Integer>();
+		}
+		
+		private class Player1BoxActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numSelected == 2 && player1Box.isSelected()) {
+					JOptionPane.showMessageDialog(frame, "Only select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					player1Box.setSelected(false);
+				}
+				else {
+					if(selected.contains(1)) {
+						selected.remove(Integer.valueOf(1));
+						numSelected--;
+					}
+					else {
+						selected.add(1);
+						numSelected++;
+					}
+				}
+			}
+		}
+		
+		private class Player2BoxActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numSelected == 2 && player2Box.isSelected()) {
+					JOptionPane.showMessageDialog(frame, "Only select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					player2Box.setSelected(false);
+				}
+				else {
+					if(selected.contains(2)) {
+						selected.remove(Integer.valueOf(2));
+						numSelected--;
+					}
+					else {
+						selected.add(2);
+						numSelected++;
+					}
+				}
+			}
+		}
+		
+		private class Player3BoxActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numPlayers < 3) {
+					JOptionPane.showMessageDialog(frame, "There are not that "
+							+ "many players present.", "Smash Character Picker",
+							JOptionPane.WARNING_MESSAGE);
+					player3Box.setSelected(false);
+				}
+				else if(numSelected == 2 && player3Box.isSelected()) {
+					JOptionPane.showMessageDialog(frame, "Only select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					player3Box.setSelected(false);
+				}
+				else {
+					if(selected.contains(3)) {
+						selected.remove(Integer.valueOf(3));
+						numSelected--;
+					}
+					else {
+						selected.add(3);
+						numSelected++;
+					}
+				}
+			}
+		}
+		
+		private class Player4BoxActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numPlayers < 4) {
+					JOptionPane.showMessageDialog(frame, "There are not that "
+							+ "many players present.", "Smash Character Picker",
+							JOptionPane.WARNING_MESSAGE);
+					player4Box.setSelected(false);
+				}
+				else if(numSelected == 2 && player4Box.isSelected()) {
+					JOptionPane.showMessageDialog(frame, "Only select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					player4Box.setSelected(false);
+				}
+				else {
+					if(selected.contains(4)) {
+						selected.remove(Integer.valueOf(4));
+						numSelected--;
+					}
+					else {
+						selected.add(4);
+						numSelected++;
+					}
+				}
+			}
+		}
+		
+		private class Player5BoxActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numPlayers < 5) {
+					JOptionPane.showMessageDialog(frame, "There are not that "
+							+ "many players present.", "Smash Character Picker",
+							JOptionPane.WARNING_MESSAGE);
+					player5Box.setSelected(false);
+				}
+				else if(numSelected == 2 && player5Box.isSelected()) {
+					JOptionPane.showMessageDialog(frame, "Only select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					player5Box.setSelected(false);
+				}
+				else {
+					if(selected.contains(5)) {
+						selected.remove(Integer.valueOf(5));
+						numSelected--;
+					}
+					else {
+						selected.add(5);
+						numSelected++;
+					}
+				}
+			}
+		}
+		
+		private class Player6BoxActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numPlayers < 6) {
+					JOptionPane.showMessageDialog(frame, "There are not that "
+							+ "many players present.", "Smash Character Picker",
+							JOptionPane.WARNING_MESSAGE);
+					player6Box.setSelected(false);
+				}
+				else if(numSelected == 2 && player6Box.isSelected()) {
+					JOptionPane.showMessageDialog(frame, "Only select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					player6Box.setSelected(false);
+				}
+				else {
+					if(selected.contains(6)) {
+						selected.remove(Integer.valueOf(6));
+						numSelected--;
+					}
+					else {
+						selected.add(6);
+						numSelected++;
+					}
+				}
+			}
+		}
+		
+		private class Player7BoxActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numPlayers < 7) {
+					JOptionPane.showMessageDialog(frame, "There are not that "
+							+ "many players present.", "Smash Character Picker",
+							JOptionPane.WARNING_MESSAGE);
+					player7Box.setSelected(false);
+				}
+				else if(numSelected == 2 && player7Box.isSelected()) {
+					JOptionPane.showMessageDialog(frame, "Only select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					player7Box.setSelected(false);
+				}
+				else {
+					if(selected.contains(7)) {
+						selected.remove(Integer.valueOf(7));
+						numSelected--;
+					}
+					else {
+						selected.add(7);
+						numSelected++;
+					}
+				}
+			}
+		}
+		
+		private class Player8BoxActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				if(numPlayers < 8) {
+					JOptionPane.showMessageDialog(frame, "There are not that "
+							+ "many players present.", "Smash Character Picker",
+							JOptionPane.WARNING_MESSAGE);
+					player8Box.setSelected(false);
+				}
+				else if(numSelected == 2 && player8Box.isSelected()) {
+					JOptionPane.showMessageDialog(frame, "Only select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					player8Box.setSelected(false);
+				}
+				else {
+					if(selected.contains(8)) {
+						selected.remove(Integer.valueOf(8));
+						numSelected--;
+					}
+					else {
+						selected.add(8);
+						numSelected++;
+					}
+				}
+			}
+		}
+		
+		private class SwitchButtonActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				int p1 = selected.get(0) - 1;
+				int p2 = selected.get(1) - 1;
+				String char1 = gotten.get(p1);
+				String char2 = gotten.get(p2);
+				int tier1 = individualCannotGet[p1].getAndRemoveLastTier();
+				int tier2 = individualCannotGet[p2].getAndRemoveLastTier();
+				
+				individualCannotGet[p1].add(char2, tier2);
+				individualCannotGet[p2].add(char1, tier1);
+				
+				gotten.remove(char1);
+				gotten.remove(char2);
+				if(p2 > p1) {
+					gotten.add(p1, char2);
+					gotten.add(p2, char1);
+				}
+				else {
+					gotten.add(p2, char1);
+					gotten.add(p1, char2);
+				}
+				
+				//refresh the screen
+				results.setText("");
+				results.setText("Battle #" + numBattles + ":\n");
+				for(int at = 0; at < numPlayers; at++) {
+					results.append("Player " + (at + 1) + " got " + gotten.get(at) + ", " + tierToString(individualCannotGet[at].getLastTier()) + ".\n");
+				}
+				
+				player1Box.setSelected(false);
+				player2Box.setSelected(false);
+				player3Box.setSelected(false);
+				player4Box.setSelected(false);
+				player5Box.setSelected(false);
+				player6Box.setSelected(false);
+				player7Box.setSelected(false);
+				player8Box.setSelected(false);
+				numSelected = 0;
+				selected.clear();
+			}
+			
+			private String tierToString(int tier) {
+				switch(tier) {
+					case 0:
+						return "Double S tier";
+					case 1:
+						return "Upper S tier";
+					case 2:
+						return "Mid S tier";
+					case 3:
+						return "Lower S tier";
+					case 4:
+						return "Upper A tier";
+					case 5:
+						return "Mid A tier";
+					case 6:
+						return "Lower A tier";
+					case 7:
+						return "Upper B tier";
+					case 8:
+						return "Mid B tier";
+					case 9:
+						return "Lower B tier";
+					case 10:
+						return "Upper C tier";
+					case 11:
+						return "Mid C tier";
+					case 12:
+						return "Lower C tier";
+					case 13:
+						return "Upper D tier";
+					case 14:
+						return "Mid D tier";
+					case 15:
+						return "Lower D tier";
+					case 16:
+						return "Upper E tier";
+					case 17:
+						return "Mid E tier";
+					case 18:
+						return "Lower E tier";
+					case 19:
+						return "Upper F tier";
+					case 20:
+						return "Mid F tier";
+					case 21:
+						return "Lower F tier";
+					default:
+						return "Invalid tier";
+				}
+			}
+		}
+	}
+	
+	private class SkipButtonActionListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			skipping = true;
+			gbal.actionPerformed(null);
+		}
 		
 	}
 	
@@ -428,7 +817,8 @@ public class Picker {
 		private JButton bruhSoundEffectButton;
 		private JButton angerousNowButton;
 		private JButton theWorstButton;
-		private JButton excuseMeButton;
+		private JButton excuseMeWhatButton;
+		private JButton bscuseMeButton;
 		private JButton ghoulButton;
 		private JButton whatButton;
 		private JButton ohNoButton;
@@ -439,6 +829,8 @@ public class Picker {
 		private JButton despiseHimButton;
 		private JButton whatDuhHeckButton;
 		private JButton cheaterButton;
+		private JButton ohMyGodButton;
+		private JButton doingStringsButton;
 		
 		public void actionPerformed(ActionEvent e) {
 			
@@ -506,8 +898,10 @@ public class Picker {
 			angerousNowButton.addActionListener(new AngerousNowActionListener());
 			theWorstButton = new JButton("<html><center>This is... the<br>worst</center></html>");
 			theWorstButton.addActionListener(new TheWorstActionListener());
-			excuseMeButton = new JButton("<html><center>\"Excuse me!\"<br>- Arin</center></html>");
-			excuseMeButton.addActionListener(new ExcuseMeActionListener());
+			bscuseMeButton = new JButton("B'scuse me");
+			bscuseMeButton.addActionListener(new BscuseMeActionListener());
+			excuseMeWhatButton = new JButton("<html><center>Excuse me<br>whaaaat</center></html>");
+			excuseMeWhatButton.addActionListener(new ExcuseMeWhatActionListener());
 			ghoulButton = new JButton("Ghoul");
 			ghoulButton.addActionListener(new GhoulActionListener());
 			whatButton = new JButton("What");
@@ -528,6 +922,10 @@ public class Picker {
 			whatDuhHeckButton.addActionListener(new WhatDuhHeckActionListener());
 			cheaterButton = new JButton("Cheater!");
 			cheaterButton.addActionListener(new CheaterActionListener());
+			ohMyGodButton = new JButton("Oh my GOD");
+			ohMyGodButton.addActionListener(new OhMyGodActionListener());
+			doingStringsButton = new JButton("<html>This dude's<br>doing strings</html>");
+			doingStringsButton.addActionListener(new DoingStringsActionListener());
 			
 			soundboardPanel.add(doItAgainButton);
 			soundboardPanel.add(neutralAerialButton);
@@ -536,8 +934,9 @@ public class Picker {
 			soundboardPanel.add(bruhSoundEffectButton);
 			soundboardPanel.add(angerousNowButton);
 			soundboardPanel.add(theWorstButton);
-			soundboardPanel.add(excuseMeButton);
+			soundboardPanel.add(bscuseMeButton);
 			soundboardPanel.add(whatDuhHeckButton);
+			soundboardPanel.add(excuseMeWhatButton);
 			soundboardPanel.add(ghoulButton);
 			soundboardPanel.add(whatButton);
 			soundboardPanel.add(ohNoButton);
@@ -547,6 +946,8 @@ public class Picker {
 			soundboardPanel.add(okMomButton);
 			soundboardPanel.add(despiseHimButton);
 			soundboardPanel.add(cheaterButton);
+			soundboardPanel.add(ohMyGodButton);
+			soundboardPanel.add(doingStringsButton);
 			
 			soundboardFrame.getContentPane().add(soundboardPanel);
 			
@@ -579,6 +980,40 @@ public class Picker {
 			}
 			
 			public void windowOpened(WindowEvent e) {
+			}
+		}
+		
+		private class DoingStringsActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					InputStream is = getClass().getResourceAsStream("/sounds/doingstrings.wav");
+					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
+					Clip clip = AudioSystem.getClip();
+					clip.open(stream);
+					clip.start();
+				} catch(Exception ex) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+				}
+			}
+		}
+		
+		private class OhMyGodActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					InputStream is = getClass().getResourceAsStream("/sounds/ohmygod.wav");
+					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
+					Clip clip = AudioSystem.getClip();
+					clip.open(stream);
+					clip.start();
+				} catch(Exception ex) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+				}
 			}
 		}
 		
@@ -769,10 +1204,27 @@ public class Picker {
 			}
 		}
 		
-		private class ExcuseMeActionListener implements ActionListener {
+		private class BscuseMeActionListener implements ActionListener {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					InputStream is = getClass().getResourceAsStream("/sounds/excuseme.wav");
+					InputStream is = getClass().getResourceAsStream("/sounds/bscuseme.wav");
+					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
+					Clip clip = AudioSystem.getClip();
+					clip.open(stream);
+					clip.start();
+				} catch(Exception ex) {
+					int hour = ZonedDateTime.now().getHour();
+					int min = ZonedDateTime.now().getMinute();
+					int sec = ZonedDateTime.now().getSecond();
+					System.err.println("[" + hour + ":" + min + ":" + sec + "]: " + ex);
+				}
+			}
+		}
+		
+		private class ExcuseMeWhatActionListener implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					InputStream is = getClass().getResourceAsStream("/sounds/excusemewhat.wav");
 					AudioInputStream stream = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
 					Clip clip = AudioSystem.getClip();
 					clip.open(stream);
@@ -935,12 +1387,15 @@ public class Picker {
 					JOptionPane.showMessageDialog(frame, "You must load a tier "
 							+ "list first!", "Smash Character Picker", 
 							JOptionPane.ERROR_MESSAGE);
+					skipping = false;
 					return;
 				}
 				//clear the results area
 				results.setText("");
-				//show number of battles
-				numBattles++;
+				//show number of battles if not skipping
+				if(!skipping || numBattles == 0) {
+					numBattles++;
+				}
 				results.append("Battle #" + numBattles + ":\n");
 				
 				int[] playerTiers = new int[numPlayers];
@@ -951,7 +1406,7 @@ public class Picker {
 					playerTiers = getPlayerTiers(standardTierChances);
 				}
 				
-				ArrayList<String> gotten = new ArrayList<String>();
+				gotten.clear();
 				for(int player = 1; player <= numPlayers; player++) {
 					int tier = playerTiers[player - 1];
 					String got = "";
@@ -964,14 +1419,17 @@ public class Picker {
 					for(String currentlyAt: linesOfFile.get(tier)) {
 						if(!linesOfFile.get(player + 21).contains(currentlyAt) &&
 						   !cannotGet.contains(currentlyAt) &&
-						   !gotten.contains(currentlyAt)) {
+						   !gotten.contains(currentlyAt) &&
+						   !individualCannotGet[player - 1].contains(currentlyAt)) {
 							validCharacters.add(currentlyAt);
 						}
 					}
 					
 					//if there are no valid characters, call the function again
 					if(validCharacters.size() == 0) {
-						numBattles--;
+						if(!skipping) {
+							numBattles--;
+						}
 						actionPerformed(null);
 						return;
 					}
@@ -993,6 +1451,10 @@ public class Picker {
 				for(int playerAt = 0; playerAt < gotten.size(); playerAt++) {
 					int tier = playerTiers[playerAt];
 					
+					if(skipping) {
+						individualCannotGet[playerAt].removeLast();
+					}
+					
 					if(tier == 0 && SSAllowedInCannotGetBuffer) {
 						cannotGet.add(gotten.get(playerAt), tier);
 					}
@@ -1002,7 +1464,18 @@ public class Picker {
 					else if(tier >= 4) {
 						cannotGet.add(gotten.get(playerAt), tier);
 					}
+					
+					//if the gotten character is a favorite, don't add it to the
+					//cannot get for rest of session queue
+					if(!linesOfFile.get(30 + playerAt).contains(gotten.get(playerAt))) {
+						individualCannotGet[playerAt].add(gotten.get(playerAt), tier);
+					}
+					System.out.println("[DEBUG]: Player " + (playerAt + 1) + " cannot get " + individualCannotGet[playerAt]);
 				}
+				
+				System.out.println("[DEBUG]: Nobody can get " + cannotGet);
+				
+				skipping = false;
 			}
 		}
 		
@@ -1059,7 +1532,7 @@ public class Picker {
 			
 			return playerTiers;
 		}
-		
+
 		private boolean tierTurnedOff(int tier, int[] chances) {
 			if(tier == 0 && chances[0] == 0) {
 				return true;
@@ -1091,71 +1564,53 @@ public class Picker {
 		}
 		
 		private String tierToString(int tier) {
-			if(tier == 0) {
-				return "Double S tier";
-			}
-			else if(tier == 1) {
-				return "Upper S tier";
-			}
-			else if(tier == 2) {
-				return "Mid S tier";
-			}
-			else if(tier == 3) {
-				return "Lower S tier";
-			}
-			else if(tier == 4) {
-				return "Upper A tier";
-			}
-			else if(tier == 5) {
-				return "Mid A tier";
-			}
-			else if(tier == 6) {
-				return "Lower A tier";
-			}
-			else if(tier == 7) {
-				return "Upper B tier";
-			}
-			else if(tier == 8) {
-				return "Mid B tier";
-			}
-			else if(tier == 9) {
-				return "Lower B tier";
-			}
-			else if(tier == 10) {
-				return "Upper C tier";
-			}
-			else if(tier == 11) {
-				return "Mid C tier";
-			}
-			else if(tier == 12) {
-				return "Lower C tier";
-			}
-			else if(tier == 13) {
-				return "Upper D tier";
-			}
-			else if(tier == 14) {
-				return "Mid D tier";
-			}
-			else if(tier == 15) {
-				return "Lower D tier";
-			}
-			else if(tier == 16) {
-				return "Upper E tier";
-			}
-			else if(tier == 17) {
-				return "Mid E tier";
-			}
-			else if(tier == 18) {
-				return "Lower E tier";
-			}
-			else if(tier == 19) {
-				return "Upper F tier";
-			}
-			else if(tier == 20) {
-				return "Mid F tier";
-			}
-			else {
-				return "Lower F tier";
+			switch(tier) {
+				case 0:
+					return "Double S tier";
+				case 1:
+					return "Upper S tier";
+				case 2:
+					return "Mid S tier";
+				case 3:
+					return "Lower S tier";
+				case 4:
+					return "Upper A tier";
+				case 5:
+					return "Mid A tier";
+				case 6:
+					return "Lower A tier";
+				case 7:
+					return "Upper B tier";
+				case 8:
+					return "Mid B tier";
+				case 9:
+					return "Lower B tier";
+				case 10:
+					return "Upper C tier";
+				case 11:
+					return "Mid C tier";
+				case 12:
+					return "Lower C tier";
+				case 13:
+					return "Upper D tier";
+				case 14:
+					return "Mid D tier";
+				case 15:
+					return "Lower D tier";
+				case 16:
+					return "Upper E tier";
+				case 17:
+					return "Mid E tier";
+				case 18:
+					return "Lower E tier";
+				case 19:
+					return "Upper F tier";
+				case 20:
+					return "Mid F tier";
+				case 21:
+					return "Lower F tier";
+				default:
+					return "Invalid tier";
 			}
 		}
 		
@@ -1251,6 +1706,14 @@ public class Picker {
 				//p6exc		index 27
 				//p7exc		index 28
 				//p8exc		index 29
+				//p1fav		index 30
+				//p2fav		index 31
+				//p3fav		index 32
+				//p4fav		index 33
+				//p5fav		index 34
+				//p6fav		index 35
+				//p7fav		index 36
+				//p8fav		index 37
 				
 				//read first line
 				String lineAt = in.readLine();
@@ -1266,79 +1729,139 @@ public class Picker {
 							foundEqual = true;
 							next = next.substring(0, next.length() - 1);
 							next = next.toLowerCase();
-							if(next.equals("double s"))
-								readLine(0, at, lineAt);
-							else if(next.equals("upper s"))
-								readLine(1, at, lineAt);
-							else if(next.equals("mid s"))
-								readLine(2, at, lineAt);
-							else if(next.equals("lower s"))
-								readLine(3, at, lineAt);
-							else if(next.equals("upper a"))
-								readLine(4, at, lineAt);
-							else if(next.equals("mid a"))
-								readLine(5, at, lineAt);
-							else if(next.equals("lower a"))
-								readLine(6, at, lineAt);
-							else if(next.equals("upper b"))
-								readLine(7, at, lineAt);
-							else if(next.equals("mid b"))
-								readLine(8, at, lineAt);
-							else if(next.equals("lower b"))
-								readLine(9, at, lineAt);
-							else if(next.equals("upper c"))
-								readLine(10, at, lineAt);
-							else if(next.equals("mid c"))
-								readLine(11, at, lineAt);
-							else if(next.equals("lower c"))
-								readLine(12, at, lineAt);
-							else if(next.equals("upper d"))
-								readLine(13, at, lineAt);
-							else if(next.equals("mid d"))
-								readLine(14, at, lineAt);
-							else if(next.equals("lower d"))
-								readLine(15, at, lineAt);
-							else if(next.equals("upper e"))
-								readLine(16, at, lineAt);
-							else if(next.equals("mid e"))
-								readLine(17, at, lineAt);
-							else if(next.equals("lower e"))
-								readLine(18, at, lineAt);
-							else if(next.equals("upper f"))
-								readLine(19, at, lineAt);
-							else if(next.equals("mid f"))
-								readLine(20, at, lineAt);
-							else if(next.equals("lower f"))
-								readLine(21, at, lineAt);
-							else if(next.equals("p1 exclude"))
-								readLine(22, at, lineAt);
-							else if(next.equals("p2 exclude"))
-								readLine(23, at, lineAt);
-							else if(next.equals("p3 exclude"))
-								readLine(24, at, lineAt);
-							else if(next.equals("p4 exclude"))
-								readLine(25, at, lineAt);
-							else if(next.equals("p5 exclude"))
-								readLine(26, at, lineAt);
-							else if(next.equals("p6 exclude"))
-								readLine(27, at, lineAt);
-							else if(next.equals("p7 exclude"))
-								readLine(28, at, lineAt);
-							else if(next.equals("p8 exclude"))
-								readLine(29, at, lineAt);
-							else if(next.equals("tier chances"))
-								readSetting(1, at, lineAt);
-							else if(next.equals("cannot get size"))
-								readSetting(2, at, lineAt);
-							else if(next.equals("allow ss in cannot get"))
-								readSetting(3, at, lineAt);
-							else if(next.equals("allow s in cannot get"))
-								readSetting(4, at, lineAt);
-							else if(next.equals("players"))
-								readSetting(5, at, lineAt);
-							else {
-								in.close();
-								throw new IOException();
+							switch(next) {
+								case "double s":
+									readLine(0, at, lineAt);
+									break;
+								case "upper s":
+									readLine(1, at, lineAt);
+									break;
+								case "mid s":
+									readLine(2, at, lineAt);
+									break;
+								case "lower s":
+									readLine(3, at, lineAt);
+									break;
+								case "upper a":
+									readLine(4, at, lineAt);
+									break;
+								case "mid a":
+									readLine(5, at, lineAt);
+									break;
+								case "lower a":
+									readLine(6, at, lineAt);
+									break;
+								case "upper b":
+									readLine(7, at, lineAt);
+									break;
+								case "mid b":
+									readLine(8, at, lineAt);
+									break;
+								case "lower b":
+									readLine(9, at, lineAt);
+									break;
+								case "upper c":
+									readLine(10, at, lineAt);
+									break;
+								case "mid c":
+									readLine(11, at, lineAt);
+									break;
+								case "lower c":
+									readLine(12, at, lineAt);
+									break;
+								case "upper d":
+									readLine(13, at, lineAt);
+									break;
+								case "mid d":
+									readLine(14, at, lineAt);
+									break;
+								case "lower d":
+									readLine(15, at, lineAt);
+									break;
+								case "upper e":
+									readLine(16, at, lineAt);
+									break;
+								case "mid e":
+									readLine(17, at, lineAt);
+									break;
+								case "lower e":
+									readLine(18, at, lineAt);
+									break;
+								case "upper f":
+									readLine(19, at, lineAt);
+									break;
+								case "mid f":
+									readLine(20, at, lineAt);
+									break;
+								case "lower f":
+									readLine(21, at, lineAt);
+									break;
+								case "p1 exclude":
+									readLine(22, at, lineAt);
+									break;
+								case "p2 exclude":
+									readLine(23, at, lineAt);
+									break;
+								case "p3 exclude":
+									readLine(24, at, lineAt);
+									break;
+								case "p4 exclude":
+									readLine(25, at, lineAt);
+									break;
+								case "p5 exclude":
+									readLine(26, at, lineAt);
+									break;
+								case "p6 exclude":
+									readLine(27, at, lineAt);
+									break;
+								case "p7 exclude":
+									readLine(28, at, lineAt);
+									break;
+								case "p8 exclude":
+									readLine(29, at, lineAt);
+									break;
+								case "p1 favorite":
+									readLine(30, at, lineAt);
+									break;
+								case "p2 favorite":
+									readLine(31, at, lineAt);
+									break;
+								case "p3 favorite":
+									readLine(32, at, lineAt);
+									break;
+								case "p4 favorite":
+									readLine(33, at, lineAt);
+									break;
+								case "p5 favorite":
+									readLine(34, at, lineAt);
+									break;
+								case "p6 favorite":
+									readLine(35, at, lineAt);
+									break;
+								case "p7 favorite":
+									readLine(36, at, lineAt);
+									break;
+								case "p8 favorite":
+									readLine(37, at, lineAt);
+									break;
+								case "tier chances":
+									readSetting(1, at, lineAt);
+									break;
+								case "cannot get size":
+									readSetting(2, at, lineAt);
+									break;
+								case "allow ss in cannot get":
+									readSetting(3, at, lineAt);
+									break;
+								case "allow s in cannot get":
+									readSetting(4, at, lineAt);
+									break;
+								case "players":
+									readSetting(5, at, lineAt);
+									break;
+								default:
+									in.close();
+									throw new IOException(next);
 							}
 						}
 						else {
@@ -1382,6 +1905,9 @@ public class Picker {
 			}
 			for(int at = 22; at < 30; at++) {
 				System.out.println("         Player " + (at - 21) + " exclude:\t" + linesOfFile.get(at));
+			}
+			for(int at = 30; at < 38; at++) {
+				System.out.println("         Player " + (at - 29) + " favorites:\t" + linesOfFile.get(at));
 			}
 			
 			fileLoaded = true;
