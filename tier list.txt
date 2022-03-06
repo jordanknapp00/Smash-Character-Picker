@@ -23,6 +23,7 @@ p2 favorite = Terry, Ridley
 p3 favorite = Cloud, Marth
 
 tier chances = 5, 15, 20, 25, 20, 15, 0, 0
+bump chances = 34, 33, 33
 cannot get size = 10
 allow ss in cannot get = true
 allow s in cannot get = true

@@ -18,12 +18,14 @@ upper c = Ice Climbers, Mii Swordfighter, King K. Rool, Lucario, Incineroar
 lower c = Piranha Plant, King Dedede, Donkey Kong, Kirby, Isabelle
 upper d = Dr. Mario, Ganondorf, Little Mac
 
-#I'll include some settings down here as an example of how they work
+#Settings:
 tier chances = 0, 20, 20, 25, 20, 15, 0, 0
 cannot get size = 12
 allow s in cannot get = true
 #The following is a default setting. I put it here anyways
 players = 2
+#Note: I'm setting it like this because getting bumped up by one is essentially useless here
+bump chances = 67, 0, 33
 
 #You could define some favorites and exlusions down here if you want
 #Right now this does the equivalent of not including them at all
