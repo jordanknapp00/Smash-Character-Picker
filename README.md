@@ -100,6 +100,8 @@ Adding new fighters to the system is easy. Simply add the fighters to your tier 
 
 #### Stat Files
 
-Statistics are stored in a file called `smash stats.sel`, which is stored in the same directory as the program and tier list file. The stats file simply stores the HashMap object which represents the stats system internally. This means that it is not editable with a text editor. The Smash Character Picker program is only designed to read `smash stats.sel`. I did write a separate program just designed for reading stats files, not writing them, but that is not included here. If there is any kind of demand for it, I'll release it somewhere.
+Statistics are stored in a file called `smash stats.sel`, which is stored in the same directory as the program and tier list file. The stats file simply stores the HashMap object which represents the stats system internally. This means that it is not editable with a text editor. The Smash Character Picker program is only designed to read `smash stats.sel`.
+
+If you want to read `.sel` files other than `smash stats.sel`, you can use the [Smash Stats Viewer](https://github.com/jordanknapp00/Smash-Stats-Viewer). This program allows read-only access to `.sel` files, so you can read various stats files without making modifications.
 
 This version of the program comes with a `smash stats.sel` file. It is intended to be used with `tier list.txt`, not `reddit tier list.txt`.
