@@ -158,8 +158,8 @@ public class MainWindow {
 		//window
 		frame = new JFrame("Smash Character Picker");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(800, 435);
-		frame.setResizable(false);
+		frame.setSize(825, 450);
+		//frame.setResizable(false);
 		
 		//we want to place the window 25 pixels to the left of the center
 		frame.setLocationRelativeTo(null);

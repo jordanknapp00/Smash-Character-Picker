@@ -64,7 +64,7 @@ public class SoundboardWindow {
 	public SoundboardWindow(MainWindow parent, ProgramState state) {		
 		frame = new JFrame("Soundboard");
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setSize(325, 435);
+		frame.setSize(325, 450);
 		frame.setResizable(false);
 		
 		this.state = state;

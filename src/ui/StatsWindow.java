@@ -59,7 +59,7 @@ public class StatsWindow {
 	public StatsWindow(MainWindow parent, ProgramState state) {
 		frame = new JFrame("Smash Character Picker Stats");
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setSize(375, 435);
+		frame.setSize(375, 450);
 		frame.setResizable(false);
 		
 		this.state = state;
