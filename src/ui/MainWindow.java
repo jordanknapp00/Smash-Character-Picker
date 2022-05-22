@@ -74,16 +74,24 @@ public class MainWindow {
 	//all Swing objects are fields of the MainWindow class
 	
 	private JFrame frame;
+	
 	private JPanel resultsPanel;
 	private JPanel switchPanel;
 	private JPanel bottomPanel;
+	
 	//leftPanel will encapsulate the tierChancePanel and cannotGetPanel
 	private JPanel leftPanel;
 	private JPanel cannotGetPanel;
+	
 	//tierChancePanel will encapsulate tierChanceTopPanel and tierChanceBottomPanel
 	private JPanel tierChancePanel;
 	private JPanel tierChanceTopPanel;
 	private JPanel tierChanceBottomPanel;
+	
+	//statsPanel will encapsulate statsTopPanel and statsBottomPanel
+	private JPanel statsPanel;
+	private JPanel statsTopPanel;
+	private JPanel statsBottomPanel;
 	
 	//resultsPanel only has one component, the results text area
 	private JTextArea results;
@@ -143,6 +151,13 @@ public class MainWindow {
 	private JSpinner cannotGetSizeSpinner;
 	private JCheckBox allowSSInCannotGet;
 	private JCheckBox allowSInCannotGet;
+	
+	//stats panel components
+	private JLabel playerLabel;
+	private JSpinner winnerSpinner;
+	private JButton pickWinnerButton;
+	private JButton lookupButton;
+	private JButton reloadButton;
 	
 	private ProgramState state;
 	private BattleGenerator battleGenerator;
