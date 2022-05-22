@@ -93,7 +93,6 @@ public class MainWindow {
 	private JSpinner numPlayersSpinner;
 	private JLabel numPlayersLabel;
 	private JButton loadButton;
-	private JButton soundBoardButton;
 	private JButton skipButton;
 	private JButton debugButton;
 	private JButton statsButton;
@@ -295,8 +294,6 @@ public class MainWindow {
 		statsButton.addActionListener(new StatsButtonActionListener());
 		debugButton = new JButton("Debug");
 		debugButton.addActionListener(new DebugButtonActionListener());
-		soundBoardButton = new JButton("Soundboard");
-		soundBoardButton.addActionListener(new SoundboardButtonActionListener());
 		loadButton.addActionListener(new LoadButtonActionListener());
 		
 		numPlayersLabel = new JLabel("Number of players: ");
@@ -313,25 +310,22 @@ public class MainWindow {
 		gc.fill = GridBagConstraints.HORIZONTAL;
 		gc.anchor = GridBagConstraints.CENTER;
 		bottomPanel.add(loadButton, gc);
-		gc.weightx = .1;
+		gc.weightx = .77;
 		gc.gridx = 1;
-		bottomPanel.add(soundBoardButton, gc);
-		gc.weightx = .67;
-		gc.gridx = 2;
 		bottomPanel.add(generateButton, gc);
 		gc.weightx = .05;
-		gc.gridx = 3;
+		gc.gridx = 2;
 		bottomPanel.add(skipButton, gc);
-		gc.gridx = 4;
+		gc.gridx = 3;
 		bottomPanel.add(debugButton, gc);
-		gc.gridx = 5;
+		gc.gridx = 4;
 		gc.weightx = .03;
 		gc.fill = GridBagConstraints.NONE;
 		bottomPanel.add(numPlayersLabel, gc);
-		gc.gridx = 6;
+		gc.gridx = 5;
 		gc.weightx = .05;
 		bottomPanel.add(numPlayersSpinner, gc);
-		gc.gridx = 7;
+		gc.gridx = 6;
 		bottomPanel.add(statsButton, gc);
 		
 		//initialize tierChanceTopPanel
@@ -688,14 +682,6 @@ public class MainWindow {
 			
 			FileLoaderParser flp = new FileLoaderParser(MainWindow.this, state);
 			flp.loadFile();
-		}
-	}
-	
-	private class SoundboardButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if(!state.openedSoundboard) {
-				new SoundboardWindow(MainWindow.this, state);
-			}
 		}
 	}
 	
