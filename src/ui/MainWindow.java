@@ -630,7 +630,7 @@ public class MainWindow {
 		lookupButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(!state.openedLookup) {
-					new LookupWindow(state);
+					new LookupWindow(state, statsManager, MainWindow.this);
 				}
 			}
 		});

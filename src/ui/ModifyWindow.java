@@ -21,6 +21,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import data.ProgramState;
+import picker.StatsManager;
 import util.Util;
 
 public class ModifyWindow {
@@ -50,11 +51,11 @@ public class ModifyWindow {
 	
 	private ProgramState state;
 	
-	public ModifyWindow(ProgramState state, String toModify) {
+	public ModifyWindow(ProgramState state, StatsManager statsManager, String toModify) {
 		this.state = state;
 		
 		if(!state.stats.containsKey(toModify)) {
-			Util.writeToStats("Fighter " + toModify + " not found!");
+			statsManager.writeToStats("Fighter " + toModify + " not found!");
 			return;
 		}
 		

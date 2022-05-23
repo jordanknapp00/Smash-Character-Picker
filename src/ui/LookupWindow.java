@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import data.ProgramState;
+import picker.StatsManager;
 import util.Util;
 import data.ComparableArray;
 
@@ -40,13 +41,14 @@ public class LookupWindow {
 	private int selectedOption;
 	
 	private ProgramState state;
+	private StatsManager statsManager;
 	
-	public LookupWindow(ProgramState state) {
+	public LookupWindow(ProgramState state, StatsManager statsManager, MainWindow parent) {
 		frame = new JFrame("Smash Character Picker");
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setSize(325, 200);
 		frame.setResizable(false);
-		frame.setLocationRelativeTo(null);
+		frame.setLocation(parent.getX(), (int) (parent.getY() + parent.getHeight()));
 		
 		topPanel = new JPanel();
 		topPanel.setBorder(BorderFactory.createTitledBorder("Lookup"));
@@ -77,7 +79,7 @@ public class LookupWindow {
 		toModify.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(!state.openedModify) {
-					new ModifyWindow(state, toModify.getText());
+					new ModifyWindow(state, statsManager, toModify.getText());
 				}
 			}
 		});
@@ -85,7 +87,7 @@ public class LookupWindow {
 		modifyButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(!state.openedModify) {
-					new ModifyWindow(state, toModify.getText());
+					new ModifyWindow(state, statsManager, toModify.getText());
 				}
 			}
 		});
@@ -107,6 +109,7 @@ public class LookupWindow {
 		frame.add(bottomPanel, gc);
 		
 		this.state = state;
+		this.statsManager = statsManager;
 		
 		selectedOption = 0;
 		
@@ -133,7 +136,7 @@ public class LookupWindow {
 						toOutput += data[at] + "\n";
 					}
 					
-					Util.writeToStats(toOutput);
+					statsManager.writeToStats(toOutput);
 					return;
 				case 2:
 					toOutput += "Sorted by Player 1's win rate:\n";
@@ -178,7 +181,7 @@ public class LookupWindow {
 						at++;
 					}
 					
-					Util.writeToStats(toOutput);
+					statsManager.writeToStats(toOutput);
 					return;
 				default:
 					toOutput += "Error, unrecognized sort ID.\n";
@@ -193,7 +196,7 @@ public class LookupWindow {
 				at++;
 			}
 			
-			Util.writeToStats(toOutput);
+			statsManager.writeToStats(toOutput);
 		}
 		
 		private ComparableArray[] getPlayerWinrateStats() {
@@ -280,7 +283,7 @@ public class LookupWindow {
 				toOutput += "Fighter " + lookup + " not found!\n";
 			}
 			
-			Util.writeToStats(toOutput);
+			statsManager.writeToStats(toOutput);
 		}
 	}
 	
