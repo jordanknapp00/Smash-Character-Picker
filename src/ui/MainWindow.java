@@ -28,6 +28,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
@@ -164,11 +165,13 @@ public class MainWindow {
 	private StatsManager statsManager;
 	
 	public MainWindow() {
-		//begin by initializing the state of the program to its default state
-		//as well as any other picker classes
+		//initialize the debug first, in case errors occur later
+		Util.initDebug();
+		
+		//initialize the program state, as well as any other picker classes
 		state = new ProgramState(this);
-		battleGenerator = new BattleGenerator(state);
 		statsManager = new StatsManager(state);
+		battleGenerator = new BattleGenerator(state, statsManager);
 		
 		//initializing the frame that holds everything together in the main
 		//window
@@ -185,11 +188,6 @@ public class MainWindow {
 		results = new JTextArea();
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
-	
-		//initialize the debug now, as some errors may potentially occur during
-		//the next part of the initialization
-		Util.initDebug();
-		
 		
 		//attempt to set look and feel, catching any errors
 		try {
@@ -612,6 +610,7 @@ public class MainWindow {
 		statsBottomPanel = new JPanel();
 		statsBottomPanel.setLayout(new GridBagLayout());
 		playerLabel = new JLabel("Player: ");
+		
 		SpinnerNumberModel winnerSpinnerModel = new SpinnerNumberModel(1, 1, 8, 1);
 		winnerSpinner = new JSpinner(winnerSpinnerModel);
 		winnerSpinner.addChangeListener(new ChangeListener() {
@@ -619,10 +618,20 @@ public class MainWindow {
 				statsManager.setSelectedWinner((int) winnerSpinner.getValue());
 			}
 		});
+		
 		pickWinnerButton = new JButton("Select winner");
 		pickWinnerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				statsManager.pickWinner();
+			}
+		});
+		
+		lookupButton = new JButton("Look up stats");
+		lookupButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(!state.openedLookup) {
+					new LookupWindow(state);
+				}
 			}
 		});
 		
@@ -632,6 +641,44 @@ public class MainWindow {
 				statsManager.updateStatsScreen();
 			}
 		});
+		
+		statsPanel = new JPanel();
+		statsPanel.setLayout(new GridBagLayout());
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weighty = 1;
+		gc.weightx = .1;
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		statsBottomPanel.add(playerLabel, gc);
+		gc.gridx = 1;
+		gc.weightx = .05;
+		statsBottomPanel.add(winnerSpinner, gc);
+		gc.gridx = 2;
+		gc.weightx = .3;
+		statsBottomPanel.add(Box.createRigidArea(new Dimension(3, 0)), gc);
+		gc.gridx = 3;
+		gc.weightx = .35;
+		statsBottomPanel.add(pickWinnerButton, gc);
+		gc.gridx = 4;
+		gc.weightx = .25;
+		statsBottomPanel.add(lookupButton, gc);
+		gc.gridx = 5;
+		statsBottomPanel.add(reloadButton, gc);
+		
+		//add top and bottom panel to main stats panel
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weightx = 1;
+		gc.weighty = .98;
+		gc.fill = GridBagConstraints.BOTH;
+		gc.anchor = GridBagConstraints.CENTER;
+		statsPanel.setLayout(new GridBagLayout());
+		JScrollPane scrollPane = new JScrollPane(statsTopPanel);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		statsPanel.add(scrollPane, gc);
+		gc.gridy = 1;
+		gc.weighty = .02;
+		statsPanel.add(statsBottomPanel, gc);
 		
 		//put it all together
 		frame.getContentPane().setLayout(new GridBagLayout());
@@ -655,6 +702,9 @@ public class MainWindow {
 		gc.gridx = 2;
 		gc.gridwidth = 1;
 		frame.add(switchPanel, gc);
+		gc.gridx = 3;
+		gc.gridheight = 2;
+		frame.add(statsPanel, gc);
 		
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
@@ -671,7 +721,7 @@ public class MainWindow {
 			if(JOptionPane.showConfirmDialog(frame, "Found 'tier list.txt' file.\n"
 						+ "Load it?", "Smash Character Picker",
 						JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-				FileLoaderParser loader = new FileLoaderParser(this, state);
+				FileLoaderParser loader = new FileLoaderParser(this, state, statsManager);
 				loader.parseFile(tierListMaybe);
 			}
 		}
@@ -722,7 +772,7 @@ public class MainWindow {
 				}
 			}
 			
-			FileLoaderParser flp = new FileLoaderParser(MainWindow.this, state);
+			FileLoaderParser flp = new FileLoaderParser(MainWindow.this, state, statsManager);
 			flp.loadFile();
 		}
 	}

@@ -179,5 +179,23 @@ public final class Util {
 		System.err.println("[" + hour + ":" + min + ":" + sec + "]:\t" + err);
 		debug.append("[" + hour + ":" + min + ":" + sec + "]:\t" + err + "\n");
 	}
+	
+	/**
+	 * A method that returns a better string representation of an array of
+	 * <code>double</code>s than just the memory address. Given that this is
+	 * only used in the context of printing things to the debug log, we're
+	 * assuming that the array will be 16 entries in length.
+	 * 
+	 * @param arr	The array of doubles.
+	 * @return		The values in the array, comma separated.
+	 */
+	public static String doubleArrString(double[] arr) {
+		String returnString = "";
+		for(int at = 0; at < 14; at++) {
+			returnString += arr[at] + ",";
+		}
+		returnString += arr[15];
+		return returnString;
+	}
 
 }

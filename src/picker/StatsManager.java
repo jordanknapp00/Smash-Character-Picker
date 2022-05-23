@@ -1,5 +1,11 @@
 package picker;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.HashMap;
+
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 
@@ -126,6 +132,82 @@ public class StatsManager {
 	 */
 	public void setSelectedWinner(int toSet) {
 		selectedWinner = toSet;
+	}
+	
+	/**
+	 * Attempt to load the stats file. Only called once the tier list file has
+	 * been loaded.
+	 */
+	public void attemptLoad()
+	{
+		state.statsFile = new File("smash stats.sel");
+		try {
+			if(state.statsFile.createNewFile()) {
+				JOptionPane.showMessageDialog(null, "A stats file has not been detected in this folder. "
+						+ "One will now be created.", "Smash Character Picker",
+						JOptionPane.INFORMATION_MESSAGE);
+				for(int at = 0; at < 24; at++) {
+					for(String fighter: state.linesOfFile.get(at)) {
+						double[] freshDouble = new double[] {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+						state.stats.put(fighter, freshDouble);
+					}
+				}
+			}
+			else {
+				loadFile(state.statsFile);
+			}
+		} catch(IOException e) {
+			Util.error(e);
+		} catch(ClassNotFoundException e) {
+			Util.error(e);
+		}
+		
+		state.needToSaveStats = true;
+	}
+	
+	/**
+	 * This method is responsible for actually loading a file. The file should
+	 * contain a <code>HashMap</code> object which can be loaded using an
+	 * <code>ObjectInputStream</code>. If this is not the case, an exception is
+	 * thrown.
+	 * 
+	 * If the file is successfully loaded, the tier list is scanned to see if
+	 * there are any fighters present who are not currently in the stats system.
+	 * If this is the case, they will be added to the system.
+	 * 
+	 * @param fileToLoad				The file to load.
+	 * @throws IOException				Thrown if the file is not found, or if
+	 * 									any other error happens while opening
+	 * 									the file.
+	 * @throws ClassNotFoundException	Thrown if the loaded file does not
+	 * 									contain a <code>HashMap</code> object.
+	 */
+	@SuppressWarnings("unchecked")
+	private void loadFile(File fileToLoad) throws IOException, ClassNotFoundException {
+		FileInputStream fis = new FileInputStream(fileToLoad);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		state.stats = (HashMap<String, double[]>) ois.readObject();
+		ois.close();
+		fis.close();
+		
+		//check if there are any fighters in the tier list not currently in the
+		//system.
+		for(int at = 0; at < 24; at++) {
+			for(String fighter: state.linesOfFile.get(at)) {
+				if(!state.stats.containsKey(fighter)) {
+					Util.log(fighter + " was not found in the system. Adding them.");
+					double[] freshDouble = new double[] {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+					state.stats.put(fighter, freshDouble);
+				}
+			}
+		}
+		
+		Util.log("The following data has been loaded into the stats system:");
+		for(String fighter: state.stats.keySet()) {
+			double[] statValues = state.stats.get(fighter);
+			
+			Util.log(fighter + ": " + Util.doubleArrString(statValues));
+		}
 	}
 
 }
