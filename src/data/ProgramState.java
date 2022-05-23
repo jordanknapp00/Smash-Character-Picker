@@ -53,11 +53,6 @@ public class ProgramState {
 	public boolean openedModify;
 	public boolean openedAdvancedSettings;
 	
-	//stats-related variables
-	public int selectedWinner;
-	public int battleWhenLastPressed;
-	public int lastSelectedWinner;
-	
 	private MainWindow parent;
 	
 	/**
@@ -95,9 +90,6 @@ public class ProgramState {
 	 * 	<li><code>openedDebug</code> = <code>false</code></li>
 	 * 	<li><code>openedLookup</code> = <code>false</code></li>
 	 * 	<li><code>openedModify</code> = <code>false</code></li>
-	 * 	<li><code>selectedWinner</code> = 1</li>
-	 * 	<li><code>battleWhenLastPressed</code> = -1</li>
-	 * 	<li><code>lastSelectedWinner</code> = -1</li>
 	 * </ul>
 	 */
 	public ProgramState(MainWindow parent) {
@@ -162,10 +154,6 @@ public class ProgramState {
 		openedDebug = false;
 		openedLookup = false;
 		openedModify = false;
-		
-		selectedWinner = 1;
-		battleWhenLastPressed = -1;
-		lastSelectedWinner = -1;
 		
 		this.parent = parent;
 	}

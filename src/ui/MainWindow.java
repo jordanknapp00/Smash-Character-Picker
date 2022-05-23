@@ -39,6 +39,7 @@ import javax.swing.event.ChangeListener;
 import data.ProgramState;
 import picker.BattleGenerator;
 import picker.FileLoaderParser;
+import picker.StatsManager;
 import util.Util;
 
 /**
@@ -160,12 +161,14 @@ public class MainWindow {
 	
 	private ProgramState state;
 	private BattleGenerator battleGenerator;
+	private StatsManager statsManager;
 	
 	public MainWindow() {
 		//begin by initializing the state of the program to its default state
 		//as well as any other picker classes
 		state = new ProgramState(this);
 		battleGenerator = new BattleGenerator(state);
+		statsManager = new StatsManager(state);
 		
 		//initializing the frame that holds everything together in the main
 		//window
@@ -187,8 +190,6 @@ public class MainWindow {
 		//the next part of the initialization
 		Util.initDebug();
 		
-		//also initialize the stats text area before setting look and feel
-		StatsOutput.initStats();
 		
 		//attempt to set look and feel, catching any errors
 		try {
@@ -605,7 +606,7 @@ public class MainWindow {
 		statsTopPanel = new JPanel();
 		statsTopPanel.setLayout(new BorderLayout());
 		statsTopPanel.setBorder(BorderFactory.createTitledBorder("Statistics"));
-		statsTopPanel.add(StatsOutput.getTextArea(), BorderLayout.CENTER);
+		statsTopPanel.add(statsManager.getTextArea(), BorderLayout.CENTER);
 		
 		//initialize lower stats panel
 		statsBottomPanel = new JPanel();
@@ -615,20 +616,20 @@ public class MainWindow {
 		winnerSpinner = new JSpinner(winnerSpinnerModel);
 		winnerSpinner.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				state.selectedWinner = (int) winnerSpinner.getValue();
+				statsManager.setSelectedWinner((int) winnerSpinner.getValue());
 			}
 		});
 		pickWinnerButton = new JButton("Select winner");
 		pickWinnerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				pickWinner();
+				statsManager.pickWinner();
 			}
 		});
 		
 		reloadButton = new JButton("⭯");
 		reloadButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				StatsOutput.updateStatsScreen(state.numPlayers, state.stats, state.gotten);
+				statsManager.updateStatsScreen();
 			}
 		});
 		
@@ -986,7 +987,7 @@ public class MainWindow {
 				Util.log("Player " + (p1 + 1) + " now cannot get " + state.individualCannotGet[p1]);
 				Util.log("Player " + (p2 + 1) + " now cannot get " + state.individualCannotGet[p2]);
 				
-				StatsOutput.updateStatsScreen(state.numPlayers, state.stats, state.gotten);
+				statsManager.updateStatsScreen();
 				
 				player1Box.setSelected(false);
 				player2Box.setSelected(false);
@@ -1118,44 +1119,6 @@ public class MainWindow {
 		bump0Spinner.setValue(state.bumpChances[0]);
 		bump1Spinner.setValue(state.bumpChances[1]);
 		bump2Spinner.setValue(state.bumpChances[2]);
-	}
-	
-	/**
-	 * This method updates the statistics, adding a win for the player who is
-	 * selected with the spinner, and a loss for all other players currently in
-	 * the session. If this battle has already had a winner selected, then the
-	 * previous winner pick is reverted, first.
-	 */
-	private void pickWinner() {
-		if(state.numBattles == battleWhenLastPressed && !(selectedWinner > state.numPlayers)) {
-			state.stats.get(state.gotten.get(lastSelectedWinner - 1))[2 * (lastSelectedWinner - 1)]--;
-			state.stats.get(state.gotten.get(selectedWinner - 1))[2 * (selectedWinner - 1)]++;
-			lastSelectedWinner = selectedWinner;
-			StatsOutput.updateStatsScreen(state.numPlayers, state.stats, state.gotten);
-		}
-		else if(state.numBattles == 0) {
-			JOptionPane.showMessageDialog(null, "There has to be a battle before there can be a winner.",
-					"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-			return;
-		}
-		else if(selectedWinner > state.numPlayers) {
-			JOptionPane.showMessageDialog(null, "Player " + selectedWinner + " cannot win, there are only "
-					+ state.numPlayers + " players.", "Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-		}
-		else {
-			battleWhenLastPressed = state.numBattles;
-			lastSelectedWinner = selectedWinner;
-			for(int at = 0; at < state.numPlayers; at++) {
-				if((at + 1) == selectedWinner) {
-					state.stats.get(state.gotten.get(at))[2 * at]++;
-					state.stats.get(state.gotten.get(at))[2 * at + 1]++;
-				}
-				else {
-					state.stats.get(state.gotten.get(at))[2 * at + 1]++;
-				}
-			}
-			StatsOutput.updateStatsScreen(state.numPlayers, state.stats, state.gotten);
-		}
 	}
 	
 	private class MainWindowListener implements WindowListener {
