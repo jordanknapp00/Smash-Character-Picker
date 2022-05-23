@@ -49,11 +49,14 @@ public class ProgramState {
 	
 	//ui booleans to prevent opening the same window when it's already open
 	public boolean openedDebug;
-	public boolean openedSoundboard;
-	public boolean openedStats;
 	public boolean openedLookup;
 	public boolean openedModify;
 	public boolean openedAdvancedSettings;
+	
+	//stats-related variables
+	public int selectedWinner;
+	public int battleWhenLastPressed;
+	public int lastSelectedWinner;
 	
 	private MainWindow parent;
 	
@@ -90,10 +93,11 @@ public class ProgramState {
 	 * 	<li><code>stats</code> is initialized to an empty <code>HashMap</code></li>
 	 * 	<li><code>skipping</code> = <code>false</code></li>
 	 * 	<li><code>openedDebug</code> = <code>false</code></li>
-	 * 	<li><code>openedSoundboard</code> = <code>false</code></li>
-	 * 	<li><code>openedStats</code> = <code>false</code></li>
 	 * 	<li><code>openedLookup</code> = <code>false</code></li>
 	 * 	<li><code>openedModify</code> = <code>false</code></li>
+	 * 	<li><code>selectedWinner</code> = 1</li>
+	 * 	<li><code>battleWhenLastPressed</code> = -1</li>
+	 * 	<li><code>lastSelectedWinner</code> = -1</li>
 	 * </ul>
 	 */
 	public ProgramState(MainWindow parent) {
@@ -156,10 +160,12 @@ public class ProgramState {
 		skipping = false;
 		
 		openedDebug = false;
-		openedSoundboard = false;
-		openedStats = false;
 		openedLookup = false;
 		openedModify = false;
+		
+		selectedWinner = 1;
+		battleWhenLastPressed = -1;
+		lastSelectedWinner = -1;
 		
 		this.parent = parent;
 	}
