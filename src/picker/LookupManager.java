@@ -6,12 +6,12 @@ import data.ComparableArray;
 import data.ProgramState;
 import util.Util;
 
-public class LookupModManager {
+public class LookupManager {
 	
 	private ProgramState state;
 	private StatsManager statsManager;
 	
-	public LookupModManager(ProgramState state, StatsManager statsManager) {
+	public LookupManager(ProgramState state, StatsManager statsManager) {
 		this.state = state;
 		this.statsManager = statsManager;
 	}

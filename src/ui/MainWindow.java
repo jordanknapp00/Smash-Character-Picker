@@ -41,7 +41,7 @@ import javax.swing.event.ChangeListener;
 import data.ProgramState;
 import picker.BattleGenerator;
 import picker.FileLoaderParser;
-import picker.LookupModManager;
+import picker.LookupManager;
 import picker.StatsManager;
 import util.Util;
 
@@ -167,7 +167,7 @@ public class MainWindow {
 	private ProgramState state;
 	private BattleGenerator battleGenerator;
 	private StatsManager statsManager;
-	private LookupModManager lookupManager;
+	private LookupManager lookupManager;
 	
 	public MainWindow() {
 		//initialize the debug first, in case errors occur later
@@ -177,7 +177,7 @@ public class MainWindow {
 		state = new ProgramState(this);
 		statsManager = new StatsManager(state);
 		battleGenerator = new BattleGenerator(state, statsManager);
-		lookupManager = new LookupModManager(state, statsManager);
+		lookupManager = new LookupManager(state, statsManager);
 		
 		//initializing the frame that holds everything together in the main
 		//window
@@ -665,20 +665,15 @@ public class MainWindow {
 		modButton = new JButton("Mod");
 		modButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				String choice = (String) JOptionPane.showInputDialog(frame, "Which fighter to mod?",
+						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
 				
-			}
-		});
-		
-		/*
-		lookupButton = new JButton("Look up stats");
-		lookupButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				if(!state.openedLookup) {
-					new LookupWindow(state, statsManager, MainWindow.this);
+				if(choice != null) {
+					@SuppressWarnings("unused")
+					ModifyWindow mw = new ModifyWindow(state, statsManager, choice);
 				}
 			}
 		});
-		*/
 		
 		reloadButton = new JButton("⭯");
 		reloadButton.addActionListener(new ActionListener() {

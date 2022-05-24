@@ -103,6 +103,11 @@ public class StatsManager {
 	 * This method updates the stats screen to whatever the current battle is.
 	 */
 	public void updateStatsScreen() {
+		//do nothing if there isn't a battle yet
+		if(state.numBattles < 1) {
+			return;
+		}
+		
 		statsOutput.setText("");
 		statsOutput.append("Stats for this battle:\n");
 		for(int at = 0; at < state.numPlayers; at++) {
