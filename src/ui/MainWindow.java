@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -40,6 +41,7 @@ import javax.swing.event.ChangeListener;
 import data.ProgramState;
 import picker.BattleGenerator;
 import picker.FileLoaderParser;
+import picker.LookupModManager;
 import picker.StatsManager;
 import util.Util;
 
@@ -165,6 +167,7 @@ public class MainWindow {
 	private ProgramState state;
 	private BattleGenerator battleGenerator;
 	private StatsManager statsManager;
+	private LookupModManager lookupManager;
 	
 	public MainWindow() {
 		//initialize the debug first, in case errors occur later
@@ -174,6 +177,7 @@ public class MainWindow {
 		state = new ProgramState(this);
 		statsManager = new StatsManager(state);
 		battleGenerator = new BattleGenerator(state, statsManager);
+		lookupManager = new LookupModManager(state, statsManager);
 		
 		//initializing the frame that holds everything together in the main
 		//window
@@ -631,14 +635,30 @@ public class MainWindow {
 		searchButton = new JButton("Search");
 		searchButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				String searchTarget = (String) JOptionPane.showInputDialog(frame, "Enter fighter to search:",
+						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
 				
+				if(searchTarget != null) {
+					lookupManager.lookup(searchTarget);
+				}
 			}
 		});
 		
 		sortButton = new JButton("Sort");
 		sortButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				String[] options = {"Fighters' overall win rate", "Players' overall win rate", 
+						"P1 win rate", "P2 win rate", "P3 win rate", "P4 win rate", 
+						"P5 win rate", "P6 win rate", "P7 win rate", "P8 win rate", 
+						"Total battles"};
+				String choice = (String) JOptionPane.showInputDialog(frame, "Sort by:", "Smash Character Picker",
+						JOptionPane.QUESTION_MESSAGE, null, options, "Fighters' overall win rate");
 				
+				int choiceVal = Arrays.asList(options).indexOf(choice);
+				
+				Util.log("val " + choiceVal);
+				
+				lookupManager.sort(choiceVal);
 			}
 		});
 		

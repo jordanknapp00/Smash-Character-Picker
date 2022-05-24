@@ -7,6 +7,8 @@ import java.time.ZonedDateTime;
 
 import javax.swing.JTextArea;
 
+import data.ComparableArray;
+
 /**
  * A class that contains a few static utility methods that are used throughout
  * the program.
@@ -196,6 +198,25 @@ public final class Util {
 		}
 		returnString += arr[15];
 		return returnString;
+	}
+	
+	/**
+	 * A method that reverses a <code>ComparableArray</code>. Not an in-place
+	 * reverse, it returns a new object.
+	 * 
+	 * @param start	The <code>ComparableArray</code> to reverse.
+	 * @return		A new <code>ComparableArray</code>, consisting of the given
+	 * 				<code>ComparableArray</code>, but reversed.
+	 */
+	public static ComparableArray[] reverse(ComparableArray[] start) {
+		ComparableArray[] retArr = new ComparableArray[start.length];
+		int j = start.length;
+		for(int at = 0; at < start.length; at++) {
+			retArr[j - 1] = start[at];
+			j--;
+		}
+		
+		return retArr;
 	}
 
 }
