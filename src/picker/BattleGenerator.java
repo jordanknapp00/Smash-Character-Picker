@@ -15,12 +15,14 @@ import util.Util;
 public class BattleGenerator {
 	
 	private ProgramState state;
+	private StatsManager statsManager;
 	
 	private long startGen;
 	private long endGen;
 	
-	public BattleGenerator(ProgramState state) {
+	public BattleGenerator(ProgramState state, StatsManager statsManager) {
 		this.state = state;
+		this.statsManager = statsManager;
 	}
 	
 	/**
@@ -54,9 +56,7 @@ public class BattleGenerator {
 			Util.log("Player " + (playerAt + 1) + " got " + state.gotten.get(playerAt));
 		}
 		
-		if(state.openedStats) {
-			Util.updateStatsScreen(state.numPlayers, state.stats, state.gotten);
-		}
+		statsManager.updateStatsScreen();
 		
 		state.skipping = false;
 		

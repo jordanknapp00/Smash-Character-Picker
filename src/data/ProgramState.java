@@ -49,8 +49,6 @@ public class ProgramState {
 	
 	//ui booleans to prevent opening the same window when it's already open
 	public boolean openedDebug;
-	public boolean openedSoundboard;
-	public boolean openedStats;
 	public boolean openedLookup;
 	public boolean openedModify;
 	public boolean openedAdvancedSettings;
@@ -90,8 +88,6 @@ public class ProgramState {
 	 * 	<li><code>stats</code> is initialized to an empty <code>HashMap</code></li>
 	 * 	<li><code>skipping</code> = <code>false</code></li>
 	 * 	<li><code>openedDebug</code> = <code>false</code></li>
-	 * 	<li><code>openedSoundboard</code> = <code>false</code></li>
-	 * 	<li><code>openedStats</code> = <code>false</code></li>
 	 * 	<li><code>openedLookup</code> = <code>false</code></li>
 	 * 	<li><code>openedModify</code> = <code>false</code></li>
 	 * </ul>
@@ -156,8 +152,6 @@ public class ProgramState {
 		skipping = false;
 		
 		openedDebug = false;
-		openedSoundboard = false;
-		openedStats = false;
 		openedLookup = false;
 		openedModify = false;
 		

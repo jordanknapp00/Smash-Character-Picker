@@ -23,10 +23,12 @@ public class FileLoaderParser {
 	
 	private ProgramState state;
 	private MainWindow parent;
+	private StatsManager statsManager;
 	
-	public FileLoaderParser(MainWindow parent, ProgramState state) {
+	public FileLoaderParser(MainWindow parent, ProgramState state, StatsManager statsManager) {
 		this.parent = parent;
 		this.state = state;
+		this.statsManager = statsManager;
 	}
 	
 	/**
@@ -39,7 +41,7 @@ public class FileLoaderParser {
 		fileChooser.setFileFilter(filter);
 		int willLoad = fileChooser.showOpenDialog(null);
 		
-		if (willLoad == JFileChooser.APPROVE_OPTION) {
+		if(willLoad == JFileChooser.APPROVE_OPTION) {
 			parseFile(fileChooser.getSelectedFile());
 		}
 	}
@@ -322,6 +324,9 @@ public class FileLoaderParser {
 		
 		state.fileLoaded = true;
 		parent.printToResult("Loaded file: " + tierListFile.getName());
+		
+		//after the file has been parsed, now attempt to load stats file
+		statsManager.attemptLoad();
 	}
 	
 	private void readLine(int index, int startAt, String line) {

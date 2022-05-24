@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -28,6 +29,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
@@ -39,6 +41,8 @@ import javax.swing.event.ChangeListener;
 import data.ProgramState;
 import picker.BattleGenerator;
 import picker.FileLoaderParser;
+import picker.LookupManager;
+import picker.StatsManager;
 import util.Util;
 
 /**
@@ -74,16 +78,24 @@ public class MainWindow {
 	//all Swing objects are fields of the MainWindow class
 	
 	private JFrame frame;
+	
 	private JPanel resultsPanel;
 	private JPanel switchPanel;
 	private JPanel bottomPanel;
+	
 	//leftPanel will encapsulate the tierChancePanel and cannotGetPanel
 	private JPanel leftPanel;
 	private JPanel cannotGetPanel;
+	
 	//tierChancePanel will encapsulate tierChanceTopPanel and tierChanceBottomPanel
 	private JPanel tierChancePanel;
 	private JPanel tierChanceTopPanel;
 	private JPanel tierChanceBottomPanel;
+	
+	//statsPanel will encapsulate statsTopPanel and statsBottomPanel
+	private JPanel statsPanel;
+	private JPanel statsTopPanel;
+	private JPanel statsBottomPanel;
 	
 	//resultsPanel only has one component, the results text area
 	private JTextArea results;
@@ -93,10 +105,8 @@ public class MainWindow {
 	private JSpinner numPlayersSpinner;
 	private JLabel numPlayersLabel;
 	private JButton loadButton;
-	private JButton soundBoardButton;
 	private JButton skipButton;
 	private JButton debugButton;
-	private JButton statsButton;
 	
 	//switchPanel components
 	private JCheckBox player1Box;
@@ -145,21 +155,36 @@ public class MainWindow {
 	private JCheckBox allowSSInCannotGet;
 	private JCheckBox allowSInCannotGet;
 	
+	//stats panel components
+	private JLabel playerLabel;
+	private JSpinner winnerSpinner;
+	private JButton pickWinnerButton;
+	private JButton searchButton;
+	private JButton sortButton;
+	private JButton modButton;
+	private JButton reloadButton;
+	
 	private ProgramState state;
 	private BattleGenerator battleGenerator;
+	private StatsManager statsManager;
+	private LookupManager lookupManager;
 	
 	public MainWindow() {
-		//begin by initializing the state of the program to its default state
-		//as well as any other picker classes
+		//initialize the debug first, in case errors occur later
+		Util.initDebug();
+		
+		//initialize the program state, as well as any other picker classes
 		state = new ProgramState(this);
-		battleGenerator = new BattleGenerator(state);
+		statsManager = new StatsManager(state);
+		battleGenerator = new BattleGenerator(state, statsManager);
+		lookupManager = new LookupManager(state, statsManager);
 		
 		//initializing the frame that holds everything together in the main
 		//window
 		frame = new JFrame("Smash Character Picker");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(800, 435);
-		frame.setResizable(false);
+		frame.setSize(1200, 450);
+		//frame.setResizable(false);
 		
 		//we want to place the window 25 pixels to the left of the center
 		frame.setLocationRelativeTo(null);
@@ -169,13 +194,6 @@ public class MainWindow {
 		results = new JTextArea();
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
-	
-		//initialize the debug now, as some errors may potentially occur during
-		//the next part of the initialization
-		Util.initDebug();
-		
-		//also initialize the stats text area before setting look and feel
-		Util.initStats();
 		
 		//attempt to set look and feel, catching any errors
 		try {
@@ -291,12 +309,8 @@ public class MainWindow {
 		}
 		
 		//continue initializing the bottomPanel
-		statsButton = new JButton("Stats");
-		statsButton.addActionListener(new StatsButtonActionListener());
 		debugButton = new JButton("Debug");
 		debugButton.addActionListener(new DebugButtonActionListener());
-		soundBoardButton = new JButton("Soundboard");
-		soundBoardButton.addActionListener(new SoundboardButtonActionListener());
 		loadButton.addActionListener(new LoadButtonActionListener());
 		
 		numPlayersLabel = new JLabel("Number of players: ");
@@ -313,26 +327,21 @@ public class MainWindow {
 		gc.fill = GridBagConstraints.HORIZONTAL;
 		gc.anchor = GridBagConstraints.CENTER;
 		bottomPanel.add(loadButton, gc);
-		gc.weightx = .1;
+		gc.weightx = .77;
 		gc.gridx = 1;
-		bottomPanel.add(soundBoardButton, gc);
-		gc.weightx = .67;
-		gc.gridx = 2;
 		bottomPanel.add(generateButton, gc);
 		gc.weightx = .05;
-		gc.gridx = 3;
+		gc.gridx = 2;
 		bottomPanel.add(skipButton, gc);
-		gc.gridx = 4;
+		gc.gridx = 3;
 		bottomPanel.add(debugButton, gc);
-		gc.gridx = 5;
+		gc.gridx = 4;
 		gc.weightx = .03;
 		gc.fill = GridBagConstraints.NONE;
 		bottomPanel.add(numPlayersLabel, gc);
-		gc.gridx = 6;
+		gc.gridx = 5;
 		gc.weightx = .05;
 		bottomPanel.add(numPlayersSpinner, gc);
-		gc.gridx = 7;
-		bottomPanel.add(statsButton, gc);
 		
 		//initialize tierChanceTopPanel
 		tierChanceTopPanel = new JPanel();
@@ -597,6 +606,124 @@ public class MainWindow {
 		gc.gridy = 1;
 		leftPanel.add(cannotGetPanel, gc);
 		
+		//initialize upper stats panel
+		statsTopPanel = new JPanel();
+		statsTopPanel.setLayout(new BorderLayout());
+		statsTopPanel.setBorder(BorderFactory.createTitledBorder("Statistics"));
+		statsTopPanel.add(statsManager.getTextArea(), BorderLayout.CENTER);
+		
+		//initialize lower stats panel
+		statsBottomPanel = new JPanel();
+		statsBottomPanel.setLayout(new GridBagLayout());
+		playerLabel = new JLabel("Player: ");
+		
+		SpinnerNumberModel winnerSpinnerModel = new SpinnerNumberModel(1, 1, 8, 1);
+		winnerSpinner = new JSpinner(winnerSpinnerModel);
+		winnerSpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				statsManager.setSelectedWinner((int) winnerSpinner.getValue());
+			}
+		});
+		
+		pickWinnerButton = new JButton("Select winner");
+		pickWinnerButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				statsManager.pickWinner();
+			}
+		});
+		
+		searchButton = new JButton("Search");
+		searchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String searchTarget = (String) JOptionPane.showInputDialog(frame, "Enter fighter to search:",
+						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
+				
+				if(searchTarget != null) {
+					lookupManager.lookup(searchTarget);
+				}
+			}
+		});
+		
+		sortButton = new JButton("Sort");
+		sortButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String[] options = {"Fighters' overall win rate", "Players' overall win rate", 
+						"P1 win rate", "P2 win rate", "P3 win rate", "P4 win rate", 
+						"P5 win rate", "P6 win rate", "P7 win rate", "P8 win rate", 
+						"Total battles"};
+				String choice = (String) JOptionPane.showInputDialog(frame, "Sort by:", "Smash Character Picker",
+						JOptionPane.QUESTION_MESSAGE, null, options, "Fighters' overall win rate");
+				
+				int choiceVal = Arrays.asList(options).indexOf(choice);
+				
+				Util.log("val " + choiceVal);
+				
+				lookupManager.sort(choiceVal);
+			}
+		});
+		
+		modButton = new JButton("Mod");
+		modButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String choice = (String) JOptionPane.showInputDialog(frame, "Which fighter to mod?",
+						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
+				
+				if(choice != null) {
+					@SuppressWarnings("unused")
+					ModifyWindow mw = new ModifyWindow(state, statsManager, choice);
+				}
+			}
+		});
+		
+		reloadButton = new JButton("⭯");
+		reloadButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				statsManager.updateStatsScreen();
+			}
+		});
+		
+		statsPanel = new JPanel();
+		statsPanel.setLayout(new GridBagLayout());
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weighty = 1;
+		gc.weightx = .1;
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		statsBottomPanel.add(playerLabel, gc);
+		gc.gridx = 1;
+		gc.weightx = .05;
+		statsBottomPanel.add(winnerSpinner, gc);
+		gc.gridx = 2;
+		gc.weightx = .3;
+		statsBottomPanel.add(Box.createRigidArea(new Dimension(3, 0)), gc);
+		gc.gridx = 3;
+		gc.weightx = .35;
+		statsBottomPanel.add(pickWinnerButton, gc);
+		gc.gridx = 4;
+		gc.weightx = .25;
+		statsBottomPanel.add(searchButton, gc);
+		gc.gridx = 5;
+		statsBottomPanel.add(sortButton, gc);
+		gc.gridx = 6;
+		statsBottomPanel.add(modButton, gc);
+		gc.gridx = 7;
+		statsBottomPanel.add(reloadButton, gc);
+		
+		//add top and bottom panel to main stats panel
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weightx = 1;
+		gc.weighty = .98;
+		gc.fill = GridBagConstraints.BOTH;
+		gc.anchor = GridBagConstraints.CENTER;
+		statsPanel.setLayout(new GridBagLayout());
+		JScrollPane scrollPane = new JScrollPane(statsTopPanel);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		statsPanel.add(scrollPane, gc);
+		gc.gridy = 1;
+		gc.weighty = .02;
+		statsPanel.add(statsBottomPanel, gc);
+		
 		//put it all together
 		frame.getContentPane().setLayout(new GridBagLayout());
 		gc.gridx = 0;
@@ -619,6 +746,9 @@ public class MainWindow {
 		gc.gridx = 2;
 		gc.gridwidth = 1;
 		frame.add(switchPanel, gc);
+		gc.gridx = 3;
+		gc.gridheight = 2;
+		frame.add(statsPanel, gc);
 		
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
@@ -635,7 +765,7 @@ public class MainWindow {
 			if(JOptionPane.showConfirmDialog(frame, "Found 'tier list.txt' file.\n"
 						+ "Load it?", "Smash Character Picker",
 						JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-				FileLoaderParser loader = new FileLoaderParser(this, state);
+				FileLoaderParser loader = new FileLoaderParser(this, state, statsManager);
 				loader.parseFile(tierListMaybe);
 			}
 		}
@@ -686,31 +816,8 @@ public class MainWindow {
 				}
 			}
 			
-			FileLoaderParser flp = new FileLoaderParser(MainWindow.this, state);
+			FileLoaderParser flp = new FileLoaderParser(MainWindow.this, state, statsManager);
 			flp.loadFile();
-		}
-	}
-	
-	private class SoundboardButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if(!state.openedSoundboard) {
-				new SoundboardWindow(MainWindow.this, state);
-			}
-		}
-	}
-	
-	private class StatsButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if(!state.fileLoaded) {
-				JOptionPane.showMessageDialog(frame,
-						"You cannot use the stats panel until you load a tier "
-						+ " list file.",
-						"Smash Character Picker",
-						JOptionPane.WARNING_MESSAGE);
-			}
-			else if(!state.openedStats) {
-				new StatsWindow(MainWindow.this, state);
-			}
 		}
 	}
 	
@@ -974,7 +1081,7 @@ public class MainWindow {
 				Util.log("Player " + (p1 + 1) + " now cannot get " + state.individualCannotGet[p1]);
 				Util.log("Player " + (p2 + 1) + " now cannot get " + state.individualCannotGet[p2]);
 				
-				Util.updateStatsScreen(state.numPlayers, state.stats, state.gotten);
+				statsManager.updateStatsScreen();
 				
 				player1Box.setSelected(false);
 				player2Box.setSelected(false);
