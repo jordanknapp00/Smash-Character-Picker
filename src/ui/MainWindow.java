@@ -157,7 +157,9 @@ public class MainWindow {
 	private JLabel playerLabel;
 	private JSpinner winnerSpinner;
 	private JButton pickWinnerButton;
-	private JButton lookupButton;
+	private JButton searchButton;
+	private JButton sortButton;
+	private JButton modButton;
 	private JButton reloadButton;
 	
 	private ProgramState state;
@@ -626,6 +628,28 @@ public class MainWindow {
 			}
 		});
 		
+		searchButton = new JButton("Search");
+		searchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+			}
+		});
+		
+		sortButton = new JButton("Sort");
+		sortButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+			}
+		});
+		
+		modButton = new JButton("Mod");
+		modButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+			}
+		});
+		
+		/*
 		lookupButton = new JButton("Look up stats");
 		lookupButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -634,6 +658,7 @@ public class MainWindow {
 				}
 			}
 		});
+		*/
 		
 		reloadButton = new JButton("⭯");
 		reloadButton.addActionListener(new ActionListener() {
@@ -661,8 +686,12 @@ public class MainWindow {
 		statsBottomPanel.add(pickWinnerButton, gc);
 		gc.gridx = 4;
 		gc.weightx = .25;
-		statsBottomPanel.add(lookupButton, gc);
+		statsBottomPanel.add(searchButton, gc);
 		gc.gridx = 5;
+		statsBottomPanel.add(sortButton, gc);
+		gc.gridx = 6;
+		statsBottomPanel.add(modButton, gc);
+		gc.gridx = 7;
 		statsBottomPanel.add(reloadButton, gc);
 		
 		//add top and bottom panel to main stats panel
