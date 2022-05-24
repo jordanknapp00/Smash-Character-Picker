@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -40,6 +41,7 @@ import javax.swing.event.ChangeListener;
 import data.ProgramState;
 import picker.BattleGenerator;
 import picker.FileLoaderParser;
+import picker.LookupManager;
 import picker.StatsManager;
 import util.Util;
 
@@ -157,12 +159,15 @@ public class MainWindow {
 	private JLabel playerLabel;
 	private JSpinner winnerSpinner;
 	private JButton pickWinnerButton;
-	private JButton lookupButton;
+	private JButton searchButton;
+	private JButton sortButton;
+	private JButton modButton;
 	private JButton reloadButton;
 	
 	private ProgramState state;
 	private BattleGenerator battleGenerator;
 	private StatsManager statsManager;
+	private LookupManager lookupManager;
 	
 	public MainWindow() {
 		//initialize the debug first, in case errors occur later
@@ -172,6 +177,7 @@ public class MainWindow {
 		state = new ProgramState(this);
 		statsManager = new StatsManager(state);
 		battleGenerator = new BattleGenerator(state, statsManager);
+		lookupManager = new LookupManager(state, statsManager);
 		
 		//initializing the frame that holds everything together in the main
 		//window
@@ -626,11 +632,45 @@ public class MainWindow {
 			}
 		});
 		
-		lookupButton = new JButton("Look up stats");
-		lookupButton.addActionListener(new ActionListener() {
+		searchButton = new JButton("Search");
+		searchButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!state.openedLookup) {
-					new LookupWindow(state, statsManager, MainWindow.this);
+				String searchTarget = (String) JOptionPane.showInputDialog(frame, "Enter fighter to search:",
+						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
+				
+				if(searchTarget != null) {
+					lookupManager.lookup(searchTarget);
+				}
+			}
+		});
+		
+		sortButton = new JButton("Sort");
+		sortButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String[] options = {"Fighters' overall win rate", "Players' overall win rate", 
+						"P1 win rate", "P2 win rate", "P3 win rate", "P4 win rate", 
+						"P5 win rate", "P6 win rate", "P7 win rate", "P8 win rate", 
+						"Total battles"};
+				String choice = (String) JOptionPane.showInputDialog(frame, "Sort by:", "Smash Character Picker",
+						JOptionPane.QUESTION_MESSAGE, null, options, "Fighters' overall win rate");
+				
+				int choiceVal = Arrays.asList(options).indexOf(choice);
+				
+				Util.log("val " + choiceVal);
+				
+				lookupManager.sort(choiceVal);
+			}
+		});
+		
+		modButton = new JButton("Mod");
+		modButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String choice = (String) JOptionPane.showInputDialog(frame, "Which fighter to mod?",
+						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
+				
+				if(choice != null) {
+					@SuppressWarnings("unused")
+					ModifyWindow mw = new ModifyWindow(state, statsManager, choice);
 				}
 			}
 		});
@@ -661,8 +701,12 @@ public class MainWindow {
 		statsBottomPanel.add(pickWinnerButton, gc);
 		gc.gridx = 4;
 		gc.weightx = .25;
-		statsBottomPanel.add(lookupButton, gc);
+		statsBottomPanel.add(searchButton, gc);
 		gc.gridx = 5;
+		statsBottomPanel.add(sortButton, gc);
+		gc.gridx = 6;
+		statsBottomPanel.add(modButton, gc);
+		gc.gridx = 7;
 		statsBottomPanel.add(reloadButton, gc);
 		
 		//add top and bottom panel to main stats panel
