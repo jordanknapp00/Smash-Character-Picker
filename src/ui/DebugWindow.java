@@ -28,7 +28,7 @@ public class DebugWindow {
 	public DebugWindow(MainWindow parent, ProgramState state) {
 		frame = new JFrame("Smash Character Picker Debug");
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setSize(800, 200);
+		frame.setSize(parent.getWidth(), 200);
 		frame.setResizable(true);
 		
 		this.state = state;

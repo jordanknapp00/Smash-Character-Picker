@@ -222,29 +222,28 @@ public class MainWindow {
 		switchPanel = new JPanel();
 		switchPanel.setBorder(BorderFactory.createTitledBorder("Switch"));
 		switchPanel.setLayout(new BoxLayout(switchPanel, BoxLayout.Y_AXIS));
-		switchPanel.setPreferredSize(new Dimension(50, 260));
 		switchPanel.setToolTipText("Select 2 players and hit the switch button,"
 				+ " and they will switch fighters.");
 		
 		//initialize SwitchManager and all its related components
 		SwitchManager sm = new SwitchManager();
-		player1Box = new JCheckBox("Player 1");
+		player1Box = new JCheckBox("P1");
 		player1Box.addActionListener(sm.new Player1BoxActionListener());
-		player2Box = new JCheckBox("Player 2");
+		player2Box = new JCheckBox("P2");
 		player2Box.addActionListener(sm.new Player2BoxActionListener());
-		player3Box = new JCheckBox("Player 3");
+		player3Box = new JCheckBox("P3");
 		player3Box.addActionListener(sm.new Player3BoxActionListener());
-		player4Box = new JCheckBox("Player 4");
+		player4Box = new JCheckBox("P4");
 		player4Box.addActionListener(sm.new Player4BoxActionListener());
-		player5Box = new JCheckBox("Player 5");
+		player5Box = new JCheckBox("P5");
 		player5Box.addActionListener(sm.new Player5BoxActionListener());
-		player6Box = new JCheckBox("Player 6");
+		player6Box = new JCheckBox("P6");
 		player6Box.addActionListener(sm.new Player6BoxActionListener());
-		player7Box = new JCheckBox("Player 7");
+		player7Box = new JCheckBox("P7");
 		player7Box.addActionListener(sm.new Player7BoxActionListener());
-		player8Box = new JCheckBox("Player 8");
+		player8Box = new JCheckBox("P8");
 		player8Box.addActionListener(sm.new Player8BoxActionListener());
-		switchButton = new JButton("Switch");
+		switchButton = new JButton("Swap");
 		switchButton.addActionListener(sm.new SwitchButtonActionListener());
 		
 		//add components to the switchPanel, including some boxes to make things
@@ -665,7 +664,7 @@ public class MainWindow {
 		modButton = new JButton("Mod");
 		modButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String choice = (String) JOptionPane.showInputDialog(frame, "Which fighter to mod?",
+				String choice = (String) JOptionPane.showInputDialog(frame, "Enter fighter to mod:",
 						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
 				
 				if(choice != null) {
@@ -728,12 +727,12 @@ public class MainWindow {
 		frame.getContentPane().setLayout(new GridBagLayout());
 		gc.gridx = 0;
 		gc.gridy = 0;
-		gc.weightx = .30;
+		gc.weightx = .2;
 		gc.weighty = .85;
 		gc.anchor = GridBagConstraints.CENTER;
 		gc.fill = GridBagConstraints.BOTH;
 		frame.add(leftPanel, gc);
-		gc.weightx = 1;
+		gc.weightx = .45;
 		gc.gridx = 1;
 		frame.add(resultsPanel, gc);
 		gc.gridy = 1;
@@ -744,11 +743,15 @@ public class MainWindow {
 		frame.add(bottomPanel, gc);
 		gc.gridy = 0;
 		gc.gridx = 2;
+		gc.weightx = .05;
 		gc.gridwidth = 1;
 		frame.add(switchPanel, gc);
 		gc.gridx = 3;
+		gc.weightx = .3;
 		gc.gridheight = 2;
 		frame.add(statsPanel, gc);
+		
+		results.setText("Player 1 got Mr. Game & Watch, Upper Double S Tier");
 		
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
