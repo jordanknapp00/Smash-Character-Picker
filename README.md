@@ -1,12 +1,12 @@
 # Smash Character Picker (v11)
 
-A program which generates a random matchup for *Super Smash Bros.* using a tier list. For those of us who can never decide what character to play, but are unsatisfied with Smash's built-in random option. Nobody wants an unfair matchup they have no chance of winning. To solve this problem, I created this program. It loads a tier list from a `.txt` file and generates a matchup that can be considered fair by the rules of that tier list. There are various systems included to generate novel matchups throughout a session. There is also a built-in stat-tracking system, allowing you to track the winrates of players and fighters.
+A program that generates a random matchup for *Super Smash Bros.* using a tier list. For those of us who can never decide what character to play, but are unsatisfied with Smash's built-in random option. It always seems to generate totally unfair matchups. To solve this problem, I created this program. It loads a tier list from a `.txt` file and generates a matchup that can be considered fair by the rules of that tier list. There are various systems included to generate novel matchups throughout a session. There is also a built-in stat-tracking system, allowing you to track the winrates of players and fighters.
 
-This version of the program (v11) sees an overhaul of the user interface. The soundboard has been removed. At some point, I'll move it to a separate program with some enhanced functionality. All other aspects of the program have been consolidated into one window, as this is considered best practice. For example, the stats window is no longer a separate window, it is always present on the right side of the main window. Some features, such as stat lookup and searching, have been replaced with dialog boxes. The only exception as of right now is the stat modding window, it is still a separate window due to its functionality being more complex than what a dialog box can take care of.
+This version of the program (v11) sees an overhaul of the user interface. The soundboard has been removed. At some point, I'll move it to a separate program with some enhanced functionality. All other aspects of the program have been consolidated into one window, as this is considered best practice. For example, the stats window is no longer a separate window, it is always present on the right side of the main window. Some features, such as stat lookup and searching, have been replaced with dialog boxes. The current exceptions are the stat modding window and the debug window. The stat modding system is complex, and difficult to implement using dialog boxes. And the debug window seems like a feature that should be optional.
 
 ## General Usage
 
-Upon launching the program, load a tier list file using the "Load" button. If there is a file in the same directory as the `.jar` file named `tier list.txt`, the program will prompt you as to whether you want to load it automatically. If the file loaded is valid, then you're ready to go. Hit the "Generate" button to generate a matchup. Two players can swap fighters if they want to; simply check the two boxes to right of the results panel corresponding to the fighters to swap, and hit the "Switch" button.
+Upon launching the program, load a tier list file using the "Load" button. If there is a file named `tier list.txt` in the same directory as the `.jar` file, the program will prompt you as to whether you want to load it automatically. If the file loaded is valid, then you're ready to go. Hit the "Generate" button to generate a matchup. Two players can swap fighters if they want to; simply check the two boxes to right of the results panel corresponding to the fighters to swap, and hit the "Switch" button.
 
 Under normal circumstances, a player cannot get the same fighter twice in one session. There are two exceptions to this: first, battles can be skipped using the "Skip" button, which is to the right of the "Generate" button. If a battle is skipped, then a player will be able to get that fighter again at a later point. The second exception is if the fighter is part of that player's favorites list. More on what exactly that means below. The inability to get the same fighter twice (except under the previously described circumstances) is what allows the program to generate novel matchups and keep your session of Smash interesting.
 
@@ -54,29 +54,27 @@ The various settings described above can also be defined in a tier list file. On
 - `tier chances = ` will allow you to set the custom tier chances automatically. Simply provide a comma-separated list of 8 numbers, and ensure they add up to 100. The numbers are just the percentages of each tier, starting from SS down to F. If the given values are valid, the program will apply them as soon as you open the tier list.
 - `bump chances = ` will allow you to set custom bump chances automatically. Simple provide a comma-separated list of 3 numbers; the chance of staying the same tier, bumping up one tier, and bumping up two tiers. These values must add up to 100. If the given values are valid, the program will apply them as soon as you open the tier list.
 
-## Other Features
-
-### Stat Tracking
+## Stat Tracking
 
 The program comes with a built-in stat-tracking system. The stats panel is located on the right side of the window. When a battle is generated, the stats window is updated. For each player, it will display their own win/loss ratio as that fighter, as well as that fighter's overall win/loss ratio.
 
 After a battle, you can select which player won, keeping track of each player's win/loss ratio as each character. If you accidentally select the wrong winner, simply reselect with the correct winner. The program will remove the previously-entered result and only count the correct one.
 
-#### Stat Search
+### Stat Search
 
 You can look up the stats of an individual fighter, displaying each player's winrate when playing as that fighter, as well as the fighter's overall winrate. Simply hit the "Search" button in the stats panel and type in the name of the fighter you want to look up.
 
-#### Stat Sorting
+### Stat Sorting
 
 You can sort the fighters by their overall winrate, as well as their winrate when being played by a particular player. You can also sort the fighters by the total number of battles they've appeared in. Finally, you can see each player's overall winrate compared to one another.
 
-#### Stat Modification
+### Stat Modification
 
 Did you accidentally select the wrong winner? As mentioned above, this is not a problem. Simply selecting the correct player and hitting the select winner button again will solve the problem, so long as you haven't generated a new battle yet. If you did generate a new battle, you can hit the "Mod" button and type in the name of a fighter to open the modify window. The modify menu lets you adjust each player's individual winrate. You can also rename the character and delete them from the system, though you must also rename/remove the character in the tier list file for this to be permanent.
 
 Adding new fighters to the system is easy. Simply add the fighters to your tier list file, and when the program is opened, they will automatically be added to the system.
 
-#### Stat Files
+### Stat Files
 
 Statistics are stored in a file called `smash stats.sel`, which is stored in the same directory as the program and tier list file. The stats file simply stores the HashMap object which represents the stats system internally. This means that it is not editable with a text editor. The Smash Character Picker program is only designed to read `smash stats.sel`.
 

@@ -751,8 +751,6 @@ public class MainWindow {
 		gc.gridheight = 2;
 		frame.add(statsPanel, gc);
 		
-		results.setText("Player 1 got Mr. Game & Watch, Upper Double S Tier");
-		
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
 		
