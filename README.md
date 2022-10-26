@@ -81,3 +81,7 @@ Statistics are stored in a file called `smash stats.sel`, which is stored in the
 If you want to read `.sel` files other than `smash stats.sel`, you can use the [Smash Stats Viewer](https://github.com/jordanknapp00/Smash-Stats-Viewer). This program allows read-only access to `.sel` files, so you can read various stats files without making modifications.
 
 This version of the program comes with a `smash stats.sel` file. It is intended to be used with `tier list.txt`, not `reddit tier list.txt`.
+
+# License
+
+This project uses the [FPA General Code License](https://about.fairfieldprogramming.org/licenses/code/). In short, you can do whatever you want with this code for non-commerical purposes. In order to use this code for commerical purposes, you must make substantial changes to it. Reorganizing the logic does not count as a substantial change. See [LICENSE.md](LICENSE.md) or the link above for more details.
