@@ -1,6 +1,7 @@
 package picker;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import data.ProgramState;
@@ -17,9 +18,6 @@ public class BattleGenerator {
 	private ProgramState state;
 	private StatsManager statsManager;
 	
-	private long startGen;
-	private long endGen;
-	
 	public BattleGenerator(ProgramState state, StatsManager statsManager) {
 		this.state = state;
 		this.statsManager = statsManager;
@@ -28,44 +26,63 @@ public class BattleGenerator {
 	/**
 	 * @return	A <code>String</code> containing the battle. The string is
 	 * 			formatted to be output directly to the <code>MainWindow</code>'s
-	 * 			<code>results TextArea</code>.
+	 *			<code>results TextArea</code>.
 	 */
 	public String generateBattle() {
-		//we want to keep track of exactly how long it took to generate this
-		//battle, for the fun of it.
-		startGen = System.currentTimeMillis();
+		double startGen = System.currentTimeMillis();
 		
-		//the actual battle is generated in a helper method, because that method
-		//may be required to call itself recursively. everything that may need
-		//to be repeated in a separate method makes things easier, including
-		//keeping track of the time it took to generate the battle. anything
-		//that should not be repeated it kept outside of the helper method.
-		String battle = "";
-		try {
-			battle = generateBattleHelper(0);
-		} catch(Exception e) {
-			Util.error(e);
-			battle = "Battle generation failed! See debug log.";
-		}
+		//instead of picking a tier and going from there, maybe start with the
+		//set of all fighters that each character can get. then maybe weight the
+		//chances of getting them based on the tier chances and the number of
+		//times the player has gotten particular fighters?
 		
-		Util.log("Nobody can get " + state.cannotGet);
-		
-		Util.log("= Final result for battle #" + state.numBattles + ": =");
-		//print out the results of the battle just because it's helpful to know
-		for(int playerAt = 0; playerAt < state.gotten.size(); playerAt++) {
-			Util.log("Player " + (playerAt + 1) + " got " + state.gotten.get(playerAt));
-		}
-		
-		statsManager.updateStatsScreen();
-		
-		state.skipping = false;
-		
-		endGen = System.currentTimeMillis();
-		double delta = endGen - startGen;
+		double delta = System.currentTimeMillis() - startGen;
 		Util.log("Generation of this battle took " + delta + "ms.");
 		
-		return battle;
+		return "";
 	}
+	
+//	/**
+//	 * @return	A <code>String</code> containing the battle. The string is
+//	 * 			formatted to be output directly to the <code>MainWindow</code>'s
+//	 * 			<code>results TextArea</code>.
+//	 */
+//	public String generateBattle() {
+//		//we want to keep track of exactly how long it took to generate this
+//		//battle, for the fun of it.
+//		startGen = System.currentTimeMillis();
+//		
+//		//the actual battle is generated in a helper method, because that method
+//		//may be required to call itself recursively. everything that may need
+//		//to be repeated in a separate method makes things easier, including
+//		//keeping track of the time it took to generate the battle. anything
+//		//that should not be repeated it kept outside of the helper method.
+//		String battle = "";
+//		try {
+//			battle = generateBattleHelper(0);
+//		} catch(Exception e) {
+//			Util.error(e);
+//			battle = "Battle generation failed! See debug log.";
+//		}
+//		
+//		Util.log("Nobody can get " + state.cannotGet);
+//		
+//		Util.log("= Final result for battle #" + state.numBattles + ": =");
+//		//print out the results of the battle just because it's helpful to know
+//		for(int playerAt = 0; playerAt < state.gotten.size(); playerAt++) {
+//			Util.log("Player " + (playerAt + 1) + " got " + state.gotten.get(playerAt));
+//		}
+//		
+//		statsManager.updateStatsScreen();
+//		
+//		state.skipping = false;
+//		
+//		endGen = System.currentTimeMillis();
+//		double delta = endGen - startGen;
+//		Util.log("Generation of this battle took " + delta + "ms.");
+//		
+//		return battle;
+//	}
 	
 	private String generateBattleHelper(int depth) throws Exception {
 		//if this is our 25th try, then give up and decide that there must not
