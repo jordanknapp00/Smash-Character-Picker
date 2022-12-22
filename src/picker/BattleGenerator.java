@@ -36,6 +36,25 @@ public class BattleGenerator {
 		//chances of getting them based on the tier chances and the number of
 		//times the player has gotten particular fighters?
 		
+		//for each player, generate a list of each fighter they could
+		//potentially get. basically, every fighter except the ones on their
+		//exclusion list, the ones in the cannot get queue, and the ones in
+		//their individual cannot get. each fighter will then have a number
+		//basically representing their chance of being chosen. that number
+		//will be the percentage chance of getting that particular tier,
+		//subtracted by the number of times that player has already gotten
+		//that fighter.
+		//
+		//after we've generated the lists for each player, we choose a player
+		//at random, and pick a fighter at random from the list. that will
+		//determine the tier. other players will then have all fighters outside
+		//of a plus or minus one tier range of that fighter removed. note that
+		//the quantities of fighters in each list still remains based on the
+		//chance of a tier and the number of times a player has gotten that
+		//fighter. once the remaining players have had their lists narrowed
+		//down to the appropriate tier, fighters are chosen at random from
+		//those lists.
+		
 		double delta = System.currentTimeMillis() - startGen;
 		Util.log("Generation of this battle took " + delta + "ms.");
 		
