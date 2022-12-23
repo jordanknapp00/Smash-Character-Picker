@@ -55,19 +55,39 @@ public class BattleGenerator {
 		//fighter. once the remaining players have had their lists narrowed
 		//down to the appropriate tier, fighters are chosen at random from
 		//those lists.
-		ArrayList<HashMap<String, Integer>> playerValidCharacters = new ArrayList<HashMap<String, Integer>>();
-		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
-			playerValidCharacters.add(getValidCharacters(playerAt));
+		
+		//okay, first we're going to make a dictionary that maps each fighter
+		//to its tier, that way when we pick a fighter, we know what tier it
+		//is. i'm fairly certain at this point that a Fighter class would
+		//make this whole process a lot simpler. perhaps i'll just get this
+		//working first, then work on refactoring the whole program around
+		//some better data structures. object-oriented programming is cool,
+		//i really shouldn't be dealing with strings like this.
+		HashMap<String, Integer> tierDict = new HashMap<String, Integer>();
+		for(int tier = 0; tier < 24; tier++) {
+			for(String charAt: state.linesOfFile.get(tier)) {
+				tierDict.put(charAt, tier);
+			}
 		}
+		
+		ArrayList<ArrayList<String>> playerValidCharacters = new ArrayList<ArrayList<String>>();
+		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
+			playerValidCharacters.add(getValidCharacters(playerAt, tierDict));
+		}
+		
+		int playerToPick = ThreadLocalRandom.current().nextInt(0, state.numPlayers);
+		int numFightersForPlayer = playerValidCharacters.get(playerToPick).size();
+		String chosenFighter = playerValidCharacters.get(playerToPick).get(ThreadLocalRandom.current().nextInt(0, numFightersForPlayer));
+		int tier = tierDict.get(chosenFighter);
 		
 		double delta = System.currentTimeMillis() - startGen;
 		Util.log("Finished generating. Generation of this battle took " + delta + "ms.");
 		
-		return "";
+		return "Player 1 got Corrin, Lower S Tier\nPlayer 2 got Terry, Mid S tier\nPlayer 3 got Wii Fit Trainer, Lower C Tier";
 	}
 	
-	private HashMap<String, Integer> getValidCharacters(int player) {
-		HashMap<String, Integer> validCharacters = new HashMap<String, Integer>();
+	private ArrayList<String> getValidCharacters(int player, HashMap<String, Integer> tierDict) {
+		ArrayList<String> validChars = new ArrayList<String>();
 		
 		//loop through the lines of the file up to a certain point. each
 		//line is a tier
@@ -80,20 +100,42 @@ public class BattleGenerator {
 				//contain this character, add them to the set of valid chars
 				if(!state.cannotGet.contains(charAt) &&
 						!state.individualCannotGet[player].contains(charAt) &&
-						!state.linesOfFile.get(player + 24).contains(charAt)) {
-					validCharacters.put(charAt, tier);
+						!state.linesOfFile.get(player + 24).contains(charAt) &&
+						!tierTurnedOff(tierDict.get(charAt))) {
+					validChars.add(charAt);
 				}
 			}
 		}
 		
-		Util.log("Found " + validCharacters.size() + " for player " + (player + 1));
+		Util.log("Found " + validChars.size() + " for player " + (player + 1));
 		
 		//now is where the fun happens. we want to determine the number of
-		//times that each player should appear. however, we cant have
-		//duplicate keys because hashmap. hmmm... what's the best way to do
-		//this?
+		//times that each player should appear, and have them appear that
+		//number of times in the arraylist
+		int size = validChars.size();
+		for(int at = 0; at < size; at++) {
+			String charAt = validChars.get(at);
+			
+			//to determine the number of times the fighter should appear,
+			//start with the tier chances for its tier
+			int toAppear = state.tierChances[subtierToTier(tierDict.get(charAt))];
+			
+			//however, now we want to subtract by the number of times this
+			//player has gotten this fighter
+			toAppear -= state.stats.get(charAt)[player * 2  + 1];
+			
+			if(toAppear <= 0) {
+				toAppear = 1;
+			}
+			
+			for(int at2 = 0; at2 < toAppear; at2++) {
+				validChars.add(charAt);
+			}
+			
+			Util.log("Player " + player + " has " + charAt + " in list " + toAppear + " times.");
+		}
 		
-		return validCharacters;
+		return validChars;
 	}
 	
 //	/**
@@ -297,7 +339,7 @@ public class BattleGenerator {
 			if(adjust < 0) {
 				adjust = 0;
 			}
-			while(tierTurnedOff(adjust, state.tierChances)) {
+			while(tierTurnedOff(adjust)) {
 				adjust++;
 			}
 			if(adjust != tier) {
@@ -313,34 +355,33 @@ public class BattleGenerator {
 	
 	/**
 	 * @param tier		The tier to check whether it's turned off.
-	 * @param chances	The current tier chances.
 	 * @return			<code>true</code> if the given tier is not currently
 	 * 					active, meaning its percentage chance is zero.
 	 * 					<code>false</code> if it <i>is</i> active.
 	 */
-	private boolean tierTurnedOff(int tier, int[] chances) {
-		if((tier == 0 || tier == 1 || tier == 2) && chances[0] == 0) {
+	private boolean tierTurnedOff(int tier) {
+		if((tier == 0 || tier == 1 || tier == 2) && state.tierChances[0] == 0) {
 			return true;
 		}
-		else if((tier == 3 || tier == 4 || tier == 5) && chances[1] == 0) {
+		else if((tier == 3 || tier == 4 || tier == 5) && state.tierChances[1] == 0) {
 			return true;
 		}
-		else if((tier == 6 || tier == 7 || tier == 8) && chances[2] == 0) {
+		else if((tier == 6 || tier == 7 || tier == 8) && state.tierChances[2] == 0) {
 			return true;
 		}
-		else if((tier == 9 || tier == 10 || tier == 11) && chances[3] == 0) {
+		else if((tier == 9 || tier == 10 || tier == 11) && state.tierChances[3] == 0) {
 			return true;
 		}
-		else if((tier == 12 || tier == 13 || tier == 14) && chances[4] == 0) {
+		else if((tier == 12 || tier == 13 || tier == 14) && state.tierChances[4] == 0) {
 			return true;
 		}
-		else if((tier == 15 || tier == 16 || tier == 17) && chances[5] == 0) {
+		else if((tier == 15 || tier == 16 || tier == 17) && state.tierChances[5] == 0) {
 			return true;
 		}
-		else if((tier == 18 || tier == 19 || tier == 20) && chances[6] == 0) {
+		else if((tier == 18 || tier == 19 || tier == 20) && state.tierChances[6] == 0) {
 			return true;
 		}
-		else if((tier == 21 || tier == 22 || tier == 23) && chances[7] == 0) {
+		else if((tier == 21 || tier == 22 || tier == 23) && state.tierChances[7] == 0) {
 			return true;
 		}
 		else {
@@ -390,6 +431,45 @@ public class BattleGenerator {
 		}
 		else {
 			return 22 + change;
+		}
+	}
+	
+	/**
+	 * This method takes a subtier value (between 0 and 23) and converts it
+	 * to a regular tier number (between 0 and 7) that can be use to index
+	 * into the tier chances array. For example, if 7 (mid A tier) is given,
+	 * 2 (A tier) will be returned.
+	 * 
+	 * @param tier	The tier to convert.
+	 * @return		The given subtier converted to a higher-level tier.
+	 */
+	private int subtierToTier(int tier) {
+		if((tier == 0 || tier == 1 || tier == 2)) {
+			return 0;
+		}
+		else if((tier == 3 || tier == 4 || tier == 5)) {
+			return 1;
+		}
+		else if((tier == 6 || tier == 7 || tier == 8)) {
+			return 2;
+		}
+		else if((tier == 9 || tier == 10 || tier == 11)) {
+			return 3;
+		}
+		else if((tier == 12 || tier == 13 || tier == 14)) {
+			return 4;
+		}
+		else if((tier == 15 || tier == 16 || tier == 17)) {
+			return 5;
+		}
+		else if((tier == 18 || tier == 19 || tier == 20)) {
+			return 6;
+		}
+		else if((tier == 21 || tier == 22 || tier == 23)) {
+			return 7;
+		}
+		else {
+			return -1;
 		}
 	}
 
