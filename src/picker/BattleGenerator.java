@@ -30,6 +30,7 @@ public class BattleGenerator {
 	 */
 	public String generateBattle() {
 		double startGen = System.currentTimeMillis();
+		Util.log("Started generating battle...");
 		
 		//instead of picking a tier and going from there, maybe start with the
 		//set of all fighters that each character can get. then maybe weight the
@@ -54,11 +55,45 @@ public class BattleGenerator {
 		//fighter. once the remaining players have had their lists narrowed
 		//down to the appropriate tier, fighters are chosen at random from
 		//those lists.
+		ArrayList<HashMap<String, Integer>> playerValidCharacters = new ArrayList<HashMap<String, Integer>>();
+		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
+			playerValidCharacters.add(getValidCharacters(playerAt));
+		}
 		
 		double delta = System.currentTimeMillis() - startGen;
-		Util.log("Generation of this battle took " + delta + "ms.");
+		Util.log("Finished generating. Generation of this battle took " + delta + "ms.");
 		
 		return "";
+	}
+	
+	private HashMap<String, Integer> getValidCharacters(int player) {
+		HashMap<String, Integer> validCharacters = new HashMap<String, Integer>();
+		
+		//loop through the lines of the file up to a certain point. each
+		//line is a tier
+		for(int tier = 0; tier < 24; tier++) {
+			//for each character in this tier
+			for(String charAt: state.linesOfFile.get(tier)) {
+				//if the cannot get queue doesn't contain this character,
+				//and this player's individual cannot get doesn't contain
+				//this character, and the player's exclusion list doesn't
+				//contain this character, add them to the set of valid chars
+				if(!state.cannotGet.contains(charAt) &&
+						!state.individualCannotGet[player].contains(charAt) &&
+						!state.linesOfFile.get(player + 24).contains(charAt)) {
+					validCharacters.put(charAt, tier);
+				}
+			}
+		}
+		
+		Util.log("Found " + validCharacters.size() + " for player " + (player + 1));
+		
+		//now is where the fun happens. we want to determine the number of
+		//times that each player should appear. however, we cant have
+		//duplicate keys because hashmap. hmmm... what's the best way to do
+		//this?
+		
+		return validCharacters;
 	}
 	
 //	/**
