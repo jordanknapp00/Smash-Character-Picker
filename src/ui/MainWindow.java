@@ -782,6 +782,8 @@ public class MainWindow {
 				return;
 			}
 			
+			state.numBattles++;
+			
 			//generateBattle will now return a blank string if it generates
 			//a battle that's invalid. at least we can try a LOT of times
 			//without worrying about a stack overflow error if we do it this

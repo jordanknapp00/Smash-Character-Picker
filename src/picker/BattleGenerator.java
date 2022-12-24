@@ -83,9 +83,18 @@ public class BattleGenerator {
 		
 		int playerToPick = ThreadLocalRandom.current().nextInt(0, state.numPlayers);
 		int numFightersForPlayer = playerValidCharacters.get(playerToPick).size();
-		ArrayList<String> gotten = new ArrayList<String>();
+		
+		//this is kind of stupid and annoying, but we need to initialize each
+		//spot in the gotten arraylist to null, because we aren't simply
+		//adding on to the end of it every time. apparently you can't add to
+		//an index if you haven't assigned stuff before it
+		state.gotten.clear();
+		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
+			state.gotten.add(null);
+		}
+		
 		String chosenFighter = playerValidCharacters.get(playerToPick).get(ThreadLocalRandom.current().nextInt(0, numFightersForPlayer));
-		gotten.add(playerToPick, chosenFighter);
+		state.gotten.set(playerToPick, chosenFighter);
 		int tier = tierDict.get(chosenFighter);
 		
 		Util.log("Picking fighter at random from player " + (playerToPick + 1));
@@ -106,12 +115,94 @@ public class BattleGenerator {
 			//any valid characters, right? let's try it. only problem is it
 			//kind of invalidates the bump chances. maybe we need to apply
 			//even more weighting according to the bump chances...
+			int tier2 = tier - 1;
+			int tier3 = tier - 2;
+			if(tier == 0) {
+				tier2 = 1;
+				tier3 = 2;
+			}
+			else if(tier == 1) {
+				tier2 = 0;
+				tier3 = 2;
+			}
+			
+			ArrayList<String> inTierOptions = new ArrayList<String>();
+			
+			for(String charAt: playerValidCharacters.get(playerAt)) {
+				//skip fighters already chosen
+				if(state.gotten.contains(charAt)) {
+					continue;
+				}
+				
+				int tierOfChar = tierDict.get(charAt);
+				
+				if(tierOfChar == tier || tierOfChar == tier2 || tierOfChar == tier3) {
+					inTierOptions.add(charAt);
+				}
+			}
+			
+			if(inTierOptions.size() == 0) {
+				Util.log("Player " + (playerAt + 1) + " has no valid options within tier range.");
+				return "";
+			}
+			
+			numFightersForPlayer = inTierOptions.size();
+			chosenFighter = inTierOptions.get(ThreadLocalRandom.current().nextInt(0, numFightersForPlayer));
+			state.gotten.set(playerAt, chosenFighter);
 		}
+		
+		String returnString = "Battle #" + state.numBattles + ":\n";
+		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
+			String fighterGot = state.gotten.get(playerAt);
+			Util.log("Player " + (playerAt + 1) + " got " + fighterGot + ", tier " + Util.tierToString(tierDict.get(fighterGot)));
+			
+			returnString += "Player " + (playerAt + 1) + " got " + fighterGot + ", " + Util.tierToString(tierDict.get(fighterGot)) + "\n";
+		}
+		
+		//remove from cannot get queue first
+		Util.log("The total size of the cannot get buffer is " + state.cannotGetSize);
+		Util.log("There are " + state.cannotGet.size() + " fighters in the buffer, and " + state.numPlayers + " players.");
+		if(state.cannotGet.size() >= (state.cannotGetSize * state.numPlayers)) {
+			Util.log("Removing from cannot get...");
+			for(int at = 0; at < state.numPlayers; at++) {
+				state.cannotGet.removeFirst();
+			}
+		}
+		
+		//then add to queue
+		for(int playerAt = 0; playerAt < state.gotten.size(); playerAt++) {
+			tier = tierDict.get(state.gotten.get(playerAt));
+			
+			if(state.skipping) {
+				state.individualCannotGet[playerAt].removeLast();
+			}
+			
+			if(tier < 3 && state.allowSSInCannotGetBuffer) {
+				state.cannotGet.add(state.gotten.get(playerAt), tier);
+			}
+			else if(tier >= 3 && tier <= 5 && state.allowSInCannotGetBuffer) {
+				state.cannotGet.add(state.gotten.get(playerAt), tier);
+			}
+			else if(tier >= 6) {
+				state.cannotGet.add(state.gotten.get(playerAt), tier);
+			}
+			
+			//if the gotten character is a favorite, don't add it to the
+			//cannot get for rest of session queue
+			if(!state.linesOfFile.get(32 + playerAt).contains(state.gotten.get(playerAt))) {
+				state.individualCannotGet[playerAt].add(state.gotten.get(playerAt), tier);
+			}
+			
+			Util.log("Player " + (playerAt + 1) + " cannot get " + state.individualCannotGet[playerAt]);
+		}
+		
+		statsManager.updateStatsScreen();
+		state.skipping = false;
 		
 		double delta = System.currentTimeMillis() - startGen;
 		Util.log("Finished generating. Generation of this battle took " + delta + "ms.");
 		
-		return "Player 1 got Corrin, Lower S Tier\nPlayer 2 got Terry, Mid S tier\nPlayer 3 got Wii Fit Trainer, Lower C Tier";
+		return returnString;
 	}
 	
 	private ArrayList<String> getValidCharacters(int player, HashMap<String, Integer> tierDict) {
@@ -159,8 +250,6 @@ public class BattleGenerator {
 			for(int at2 = 0; at2 < toAppear; at2++) {
 				validChars.add(charAt);
 			}
-			
-			Util.log("Player " + player + " has " + charAt + " in list " + toAppear + " times.");
 		}
 		
 		return validChars;
