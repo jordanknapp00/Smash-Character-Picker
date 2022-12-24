@@ -30,32 +30,7 @@ public class BattleGenerator {
 	 */
 	public String generateBattle() {
 		double startGen = System.currentTimeMillis();
-		Util.log("Started generating battle...");
-		
-		//okay, this whole process is bad and i don't like it. i keep trying
-		//to make it so you can never have a situation where there are no
-		//valid characters for a player, and that's very, very hard. i think
-		//we do want to start with the full set of valid characters for each
-		//player, and organize them by tier. either use an ArrayList of
-		//HashMaps which map Integers to ArrayLists, or we use an ArrayList
-		//of ArrayLists of ArrayLists, with the middle ArrayList containing
-		//each tier in its appropriate index.
-		//
-		//Anyways, once we've generated the set of valid characters for
-		//everyone, we need to determine which tiers each player can get.
-		//we may have a case where player 1 can't get any Mid S tiers, and
-		//player 2 can't get any Upper S tiers, but that's okay. a battle
-		//could still be generated there. i guess if there are any two tier
-		//gaps for a particular player, that means nobody should be able to
-		//get those tiers. so if a player can't get Mid A, Upper A, or Lower S,
-		//that means that nobody should be able to get Mid A. you could still
-		//generate Upper A, then that player would have to get a Mid S tier.
-		//
-		//honestly, maybe it is better when we just pick a tier and try
-		//several times, because trying to fully prevent impossible matchups
-		//seems to be, well... impossible.
-		
-		
+		Util.log("Started generating battle...");	
 		
 		//instead of picking a tier and going from there, maybe start with the
 		//set of all fighters that each character can get. then maybe weight the
@@ -125,42 +100,12 @@ public class BattleGenerator {
 				continue;
 			}
 			
-			int adjustVal = ThreadLocalRandom.current().nextInt(0, 100);
-			int adjust = 1;
-			
-			int sum = state.bumpChances[0];
-			if(adjustVal <= sum) {
-				adjust = 0;
-			}
-			sum += state.bumpChances[1];
-			if(adjustVal <= sum && adjust == 1) {
-				adjust = -1;
-			}
-			sum += state.bumpChances[2];
-			if(adjustVal <= sum && adjust == 1) {
-				adjust = -2;
-			}
-			
-			int playerTier = tier + adjust;
-			if(playerTier < 0) {
-				playerTier = 0;
-			}
-			
-			if(playerTier != tier) {
-				Util.log("Player " + (playerAt + 1) + " has been adjusted to tier " + Util.tierToString(playerTier));
-			}
-			
-			ArrayList<String> fightersInTier = new ArrayList<String>();
-			for(String at: playerValidCharacters.get(playerAt)) {
-				if(tierDict.get(at) == playerTier) {
-					fightersInTier.add(at);
-				}
-			}
-			
-			if(fightersInTier.size() == 0) {
-				Util.log("Found no valid characters for player " + (playerAt + 1) + " in selected tier.");
-				return "";
-			}
+			//instead of generating a tier, why not instead just include
+			//all characters from the range of tiers that are available?
+			//that would greatly reduce the chances of getting a tier without
+			//any valid characters, right? let's try it. only problem is it
+			//kind of invalidates the bump chances. maybe we need to apply
+			//even more weighting according to the bump chances...
 		}
 		
 		double delta = System.currentTimeMillis() - startGen;
