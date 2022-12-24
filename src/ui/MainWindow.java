@@ -782,7 +782,22 @@ public class MainWindow {
 				return;
 			}
 			
-			results.setText(battleGenerator.generateBattle());
+			//generateBattle will now return a blank string if it generates
+			//a battle that's invalid. at least we can try a LOT of times
+			//without worrying about a stack overflow error if we do it this
+			//way
+			String result = "";
+			int tries = 0;
+			while(result == "" && tries < 100) {
+				tries++;
+				result = battleGenerator.generateBattle();
+			}
+			
+			if(result == "") {
+				result = "No valid battles found after 100 tries.";
+			}
+			
+			results.setText(result);
 			
 			//the last thing we're gonna do is enable all the switch panel
 			//stuff, now that it won't cause errors and whatnot.

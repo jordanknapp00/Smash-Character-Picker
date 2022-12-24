@@ -32,6 +32,31 @@ public class BattleGenerator {
 		double startGen = System.currentTimeMillis();
 		Util.log("Started generating battle...");
 		
+		//okay, this whole process is bad and i don't like it. i keep trying
+		//to make it so you can never have a situation where there are no
+		//valid characters for a player, and that's very, very hard. i think
+		//we do want to start with the full set of valid characters for each
+		//player, and organize them by tier. either use an ArrayList of
+		//HashMaps which map Integers to ArrayLists, or we use an ArrayList
+		//of ArrayLists of ArrayLists, with the middle ArrayList containing
+		//each tier in its appropriate index.
+		//
+		//Anyways, once we've generated the set of valid characters for
+		//everyone, we need to determine which tiers each player can get.
+		//we may have a case where player 1 can't get any Mid S tiers, and
+		//player 2 can't get any Upper S tiers, but that's okay. a battle
+		//could still be generated there. i guess if there are any two tier
+		//gaps for a particular player, that means nobody should be able to
+		//get those tiers. so if a player can't get Mid A, Upper A, or Lower S,
+		//that means that nobody should be able to get Mid A. you could still
+		//generate Upper A, then that player would have to get a Mid S tier.
+		//
+		//honestly, maybe it is better when we just pick a tier and try
+		//several times, because trying to fully prevent impossible matchups
+		//seems to be, well... impossible.
+		
+		
+		
 		//instead of picking a tier and going from there, maybe start with the
 		//set of all fighters that each character can get. then maybe weight the
 		//chances of getting them based on the tier chances and the number of
@@ -73,12 +98,70 @@ public class BattleGenerator {
 		ArrayList<ArrayList<String>> playerValidCharacters = new ArrayList<ArrayList<String>>();
 		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
 			playerValidCharacters.add(getValidCharacters(playerAt, tierDict));
+			
+			//go ahead and check if a particular player has no valid chars
+			if(playerValidCharacters.get(playerAt).size() == 0) {
+				Util.log("Player " + (playerAt + 1) + " has no valid characters!");
+				return "";
+			}
 		}
 		
 		int playerToPick = ThreadLocalRandom.current().nextInt(0, state.numPlayers);
 		int numFightersForPlayer = playerValidCharacters.get(playerToPick).size();
+		ArrayList<String> gotten = new ArrayList<String>();
 		String chosenFighter = playerValidCharacters.get(playerToPick).get(ThreadLocalRandom.current().nextInt(0, numFightersForPlayer));
+		gotten.add(playerToPick, chosenFighter);
 		int tier = tierDict.get(chosenFighter);
+		
+		Util.log("Picking fighter at random from player " + (playerToPick + 1));
+		Util.log("Player " + (playerToPick + 1) + " has " + numFightersForPlayer + " fighters in their valid set");
+		Util.log("Chose " + chosenFighter + ", so the tier is " + Util.tierToString(tier));
+		
+		//okay, so it's still entirely possible to generate a tier that has
+		//no valid characters for a player. whatever, we'll just return a
+		//blank string in that case.
+		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
+			if(playerAt == playerToPick) {
+				continue;
+			}
+			
+			int adjustVal = ThreadLocalRandom.current().nextInt(0, 100);
+			int adjust = 1;
+			
+			int sum = state.bumpChances[0];
+			if(adjustVal <= sum) {
+				adjust = 0;
+			}
+			sum += state.bumpChances[1];
+			if(adjustVal <= sum && adjust == 1) {
+				adjust = -1;
+			}
+			sum += state.bumpChances[2];
+			if(adjustVal <= sum && adjust == 1) {
+				adjust = -2;
+			}
+			
+			int playerTier = tier + adjust;
+			if(playerTier < 0) {
+				playerTier = 0;
+			}
+			
+			if(playerTier != tier) {
+				Util.log("Player " + (playerAt + 1) + " has been adjusted to tier " + Util.tierToString(playerTier));
+			}
+			
+			ArrayList<String> fightersInTier = new ArrayList<String>();
+			for(String at: playerValidCharacters.get(playerAt)) {
+				if(tierDict.get(at) == playerTier) {
+					fightersInTier.add(at);
+				}
+			}
+			
+			if(fightersInTier.size() == 0) {
+				Util.log("Found no valid characters for player " + (playerAt + 1) + " in selected tier.");
+				return "";
+			}
+		}
 		
 		double delta = System.currentTimeMillis() - startGen;
 		Util.log("Finished generating. Generation of this battle took " + delta + "ms.");
