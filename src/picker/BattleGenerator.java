@@ -128,6 +128,9 @@ public class BattleGenerator {
 			}
 			
 			ArrayList<String> inTierOptions = new ArrayList<String>();
+			int countTier1 = 0;
+			int countTier2 = 0;
+			int countTier3 = 0;
 			
 			for(String charAt: playerValidCharacters.get(playerAt)) {
 				//skip fighters already chosen
@@ -136,8 +139,24 @@ public class BattleGenerator {
 				}
 				
 				int tierOfChar = tierDict.get(charAt);
+				int timesToAdd = 0;
 				
-				if(tierOfChar == tier || tierOfChar == tier2 || tierOfChar == tier3) {
+				//alright, we're going to weight things even more to account
+				//for the bump chances, why the hell not?
+				if(tierOfChar == tier) {
+					timesToAdd = state.bumpChances[0];
+					countTier1 += timesToAdd;
+				}
+				else if(tierOfChar == tier2) {
+					timesToAdd = state.bumpChances[1];
+					countTier2 += timesToAdd;
+				}
+				else if(tierOfChar == tier3) {
+					timesToAdd = state.bumpChances[2];
+					countTier3 += timesToAdd;
+				}
+				
+				for(int at = 0; at < timesToAdd; at++) {
 					inTierOptions.add(charAt);
 				}
 			}
@@ -145,6 +164,10 @@ public class BattleGenerator {
 			if(inTierOptions.size() == 0) {
 				Util.log("Player " + (playerAt + 1) + " has no valid options within tier range.");
 				return "";
+			}
+			else {
+				Util.log("Player " + (playerAt + 1) + " has " + inTierOptions.size() + " options within tier range");
+				Util.log("  Of them, " + countTier1 + " are the original tier, " + countTier2 + " bump once, " + countTier3 + " bump twice.");
 			}
 			
 			numFightersForPlayer = inTierOptions.size();
