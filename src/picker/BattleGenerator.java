@@ -156,6 +156,12 @@ public class BattleGenerator {
 					countTier3 += timesToAdd;
 				}
 				
+				//multiplying each set of characters by a factor of 10 or
+				//even more is going to throw off the balancing due to the
+				//number of times a player has gotten a fighter. so we want
+				//to add in some more adjustment based on that number
+				timesToAdd -= 3 * state.stats.get(charAt)[playerAt * 2  + 1];
+				
 				for(int at = 0; at < timesToAdd; at++) {
 					inTierOptions.add(charAt);
 				}
@@ -270,8 +276,9 @@ public class BattleGenerator {
 			int toAppear = state.tierChances[subtierToTier(tierDict.get(charAt))];
 			
 			//however, now we want to subtract by the number of times this
-			//player has gotten this fighter
-			toAppear -= state.stats.get(charAt)[player * 2  + 1];
+			//player has gotten this fighter... maybe times two to really
+			//make a difference
+			toAppear -= 2 * state.stats.get(charAt)[player * 2  + 1];
 			
 			if(toAppear <= 0) {
 				toAppear = 1;
