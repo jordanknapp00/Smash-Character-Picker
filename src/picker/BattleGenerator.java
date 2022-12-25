@@ -18,9 +18,17 @@ public class BattleGenerator {
 	private ProgramState state;
 	private StatsManager statsManager;
 	
+	private HashMap<String, Integer> tierDict;
+	
 	public BattleGenerator(ProgramState state, StatsManager statsManager) {
 		this.state = state;
 		this.statsManager = statsManager;
+		
+		//for now, we're using this dictionary to easily be able to figure
+		//out the tier of a fighter. in the future, i want to be able to
+		//have a Fighter class that makes managing all this stuff a lot easier.
+		//java is object-oriented, why am i not using it?
+		tierDict = new HashMap<String, Integer>();
 	}
 	
 	/**
@@ -55,25 +63,22 @@ public class BattleGenerator {
 		//down to the appropriate tier, fighters are chosen at random from
 		//those lists.
 		
-		//okay, first we're going to make a dictionary that maps each fighter
-		//to its tier, that way when we pick a fighter, we know what tier it
-		//is. i'm fairly certain at this point that a Fighter class would
-		//make this whole process a lot simpler. perhaps i'll just get this
-		//working first, then work on refactoring the whole program around
-		//some better data structures. object-oriented programming is cool,
-		//i really shouldn't be dealing with strings like this.
-		HashMap<String, Integer> tierDict = new HashMap<String, Integer>();
-		for(int tier = 0; tier < 24; tier++) {
-			for(String charAt: state.linesOfFile.get(tier)) {
-				tierDict.put(charAt, tier);
+		//i guess i can't initialize the tierDict in the constructor like i
+		//wanted to, because a tier list hasn't been loaded when this class
+		//is initialized. i mean, duh! we still don't want to waste time
+		//making the tier dict every time, so we'll do it here but only if
+		//the tier dict is empty
+		if(tierDict.size() == 0) {
+			for(int tier = 0; tier < 24; tier++) {
+				for(String charAt: state.linesOfFile.get(tier)) {
+					tierDict.put(charAt, tier);
+				}
 			}
 		}
 		
-		Util.log("Created tier dictionary");
-		
 		ArrayList<ArrayList<String>> playerValidCharacters = new ArrayList<ArrayList<String>>();
 		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
-			playerValidCharacters.add(getValidCharacters(playerAt, tierDict));
+			playerValidCharacters.add(getValidCharacters(playerAt));
 			
 			//go ahead and check if a particular player has no valid chars
 			if(playerValidCharacters.get(playerAt).size() == 0) {
@@ -139,28 +144,27 @@ public class BattleGenerator {
 				}
 				
 				int tierOfChar = tierDict.get(charAt);
-				int timesToAdd = 0;
-				
-				//alright, we're going to weight things even more to account
-				//for the bump chances, why the hell not?
-				if(tierOfChar == tier) {
-					timesToAdd = state.bumpChances[0];
-					countTier1 += timesToAdd;
-				}
-				else if(tierOfChar == tier2) {
-					timesToAdd = state.bumpChances[1];
-					countTier2 += timesToAdd;
-				}
-				else if(tierOfChar == tier3) {
-					timesToAdd = state.bumpChances[2];
-					countTier3 += timesToAdd;
-				}
 				
 				//multiplying each set of characters by a factor of 10 or
 				//even more is going to throw off the balancing due to the
 				//number of times a player has gotten a fighter. so we want
 				//to add in some more adjustment based on that number
-				timesToAdd -= 3 * state.stats.get(charAt)[playerAt * 2  + 1];
+				int timesToAdd = (int) (-2 * state.stats.get(charAt)[playerAt * 2  + 1]);
+				
+				//alright, we're going to weight things even more to account
+				//for the bump chances, why the hell not?
+				if(tierOfChar == tier) {
+					timesToAdd += state.bumpChances[0];
+					countTier1 += timesToAdd;
+				}
+				else if(tierOfChar == tier2) {
+					timesToAdd += state.bumpChances[1];
+					countTier2 += timesToAdd;
+				}
+				else if(tierOfChar == tier3) {
+					timesToAdd += state.bumpChances[2];
+					countTier3 += timesToAdd;
+				}
 				
 				for(int at = 0; at < timesToAdd; at++) {
 					inTierOptions.add(charAt);
@@ -241,7 +245,7 @@ public class BattleGenerator {
 		return returnString;
 	}
 	
-	private ArrayList<String> getValidCharacters(int player, HashMap<String, Integer> tierDict) {
+	private ArrayList<String> getValidCharacters(int player) {
 		ArrayList<String> validChars = new ArrayList<String>();
 		
 		//loop through the lines of the file up to a certain point. each
@@ -256,7 +260,7 @@ public class BattleGenerator {
 				if(!state.cannotGet.contains(charAt) &&
 						!state.individualCannotGet[player].contains(charAt) &&
 						!state.linesOfFile.get(player + 24).contains(charAt) &&
-						!tierTurnedOff(tierDict.get(charAt))) {
+						!tierTurnedOff(tier)) {
 					validChars.add(charAt);
 				}
 			}
@@ -292,221 +296,6 @@ public class BattleGenerator {
 		return validChars;
 	}
 	
-//	/**
-//	 * @return	A <code>String</code> containing the battle. The string is
-//	 * 			formatted to be output directly to the <code>MainWindow</code>'s
-//	 * 			<code>results TextArea</code>.
-//	 */
-//	public String generateBattle() {
-//		//we want to keep track of exactly how long it took to generate this
-//		//battle, for the fun of it.
-//		startGen = System.currentTimeMillis();
-//		
-//		//the actual battle is generated in a helper method, because that method
-//		//may be required to call itself recursively. everything that may need
-//		//to be repeated in a separate method makes things easier, including
-//		//keeping track of the time it took to generate the battle. anything
-//		//that should not be repeated it kept outside of the helper method.
-//		String battle = "";
-//		try {
-//			battle = generateBattleHelper(0);
-//		} catch(Exception e) {
-//			Util.error(e);
-//			battle = "Battle generation failed! See debug log.";
-//		}
-//		
-//		Util.log("Nobody can get " + state.cannotGet);
-//		
-//		Util.log("= Final result for battle #" + state.numBattles + ": =");
-//		//print out the results of the battle just because it's helpful to know
-//		for(int playerAt = 0; playerAt < state.gotten.size(); playerAt++) {
-//			Util.log("Player " + (playerAt + 1) + " got " + state.gotten.get(playerAt));
-//		}
-//		
-//		statsManager.updateStatsScreen();
-//		
-//		state.skipping = false;
-//		
-//		endGen = System.currentTimeMillis();
-//		double delta = endGen - startGen;
-//		Util.log("Generation of this battle took " + delta + "ms.");
-//		
-//		return battle;
-//	}
-	
-	private String generateBattleHelper(int depth) throws Exception {
-		//if this is our 25th try, then give up and decide that there must not
-		//be any valid battles left.
-		if(depth == 25) {
-			throw new Exception("No valid battles found after 25 tries");
-		}
-		
-		//otherwise, continue with battle generation normally
-		String battle = "";
-		
-		if(!state.skipping || state.numBattles == 0) {
-			state.numBattles++;
-		}
-		
-		battle += "Battle #" + state.numBattles + ":\n";
-		Util.log("=== BATTLE #" + state.numBattles + ": ===");
-		
-		int[] playerTiers = getPlayerTiers();
-		
-		state.gotten.clear();
-		for(int player = 1; player <= state.numPlayers; player++) {
-			int tier = playerTiers[player - 1];
-			String got = "";
-			ArrayList<String> validCharacters = new ArrayList<String>();
-			
-			//set up an array list of valid characters from the appropriate
-			//tier from which this player's character will be chosen
-			//basically, remove excluded characters, ones from the cannot
-			//get queue, and ones already gotten
-			for(String currentlyAt: state.linesOfFile.get(tier)) {
-				if(!state.linesOfFile.get(player + 23).contains(currentlyAt) &&
-				   !state.cannotGet.contains(currentlyAt) &&
-				   !state.gotten.contains(currentlyAt) &&
-				   !state.individualCannotGet[player - 1].contains(currentlyAt)) {
-					validCharacters.add(currentlyAt);
-				}
-			}
-			
-			//if there are no valid characters, call the function again
-			if(validCharacters.size() == 0) {
-				if(!state.skipping) {
-					state.numBattles--;
-				}
-				
-				Util.error("There were no valid characters, retrying...");
-				return generateBattleHelper(depth + 1);
-			}
-			
-			got = validCharacters.get(ThreadLocalRandom.current().nextInt(0, validCharacters.size()));
-			state.gotten.add(got);
-			
-			battle += "Player " + player + " got " + got + ", " + Util.tierToString(tier) + ".\n";
-		}
-		
-		//remove from cannot get queue first
-		Util.log("The total size of the cannot get buffer is " + state.cannotGetSize);
-		Util.log("There are " + state.cannotGet.size() + " fighters in the buffer, and " + state.numPlayers + " players.");
-		if(state.cannotGet.size() >= (state.cannotGetSize * state.numPlayers)) {
-			Util.log("Removing from cannot get...");
-			for(int at = 0; at < state.numPlayers; at++) {
-				state.cannotGet.removeFirst();
-			}
-		}
-		
-		//then add to queue
-		for(int playerAt = 0; playerAt < state.gotten.size(); playerAt++) {
-			int tier = playerTiers[playerAt];
-			
-			if(state.skipping) {
-				state.individualCannotGet[playerAt].removeLast();
-			}
-			
-			if(tier < 3 && state.allowSSInCannotGetBuffer) {
-				state.cannotGet.add(state.gotten.get(playerAt), tier);
-			}
-			else if(tier >= 3 && tier <= 5 && state.allowSInCannotGetBuffer) {
-				state.cannotGet.add(state.gotten.get(playerAt), tier);
-			}
-			else if(tier >= 6) {
-				state.cannotGet.add(state.gotten.get(playerAt), tier);
-			}
-			
-			//if the gotten character is a favorite, don't add it to the
-			//cannot get for rest of session queue
-			if(!state.linesOfFile.get(32 + playerAt).contains(state.gotten.get(playerAt))) {
-				state.individualCannotGet[playerAt].add(state.gotten.get(playerAt), tier);
-			}
-			
-			Util.log("Player " + (playerAt + 1) + " cannot get " + state.individualCannotGet[playerAt]);
-		}
-		
-		return battle;
-	}
-	
-	private int[] getPlayerTiers() {
-		int tierChance = ThreadLocalRandom.current().nextInt(0, 101);
-		int tier = -1;
-		int sum = 0;
-		int[] playerTiers = new int[state.numPlayers];
-		
-		sum = state.tierChances[0];
-		if(tierChance <= sum) {
-			tier = 0;
-		}
-		sum += state.tierChances[1];
-		if(tierChance <= sum && tier == -1) {
-			tier = 1;
-		}
-		sum += state.tierChances[2];
-		if(tierChance <= sum && tier == -1) {
-			tier = 2;
-		}
-		sum += state.tierChances[3];
-		if(tierChance <= sum && tier == -1) {
-			tier = 3;
-		}
-		sum += state.tierChances[4];
-		if(tierChance <= sum && tier == -1) {
-			tier = 4;
-		}
-		sum += state.tierChances[5];
-		if(tierChance <= sum && tier == -1) {
-			tier = 5;
-		}
-		sum += state.tierChances[6];
-		if(tierChance <= sum && tier == -1) {
-			tier = 6;
-		}
-		sum += state.tierChances[7];
-		if(tierChance <= sum && tier == -1) {
-			tier = 7;
-		}
-		tier = convertToTierNum(tier);
-		
-		Util.log("The starting tier is " + Util.tierToString(tier));
-		
-		for(int at = 0; at < state.numPlayers; at++) {
-			int adjustVal = ThreadLocalRandom.current().nextInt(0, 100);
-			int adjust = 1;
-			
-			sum = state.bumpChances[0];
-			if(adjustVal <= sum) {
-				adjust = 0;
-			}
-			sum += state.bumpChances[1];
-			if(adjustVal <= sum && adjust == 1) {
-				adjust = -1;
-			}
-			sum += state.bumpChances[2];
-			if(adjustVal <= sum && adjust == 1) {
-				adjust = -2;
-			}
-			
-			int oldadj = adjust;
-			adjust = tier + adjust;
-			
-			if(adjust < 0) {
-				adjust = 0;
-			}
-			while(tierTurnedOff(adjust)) {
-				adjust++;
-			}
-			if(adjust != tier) {
-				Util.log("Player " + (at + 1) + " has been adjusted (adjval "
-						+ oldadj + "), getting " + Util.tierToString(adjust));
-			}
-			
-			playerTiers[at] = adjust;
-		}
-		
-		return playerTiers;
-	}
-	
 	/**
 	 * @param tier		The tier to check whether it's turned off.
 	 * @return			<code>true</code> if the given tier is not currently
@@ -540,51 +329,6 @@ public class BattleGenerator {
 		}
 		else {
 			return false;
-		}
-	}
-	
-	/**
-	 * This method takes in a tier generated in the
-	 * <code>getPlayerTiers()</code> method, which is a value between 0 and 7,
-	 * and converts it into a proper tier number that can be used by the rest of
-	 * the program to index into the <code>linesOfFile</code> array.
-	 * <br><br>
-	 * Since the <code>getPlayerTiers()</code> method only picks a basic tier,
-	 * i.e. SS, S, A, B, etc., this tier will also randomly select a sub-tier.
-	 * The given tier value has equal chance of being incremented by one,
-	 * decremented by one, or staying the same, thus choosing between the upper,
-	 * lower, or mid sub-tiers.
-	 * 
-	 * @param tier	The base tier to convert.
-	 * @return		The given tier, converted into the appropriate index and
-	 * 				with a sub-tier randomly chosen.
-	 */
-	private int convertToTierNum(int tier) {
-		int change = ThreadLocalRandom.current().nextInt(-1, 2);
-		
-		if(tier == 0) {
-			return 1 + change;
-		}
-		else if(tier == 1) {
-			return 4 + change;
-		}
-		else if(tier == 2) {
-			return 7 + change;
-		}
-		else if(tier == 3) {
-			return 10 + change;
-		}
-		else if(tier == 4) {
-			return 13 + change;
-		}
-		else if(tier == 5) {
-			return 16 + change;
-		}
-		else if(tier == 6) {
-			return 19 + change;
-		}
-		else {
-			return 22 + change;
 		}
 	}
 	
