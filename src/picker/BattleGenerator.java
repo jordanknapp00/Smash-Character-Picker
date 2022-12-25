@@ -18,9 +18,17 @@ public class BattleGenerator {
 	private ProgramState state;
 	private StatsManager statsManager;
 	
+	private HashMap<String, Integer> tierDict;
+	
 	public BattleGenerator(ProgramState state, StatsManager statsManager) {
 		this.state = state;
 		this.statsManager = statsManager;
+		
+		//for now, we're using this dictionary to easily be able to figure
+		//out the tier of a fighter. in the future, i want to be able to
+		//have a Fighter class that makes managing all this stuff a lot easier.
+		//java is object-oriented, why am i not using it?
+		tierDict = new HashMap<String, Integer>();
 	}
 	
 	/**
@@ -55,25 +63,22 @@ public class BattleGenerator {
 		//down to the appropriate tier, fighters are chosen at random from
 		//those lists.
 		
-		//okay, first we're going to make a dictionary that maps each fighter
-		//to its tier, that way when we pick a fighter, we know what tier it
-		//is. i'm fairly certain at this point that a Fighter class would
-		//make this whole process a lot simpler. perhaps i'll just get this
-		//working first, then work on refactoring the whole program around
-		//some better data structures. object-oriented programming is cool,
-		//i really shouldn't be dealing with strings like this.
-		HashMap<String, Integer> tierDict = new HashMap<String, Integer>();
-		for(int tier = 0; tier < 24; tier++) {
-			for(String charAt: state.linesOfFile.get(tier)) {
-				tierDict.put(charAt, tier);
+		//i guess i can't initialize the tierDict in the constructor like i
+		//wanted to, because a tier list hasn't been loaded when this class
+		//is initialized. i mean, duh! we still don't want to waste time
+		//making the tier dict every time, so we'll do it here but only if
+		//the tier dict is empty
+		if(tierDict.size() == 0) {
+			for(int tier = 0; tier < 24; tier++) {
+				for(String charAt: state.linesOfFile.get(tier)) {
+					tierDict.put(charAt, tier);
+				}
 			}
 		}
 		
-		Util.log("Created tier dictionary");
-		
 		ArrayList<ArrayList<String>> playerValidCharacters = new ArrayList<ArrayList<String>>();
 		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
-			playerValidCharacters.add(getValidCharacters(playerAt, tierDict));
+			playerValidCharacters.add(getValidCharacters(playerAt));
 			
 			//go ahead and check if a particular player has no valid chars
 			if(playerValidCharacters.get(playerAt).size() == 0) {
@@ -241,7 +246,7 @@ public class BattleGenerator {
 		return returnString;
 	}
 	
-	private ArrayList<String> getValidCharacters(int player, HashMap<String, Integer> tierDict) {
+	private ArrayList<String> getValidCharacters(int player) {
 		ArrayList<String> validChars = new ArrayList<String>();
 		
 		//loop through the lines of the file up to a certain point. each
@@ -256,7 +261,7 @@ public class BattleGenerator {
 				if(!state.cannotGet.contains(charAt) &&
 						!state.individualCannotGet[player].contains(charAt) &&
 						!state.linesOfFile.get(player + 24).contains(charAt) &&
-						!tierTurnedOff(tierDict.get(charAt))) {
+						!tierTurnedOff(tier)) {
 					validChars.add(charAt);
 				}
 			}
