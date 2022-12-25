@@ -784,6 +784,8 @@ public class MainWindow {
 			
 			state.numBattles++;
 			
+			Util.log("========== BEGINNING GENERATION OF BATTLE " + state.numBattles + " ==========");
+			
 			//generateBattle will now return a blank string if it generates
 			//a battle that's invalid. at least we can try a LOT of times
 			//without worrying about a stack overflow error if we do it this
@@ -792,8 +794,12 @@ public class MainWindow {
 			int tries = 0;
 			while(result == "" && tries < 100) {
 				tries++;
+				Util.log("======= Try " + tries + " =======");
+				
 				result = battleGenerator.generateBattle();
 			}
+			
+			Util.log("========== End battle generation process ==========");
 			
 			if(result == "") {
 				result = "No valid battles found after 100 tries.";

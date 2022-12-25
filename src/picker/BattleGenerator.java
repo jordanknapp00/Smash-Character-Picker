@@ -30,7 +30,6 @@ public class BattleGenerator {
 	 */
 	public String generateBattle() {
 		double startGen = System.currentTimeMillis();
-		Util.log("Started generating battle...");	
 		
 		//instead of picking a tier and going from there, maybe start with the
 		//set of all fighters that each character can get. then maybe weight the
@@ -69,6 +68,8 @@ public class BattleGenerator {
 				tierDict.put(charAt, tier);
 			}
 		}
+		
+		Util.log("Created tier dictionary");
 		
 		ArrayList<ArrayList<String>> playerValidCharacters = new ArrayList<ArrayList<String>>();
 		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
@@ -151,6 +152,8 @@ public class BattleGenerator {
 			state.gotten.set(playerAt, chosenFighter);
 		}
 		
+		Util.log("===== Successfully generated battle! =====");
+		
 		String returnString = "Battle #" + state.numBattles + ":\n";
 		for(int playerAt = 0; playerAt < state.numPlayers; playerAt++) {
 			String fighterGot = state.gotten.get(playerAt);
@@ -158,6 +161,8 @@ public class BattleGenerator {
 			
 			returnString += "Player " + (playerAt + 1) + " got " + fighterGot + ", " + Util.tierToString(tierDict.get(fighterGot)) + "\n";
 		}
+		
+		Util.log("=== Cannot get information: ===");
 		
 		//remove from cannot get queue first
 		Util.log("The total size of the cannot get buffer is " + state.cannotGetSize);
@@ -195,6 +200,8 @@ public class BattleGenerator {
 			
 			Util.log("Player " + (playerAt + 1) + " cannot get " + state.individualCannotGet[playerAt]);
 		}
+		
+		Util.log("Nobody can get " + state.cannotGet);
 		
 		statsManager.updateStatsScreen();
 		state.skipping = false;
