@@ -144,28 +144,27 @@ public class BattleGenerator {
 				}
 				
 				int tierOfChar = tierDict.get(charAt);
-				int timesToAdd = 0;
-				
-				//alright, we're going to weight things even more to account
-				//for the bump chances, why the hell not?
-				if(tierOfChar == tier) {
-					timesToAdd = state.bumpChances[0];
-					countTier1 += timesToAdd;
-				}
-				else if(tierOfChar == tier2) {
-					timesToAdd = state.bumpChances[1];
-					countTier2 += timesToAdd;
-				}
-				else if(tierOfChar == tier3) {
-					timesToAdd = state.bumpChances[2];
-					countTier3 += timesToAdd;
-				}
 				
 				//multiplying each set of characters by a factor of 10 or
 				//even more is going to throw off the balancing due to the
 				//number of times a player has gotten a fighter. so we want
 				//to add in some more adjustment based on that number
-				timesToAdd -= 3 * state.stats.get(charAt)[playerAt * 2  + 1];
+				int timesToAdd = (int) (-2 * state.stats.get(charAt)[playerAt * 2  + 1]);
+				
+				//alright, we're going to weight things even more to account
+				//for the bump chances, why the hell not?
+				if(tierOfChar == tier) {
+					timesToAdd += state.bumpChances[0];
+					countTier1 += timesToAdd;
+				}
+				else if(tierOfChar == tier2) {
+					timesToAdd += state.bumpChances[1];
+					countTier2 += timesToAdd;
+				}
+				else if(tierOfChar == tier3) {
+					timesToAdd += state.bumpChances[2];
+					countTier3 += timesToAdd;
+				}
 				
 				for(int at = 0; at < timesToAdd; at++) {
 					inTierOptions.add(charAt);
