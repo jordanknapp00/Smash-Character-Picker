@@ -34,4 +34,42 @@ DebugWindow class:
 ModifyWindow class:
 
 - Contains the UI for modifying a fighter's stats
-- Inherit from some kind of modal dialog class? I want this to be modal like everything else
+- Inherit from some kind of modal dialog class? I want this to be modal like everything else except the debug window
+
+=== BUSINESS LOGIC CLASSES ==
+
+FileLoaderParser class:
+
+- Final class that has static methods to handle loading and parsing tier list files
+- Will set data in the Settings and TierList classes according to what it loads
+
+BattleGenerator class:
+
+- Final class with static methods that deal in generating battles
+
+LookupManager class:
+
+- Final class with static methods that deal in handling stat lookup queries
+
+StatsManager class:
+
+- Final class with static methods that deal in tracking statistics data
+
+=== OBJECTS ===
+
+Fighter class:
+
+- Stores data for all fighters in the system
+- TierList class will have ways to access Fighters, but they generally shouldn't be initialized directly
+- Has a name, a tier, and maybe also stats data attached to it? This would eliminate need for CannotGetQueue class, can just use Queue of Fighters
+
+ComparableArray class:
+
+- More or less unchanged from existing implementation
+- Used for easy sorting in the StatsManager class
+
+=== OTHER ===
+
+Util class:
+
+- Final class with various utility methods used throughout the program
