@@ -27,6 +27,13 @@ public final class Util {
 	public static JTextArea debug;
 	
 	/**
+	 * Private constructor to prevent instantiating the <code>Util</code> class.
+	 */
+	private Util() {
+		throw new UnsupportedOperationException("Cannot instantiate Util class");
+	}
+	
+	/**
 	 * Static method that converts a given tier number (used for indexing into
 	 * the <code>linesOfFile</code> array, for example) into a human-readable
 	 * tier name.

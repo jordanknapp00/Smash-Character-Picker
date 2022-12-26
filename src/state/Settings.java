@@ -1,5 +1,11 @@
 package state;
 
+/**
+ * Class that keeps track of settings used throughout the program.
+ * 
+ * @author Jordan Knapp
+ *
+ */
 public final class Settings {
 	
 	public static int numPlayers;
@@ -11,6 +17,14 @@ public final class Settings {
 	public static boolean allowSSInCannotGet;
 	
 	public static int cannotGetSize;
+	
+	/**
+	 * Private constructor to prevent instantiating the <code>Settings</code>
+	 * class.
+	 */
+	private Settings() {
+		throw new UnsupportedOperationException("Cannot instantiate Settings class");
+	}
 	
 	/**
 	 * Initialize the settings to their default values:
