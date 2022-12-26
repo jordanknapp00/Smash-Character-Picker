@@ -1,0 +1,37 @@
+=== PRIMARY CLASSES ===
+
+Driver class:
+
+- Contains our main() method
+- Only exists to create an instance of MainWindow.
+
+MainWindow class:
+
+- Contains all of the components that make up the user interface, as well as all the ActionListeners and whatnot that handle them.
+- Should not perform any "business logic", instead calling other areas of the program to handle that. It should call final classes, which have
+  static methods that perform more detailed actions than one would want to include in an ActionListener
+- Inherit from JFrame? JWindow? Canvas? I dunno. Is there a better way than it just being a class?
+
+=== STATE MANAGEMENT CLASSES ===
+
+Settings class:
+
+- Final class that holds all the settings data
+- Everything is public, allowing it to be easily accessed and changed anywhere in the program
+
+TierList class:
+
+- Final class (because there's only one at any given time and there's no reason to have to pass it around when calling methods and stuff)
+- Uses an ArrayList of ArrayLists to store the tiers, but allows much easier access with methods
+
+=== OTHER UI CLASSES ===
+
+DebugWindow class:
+
+- A non-modal window that is openable with a button in the MainWindow. It can be closed and reopened whenever.
+- Contains a text box to which debug and error messages can be printed (standard error redirected to it?)
+
+ModifyWindow class:
+
+- Contains the UI for modifying a fighter's stats
+- Inherit from some kind of modal dialog class? I want this to be modal like everything else
