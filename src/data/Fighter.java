@@ -18,5 +18,24 @@ public class Fighter {
 		this.name = name;
 		this.tier = tier;
 	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public int getTier() {
+		return tier;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if(!(o instanceof Fighter)) {
+			return false;
+		}
+		
+		Fighter other = (Fighter) o;
+		
+		return (name == other.getName()) && (tier == other.getTier());
+	}
 
 }
