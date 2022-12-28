@@ -128,5 +128,16 @@ public class Matchup {
 		
 		return true;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder retString = new StringBuilder();
+		
+		for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
+			retString.append("Player " + (playerAt + 1) + " got " + fighters[playerAt] + "\n");
+		}
+		
+		return retString.toString();
+	}
 
 }

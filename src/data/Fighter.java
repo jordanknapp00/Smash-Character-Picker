@@ -37,5 +37,10 @@ public class Fighter {
 		
 		return (name == other.getName()) && (tier == other.getTier());
 	}
+	
+	@Override
+	public String toString() {
+		return name;
+	}
 
 }

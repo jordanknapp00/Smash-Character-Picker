@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import data.Fighter;
+import util.Util;
 
 /**
  * The <code>TierList</code> class is responsible for managing the tier list.
@@ -49,5 +50,22 @@ public final class TierList {
 	
 	public static int tierSize(int tier) {
 		return tierList.get(tier).size();
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder retString = new StringBuilder("Tier List:\n");
+		
+		for(int tierAt = 0; tierAt < 24; tierAt++) {
+			retString.append("Tier " + Util.tierToString(tierAt) + ": ");
+			List<Fighter> at = tierList.get(tierAt);
+			
+			for(int fighterAt = 0; fighterAt < at.size() - 1; fighterAt++) {
+				retString.append(at.get(fighterAt).toString() + ", ");
+			}
+			retString.append(at.get(at.size() - 1).toString() + "\n");
+		}
+		
+		return retString.toString();
 	}
 }
