@@ -61,12 +61,22 @@ Fighter class:
 
 - Stores data for all fighters in the system
 - TierList class will have ways to access Fighters, but they generally shouldn't be initialized directly
-- Has a name, a tier, and maybe also stats data attached to it? This would eliminate need for CannotGetQueue class, can just use Queue of Fighters
+- Has a name and tier. This would eliminate need for CannotGetQueue class, can just use Queue of Fighters
+- Fighter class is what interfaces with the StatManager to track stats -- StatManager needs to use character names to ensure Serializability, so
+  to mark the winner of a battle, find which Fighter it is with the currentMatchup object, then call recordWin() or something, passing the player as
+  a parameter
 
 ComparableArray class:
 
 - More or less unchanged from existing implementation
 - Used for easy sorting in the StatsManager class
+
+Matchup class:
+
+- Records a single matchup -- which player got which fighter
+- Implements Comparable, and when matchups are compared, the same set of fighters are considered equal even if different players got them
+- Goal is to reduce duplicate matchups
+- Have a currentMatchup object that might assist in stat tracking
 
 === OTHER ===
 
