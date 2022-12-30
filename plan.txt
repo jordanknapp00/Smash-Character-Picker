@@ -12,6 +12,10 @@ MainWindow class:
   static methods that perform more detailed actions than one would want to include in an ActionListener
 - Inherit from JFrame? JWindow? Canvas? I dunno. Is there a better way than it just being a class?
 
+- MainWindow needs to have ways for all the other classes to call methods to update the UI and stuff. does MainWindow need to itself be static?
+  Or should it be a singleton? There is only one MainWindow when the program runs, so there's no reason for there to even be multiple instances
+  of it. Does it even need to be an object at all, or does it work better as just a class, much like the managers do?
+
 === STATE MANAGEMENT CLASSES ===
 
 Settings class:
