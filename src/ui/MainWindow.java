@@ -129,7 +129,7 @@ public class MainWindow {
 	
 	private Queue<Fighter> cannotGetQueue;
 	
-	public MainWindow() {
+	public MainWindow() throws Exception {
 		//set up whatever instance variables we have first. we have these
 		//arrays to track the value of tier and bump chances for 2 reasons.
 		//first, if they are invalid, that makes resetting them to the old
@@ -154,17 +154,7 @@ public class MainWindow {
 		
 		Util.initDebug();
 		
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch(ClassNotFoundException e) {
-			//TODO: handle these exceptions
-		} catch(InstantiationException e) {
-			
-		} catch(IllegalAccessException e) {
-			
-		} catch(UnsupportedLookAndFeelException e) {
-			
-		}
+		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		
 		//will be used to set up a majority of the UI
 		GridBagConstraints gc = new GridBagConstraints();
@@ -241,12 +231,8 @@ public class MainWindow {
 		//TODO: add ActionListener
 		
 		loadButton = new JButton("Load");
-		try {
-			Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
-			loadButton.setIcon(new ImageIcon(loadImage));
-		} catch(IOException e) {
-			//TODO: handle this error
-		}
+		Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
+		loadButton.setIcon(new ImageIcon(loadImage));
 		//TODO: add action listener
 		
 		debugButton = new JButton("Debug");
