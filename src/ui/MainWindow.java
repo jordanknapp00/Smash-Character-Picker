@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -19,6 +20,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
@@ -28,6 +30,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import data.Fighter;
+import util.Util;
 
 public class MainWindow {
 	
@@ -120,36 +123,23 @@ public class MainWindow {
 	private JButton modButton;
 	private JButton reloadButton;
 	
-	//various state variables
-	//TODO: determine whether or not any of these values are actually necessary (can we just pass the direct UI element's value?)
-	private int numPlayers;
-	
+	//other variables
 	private int[] tierChances;
-	private int[] newTierChances;
 	private int[] bumpChances;
-	private int[] newBumpChances;
 	
-	private int cannotGetSize;
 	private Queue<Fighter> cannotGetQueue;
 	
-	private boolean sInCannotGet;
-	private boolean ssInCannotGet;
-	
 	public MainWindow() {
-		//before we initialize anything, initialize the state variables to
-		//their default values
-		numPlayers = 3;
-		
+		//set up whatever instance variables we have first. we have these
+		//arrays to track the value of tier and bump chances for 2 reasons.
+		//first, if they are invalid, that makes resetting them to the old
+		//value easier. also, passing in the array to a BattleGenerator
+		//class is also easier, instead of having to generate that array
+		//on the spot when the generate button is clicked
 		tierChances = new int[] {10, 20, 25, 25, 20, 0, 0, 0};
 		bumpChances = new int[] {70, 15, 15};
-		newTierChances = new int[] {10, 20, 25, 25, 20, 0, 0, 0};
-		newBumpChances = new int[] {70, 15, 15};
 		
-		cannotGetSize = 10;
 		cannotGetQueue = new ArrayDeque<Fighter>();
-		
-		sInCannotGet = true;
-		ssInCannotGet = false;
 		
 		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
@@ -161,6 +151,8 @@ public class MainWindow {
 		results = new JTextArea();
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
+		
+		Util.initDebug();
 		
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -178,9 +170,8 @@ public class MainWindow {
 		GridBagConstraints gc = new GridBagConstraints();
 		
 		//initialize resultsPanel
-		resultsPanel = new JPanel();
+		resultsPanel = new JPanel(new BorderLayout());
 		resultsPanel.setBorder(BorderFactory.createTitledBorder("Results"));
-		resultsPanel.setLayout(new BorderLayout());
 		resultsPanel.add(results);
 		resultsPanel.setPreferredSize(new Dimension(425, 260));
 		
@@ -239,8 +230,9 @@ public class MainWindow {
 		player8Box.setEnabled(false);
 		switchButton.setEnabled(false);
 		
-		bottomPanel = new JPanel();
-		bottomPanel.setLayout(new GridBagLayout());
+		//set up the bottom panel
+		
+		bottomPanel = new JPanel(new GridBagLayout());
 		
 		generateButton = new JButton("Generate");
 		//TODO: add anonymous ActionListener that will call a BattleGenerator class
@@ -263,13 +255,329 @@ public class MainWindow {
 		numPlayersLabel = new JLabel("Number of players: ");
 		SpinnerNumberModel model = new SpinnerNumberModel(2, 2, 8, 1);
 		numPlayersSpinner = new JSpinner(model);
-		numPlayersSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				numPlayers = (int) numPlayersSpinner.getValue();
-			}
-		});
 		
+		//add components to the bottomPanel
+		gc.weightx = .03;
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		gc.anchor = GridBagConstraints.CENTER;
+		bottomPanel.add(loadButton, gc);
+		gc.weightx = .77;
+		gc.gridx = 1;
+		bottomPanel.add(generateButton, gc);
+		gc.weightx = .05;
+		gc.gridx = 2;
+		bottomPanel.add(skipButton, gc);
+		gc.gridx = 3;
+		bottomPanel.add(debugButton, gc);
+		gc.gridx = 4;
+		gc.weightx = .03;
+		gc.fill = GridBagConstraints.NONE;
+		bottomPanel.add(numPlayersLabel, gc);
+		gc.gridx = 5;
+		gc.weightx = .05;
+		bottomPanel.add(numPlayersSpinner, gc);
 		
+		//set up tierChanceTopPanel
+		
+		tierChanceTopPanel = new JPanel(new GridBagLayout());
+		
+		tierChanceLabel1 = new JLabel("You can set custom chances for each " +
+				"tier.");
+		tierChanceLabel2 = new JLabel("Remember to hit apply!");
+		
+		//i've learned an unfortunate lesson, all the spinners need to have
+		//different models. otherwise they all do exactly the same thing.
+		//so fine.
+		model = new SpinnerNumberModel(tierChances[0], 0, 100, 1);
+		SSTierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(tierChances[1], 0, 100, 1);
+		STierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(tierChances[2], 0, 100, 1);
+		ATierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(tierChances[3], 0, 100, 1);
+		BTierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(tierChances[4], 0, 100, 1);
+		CTierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(tierChances[5], 0, 100, 1);
+		DTierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(tierChances[6], 0, 100, 1);
+		ETierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(tierChances[7], 0, 100, 1);
+		FTierSpinner = new JSpinner(model);
+		
+		//also create all the labels
+		SSTierLabel = new JLabel("SS tier chance: ");
+		STierLabel = new JLabel("S tier chance: ");
+		ATierLabel = new JLabel("A tier chance: ");
+		BTierLabel = new JLabel("B tier chance: ");
+		CTierLabel = new JLabel("C tier chance: ");
+		DTierLabel = new JLabel("D tier chance: ");
+		ETierLabel = new JLabel("E tier chance: ");
+		FTierLabel = new JLabel("F tier chance: ");
+		
+		//and then add to the panel
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.gridwidth = 2;
+		tierChanceTopPanel.add(tierChanceLabel1, gc);
+		gc.gridy = 1;
+		tierChanceTopPanel.add(tierChanceLabel2, gc);
+		gc.anchor = GridBagConstraints.CENTER;
+		gc.anchor = GridBagConstraints.LINE_END;
+		gc.gridwidth = 1;
+		gc.gridy = 2;
+		tierChanceTopPanel.add(SSTierLabel, gc);
+		gc.gridy = 3;
+		tierChanceTopPanel.add(STierLabel, gc);
+		gc.gridy = 4;
+		tierChanceTopPanel.add(ATierLabel, gc);
+		gc.gridy = 5;
+		tierChanceTopPanel.add(BTierLabel, gc);
+		gc.gridy = 6;
+		tierChanceTopPanel.add(CTierLabel, gc);
+		gc.gridy = 7;
+		tierChanceTopPanel.add(DTierLabel, gc);
+		gc.gridy = 8;
+		tierChanceTopPanel.add(ETierLabel, gc);
+		gc.gridy = 9;
+		tierChanceTopPanel.add(FTierLabel, gc);
+		gc.gridx = 1;
+		gc.gridy = 2;
+		gc.anchor = GridBagConstraints.LINE_START;
+		tierChanceTopPanel.add(SSTierSpinner, gc);
+		gc.gridy = 3;
+		tierChanceTopPanel.add(STierSpinner, gc);
+		gc.gridy = 4;
+		tierChanceTopPanel.add(ATierSpinner, gc);
+		gc.gridy = 5;
+		tierChanceTopPanel.add(BTierSpinner, gc);
+		gc.gridy = 6;
+		tierChanceTopPanel.add(CTierSpinner, gc);
+		gc.gridy = 7;
+		tierChanceTopPanel.add(DTierSpinner, gc);
+		gc.gridy = 8;
+		tierChanceTopPanel.add(ETierSpinner, gc);
+		gc.gridy = 9;
+		tierChanceTopPanel.add(FTierSpinner, gc);
+		
+		//set up tierChanceBottomPanel
+		
+		tierChanceBottomPanel = new JPanel(new GridBagLayout());
+		
+		applyButton = new JButton("Apply tier chance settings");
+		//TODO: add action listener
+		
+		bumpChanceLabel = new JLabel("Chances of bumping up tiers:");
+		bump2 = new JLabel(" 2 tiers");
+		bump1 = new JLabel("  1 tier");
+		bump0 = new JLabel("Stay same");
+		
+		model = new SpinnerNumberModel(bumpChances[0], 0, 100, 1);
+		bump0Spinner = new JSpinner(model);
+		model = new SpinnerNumberModel(bumpChances[1], 0, 100, 1);
+		bump1Spinner = new JSpinner(model);
+		model = new SpinnerNumberModel(bumpChances[2], 0, 100, 1);
+		bump2Spinner = new JSpinner(model);
+		
+		//add components to the panel
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.gridwidth = 3;
+		gc.anchor = GridBagConstraints.CENTER;
+		tierChanceBottomPanel.add(bumpChanceLabel, gc);
+		gc.gridy = 1;
+		gc.gridwidth = 1;
+		gc.anchor = GridBagConstraints.LINE_START;
+		tierChanceBottomPanel.add(bump0Spinner, gc);
+		gc.gridx = 1;
+		tierChanceBottomPanel.add(bump1Spinner, gc);
+		gc.gridx = 2;
+		tierChanceBottomPanel.add(bump2Spinner, gc);
+		gc.gridx = 0;
+		gc.gridy = 2;
+		tierChanceBottomPanel.add(bump0, gc);
+		gc.gridx = 1;
+		tierChanceBottomPanel.add(bump1, gc);
+		gc.gridx = 2;
+		tierChanceBottomPanel.add(bump2, gc);
+		gc.gridx = 0;
+		gc.gridy = 3;
+		gc.gridwidth = 3;
+		gc.anchor = GridBagConstraints.CENTER;
+		tierChanceBottomPanel.add(applyButton, gc);
+		
+		tierChancePanel = new JPanel(new GridBagLayout());
+		tierChancePanel.setBorder(BorderFactory.createTitledBorder("Tier chance settings"));
+		
+		//add components to tierChancePanel
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.gridwidth = 1;
+		gc.anchor = GridBagConstraints.CENTER;
+		gc.weighty = .7;
+		tierChancePanel.add(tierChanceTopPanel, gc);
+		gc.gridy = 1;
+		gc.weighty = .3;
+		tierChancePanel.add(tierChanceBottomPanel, gc);
+		tierChancePanel.setPreferredSize(new Dimension(240, 280));
+		
+		//set up cannotGetPanel
+		
+		cannotGetPanel = new JPanel(new GridBagLayout());
+		cannotGetPanel.setBorder(BorderFactory.createTitledBorder("\"Cannot Get\" buffer settings"));
+		
+		//default cannot get size defined here
+		model = new SpinnerNumberModel(10, 0, 15, 1);
+		cannotGetSizeSpinner = new JSpinner(model);
+		
+		cannotGetSizeLabel = new JLabel("Size of the \"Cannot Get\" buffer: ");
+		cannotGetSizeLabel.setToolTipText("<html>If this is set too high, " +
+				"the program could freeze, because there may be no valid " +
+				"fighters left for it to pick.<br>With all fighters being " +
+				"included, it should be safe to go up to 15, assuming there " +
+				"are 2 players.<br>Note that you have the option as to " +
+				"whether S & SS tiers are allowed in the buffer.</html>");
+		
+		allowSSInCannotGet = new JCheckBox("Allow SS tiers in \"Cannot Get\" buffer");
+		allowSInCannotGet = new JCheckBox("Allow S tiers in \"Cannot Get\" buffer");
+		
+		//add components to cannotGetPanel
+		gc.gridwidth = 1;
+		gc.gridheight = 1;
+		gc.gridy = 0;
+		gc.gridx = 0;
+		gc.anchor = GridBagConstraints.LINE_END;
+		cannotGetPanel.add(cannotGetSizeLabel, gc);
+		gc.gridx = 1;
+		gc.anchor = GridBagConstraints.LINE_START;
+		cannotGetPanel.add(cannotGetSizeSpinner, gc);
+		gc.gridx = 0;
+		gc.gridy = 1;
+		gc.anchor = GridBagConstraints.LINE_END;
+		cannotGetPanel.add(allowSSInCannotGet, gc);
+		gc.gridy = 2;
+		cannotGetPanel.add(allowSInCannotGet, gc);
+		
+		//combine left panels
+		leftPanel = new JPanel();
+		leftPanel.setLayout(new GridBagLayout());
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weightx = 1;
+		gc.weighty = .5;
+		gc.anchor = GridBagConstraints.CENTER;
+		gc.fill = GridBagConstraints.BOTH;
+		leftPanel.add(tierChancePanel, gc);
+		gc.gridy = 1;
+		leftPanel.add(cannotGetPanel, gc);
+		
+		//set up upper stats panel
+		
+		statsTopPanel = new JPanel(new BorderLayout());
+		statsTopPanel.setBorder(BorderFactory.createTitledBorder("Statistics"));
+		//TODO: handle stats text area
+		
+		//set up lower stats panel
+		statsBottomPanel = new JPanel(new GridBagLayout());
+		
+		playerLabel = new JLabel("Player: ");
+		model = new SpinnerNumberModel(1, 1, 8, 1);
+		winnerSpinner = new JSpinner(model);
+		
+		pickWinnerButton = new JButton("Select winner");
+		//TODO: add action listener
+		
+		searchButton = new JButton("Search");
+		//TODO: add action listener
+		
+		sortButton = new JButton("Sort");
+		//TODO: add action listener
+		
+		modButton = new JButton("Mod");
+		//TODO: add action listener
+		
+		reloadButton = new JButton("⭯");
+		//TODO: add action listener
+		
+		statsPanel = new JPanel(new GridBagLayout());
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weighty = 1;
+		gc.weightx = .1;
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		statsBottomPanel.add(playerLabel, gc);
+		gc.gridx = 1;
+		gc.weightx = .05;
+		statsBottomPanel.add(winnerSpinner, gc);
+		gc.gridx = 2;
+		gc.weightx = .3;
+		statsBottomPanel.add(Box.createRigidArea(new Dimension(3, 0)), gc);
+		gc.gridx = 3;
+		gc.weightx = .35;
+		statsBottomPanel.add(pickWinnerButton, gc);
+		gc.gridx = 4;
+		gc.weightx = .25;
+		statsBottomPanel.add(searchButton, gc);
+		gc.gridx = 5;
+		statsBottomPanel.add(sortButton, gc);
+		gc.gridx = 6;
+		statsBottomPanel.add(modButton, gc);
+		gc.gridx = 7;
+		statsBottomPanel.add(reloadButton, gc);
+		
+		//add top and bottom panel to main stats panel
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weightx = 1;
+		gc.weighty = .98;
+		gc.fill = GridBagConstraints.BOTH;
+		gc.anchor = GridBagConstraints.CENTER;
+		statsPanel.setLayout(new GridBagLayout());
+		JScrollPane scrollPane = new JScrollPane(statsTopPanel);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		statsPanel.add(scrollPane, gc);
+		gc.gridy = 1;
+		gc.weighty = .02;
+		statsPanel.add(statsBottomPanel, gc);
+		
+		//put it all together
+		frame.getContentPane().setLayout(new GridBagLayout());
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weightx = .2;
+		gc.weighty = .85;
+		gc.anchor = GridBagConstraints.CENTER;
+		gc.fill = GridBagConstraints.BOTH;
+		frame.add(leftPanel, gc);
+		gc.weightx = .45;
+		gc.gridx = 1;
+		frame.add(resultsPanel, gc);
+		gc.gridy = 1;
+		gc.gridx = 0;
+		gc.weightx = 1;
+		gc.weighty = .15;
+		gc.gridwidth = 3;
+		frame.add(bottomPanel, gc);
+		gc.gridy = 0;
+		gc.gridx = 2;
+		gc.weightx = .05;
+		gc.gridwidth = 1;
+		frame.add(switchPanel, gc);
+		gc.gridx = 3;
+		gc.weightx = .3;
+		gc.gridheight = 2;
+		frame.add(statsPanel, gc);
+		
+		//Create icon
+		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
+		
+		//TODO: add window listener for stuff like saving stats
+		
+		Util.log("Finished initializing MainWindow UI");
+		
+		frame.setVisible(true);
+		
+		//TODO: attempt to load tier list
 	}
 
 }
