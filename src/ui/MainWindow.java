@@ -6,6 +6,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -127,8 +129,6 @@ public class MainWindow {
 	private int[] tierChances;
 	private int[] bumpChances;
 	
-	private Queue<Fighter> cannotGetQueue;
-	
 	public MainWindow() throws Exception {
 		//set up whatever instance variables we have first. we have these
 		//arrays to track the value of tier and bump chances for 2 reasons.
@@ -138,8 +138,6 @@ public class MainWindow {
 		//on the spot when the generate button is clicked
 		tierChances = new int[] {10, 20, 25, 25, 20, 0, 0, 0};
 		bumpChances = new int[] {70, 15, 15};
-		
-		cannotGetQueue = new ArrayDeque<Fighter>();
 		
 		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
@@ -351,7 +349,6 @@ public class MainWindow {
 		tierChanceBottomPanel = new JPanel(new GridBagLayout());
 		
 		applyButton = new JButton("Apply tier chance settings");
-		//TODO: add action listener
 		
 		bumpChanceLabel = new JLabel("Chances of bumping up tiers:");
 		bump2 = new JLabel(" 2 tiers");
