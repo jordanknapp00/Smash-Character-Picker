@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
+import util.Util;
+
 /**
  * The <code>TierList</code> class holds all the data about the current
  * tier list loaded in the program. This includes the fighters in each tier,
@@ -134,6 +136,91 @@ public class TierList {
 		//start by initializing everything to default values. this way we
 		//can just override stuff that's in the file
 		this();
+		
+		//TODO: load files
 	}
-
+	
+	/**
+	 * @return	The number of fighters in the tier list.
+	 */
+	public int numFighters() {
+		return fighterNames.size();
+	}
+	
+	/**
+	 * Determines if the tier list contains a particular <code>Fighter</code>.
+	 * 
+	 * @param toCheck	The <code>Fighter</code> to check.
+	 * @return			<code>true</code> if the tier list contains that
+	 * 					fighter, <code>false</code> if it does not.
+	 */
+	public boolean contains(Fighter toCheck) {
+		return contains(toCheck.getName());
+	}
+	
+	/**
+	 * Determines if the tier list contains a fighter with a particular name.
+	 * 
+	 * @param nameToCheck	The name of a fighter to check.
+	 * @return				<code>true</code> if the tier list has a
+	 * 						fighter with that name, <code>false</code> if it
+	 * 						does not.
+	 */
+	public boolean contains(String nameToCheck) {
+		return fighterNames.contains(nameToCheck);
+	}
+	
+	/**
+	 * Determines the tier of the given <code>Fighter</code>.
+	 * 
+	 * @param toCheck	The <code>Fighter</code> to check.
+	 * @return			The tier of the given fighter (from 0 to
+	 * 					<code><b><i>NUM_TIERS</b></i> - 1</code>), or -1 if
+	 * 					they are not present in the tier list.
+	 */
+	public int tierOf(Fighter toCheck) {
+		return tierOf(toCheck.getName());
+	}
+	
+	/**
+	 * Determines which tier the fighter with the given name is in.
+	 * 
+	 * @param nameToCheck	The name of the fighter to check.
+	 * @return				The tier of the given fighter (from 0 to
+	 * 						<code><b><i>NUM_TIERS</b></i> - 1</code>), or -1
+	 * 						if they are not present in the tier list.
+	 */
+	public int tierOf(String nameToCheck) {
+		if(!contains(nameToCheck)) {
+			return -1;
+		}
+		
+		for(int tierAt = 0; tierAt < NUM_TIERS; tierAt++) {
+			for(Fighter fighterAt: tierList.get(tierAt)) {
+				if(fighterAt.getName().equals(nameToCheck)) {
+					return tierAt;
+				}
+			}
+		}
+		
+		return -1;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer retString = new StringBuffer(500);
+		
+		for(int at = 0; at < NUM_TIERS; at++) {
+			String tierAt = Util.tierToString(at);
+			
+			if(at == 0 || at == 2) {
+				retString.append(tierAt + ":\t" + tierList.get(at));
+			}
+			else {
+				retString.append(tierAt + ":\t\t" + tierList.get(at));
+			}
+		}
+		
+		return retString.toString();
+	}
 }
