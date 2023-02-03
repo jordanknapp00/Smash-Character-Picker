@@ -1,7 +1,5 @@
 package data;
 
-import state.Settings;
-
 /**
  * The <code>Matchup</code> class represents a single battle. It stores the
  * fighters that appeared in the battle in an array, ordered by the player
@@ -19,12 +17,12 @@ public class Matchup {
 	private Fighter[] fighters;
 	
 	/**
-	 * Initialize the <code>Matchup</code>. To begin with, it will be empty,
-	 * with a capacity equal to <code>Settings.numPlayers</code> at creation
-	 * time.
+	 * Initialize an empty <code>Matchup</code> with the given size.
+	 * 
+	 * @param numPlayers	The number of players in this matchup.
 	 */
-	public Matchup() {
-		fighters = new Fighter[Settings.numPlayers];
+	public Matchup(int numPlayers) {
+		fighters = new Fighter[numPlayers];
 	}
 	
 	/**
