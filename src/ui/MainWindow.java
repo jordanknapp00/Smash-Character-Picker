@@ -32,6 +32,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import data.Fighter;
+import data.TierList;
 import util.Util;
 
 public class MainWindow {
@@ -125,20 +126,10 @@ public class MainWindow {
 	private JButton modButton;
 	private JButton reloadButton;
 	
-	//other variables
-	private int[] tierChances;
-	private int[] bumpChances;
+	//other variables	
+	private TierList tierList;
 	
-	public MainWindow() throws Exception {
-		//set up whatever instance variables we have first. we have these
-		//arrays to track the value of tier and bump chances for 2 reasons.
-		//first, if they are invalid, that makes resetting them to the old
-		//value easier. also, passing in the array to a BattleGenerator
-		//class is also easier, instead of having to generate that array
-		//on the spot when the generate button is clicked
-		tierChances = new int[] {10, 20, 25, 25, 20, 0, 0, 0};
-		bumpChances = new int[] {70, 15, 15};
-		
+	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -271,22 +262,23 @@ public class MainWindow {
 		
 		//i've learned an unfortunate lesson, all the spinners need to have
 		//different models. otherwise they all do exactly the same thing.
-		//so fine.
-		model = new SpinnerNumberModel(tierChances[0], 0, 100, 1);
+		//so fine. also, these default values should be the same as what the
+		//default constructor for TierList does.
+		model = new SpinnerNumberModel(10, 0, 100, 1);
 		SSTierSpinner = new JSpinner(model);
-		model = new SpinnerNumberModel(tierChances[1], 0, 100, 1);
+		model = new SpinnerNumberModel(20, 0, 100, 1);
 		STierSpinner = new JSpinner(model);
-		model = new SpinnerNumberModel(tierChances[2], 0, 100, 1);
+		model = new SpinnerNumberModel(25, 0, 100, 1);
 		ATierSpinner = new JSpinner(model);
-		model = new SpinnerNumberModel(tierChances[3], 0, 100, 1);
+		model = new SpinnerNumberModel(25, 0, 100, 1);
 		BTierSpinner = new JSpinner(model);
-		model = new SpinnerNumberModel(tierChances[4], 0, 100, 1);
+		model = new SpinnerNumberModel(20, 0, 100, 1);
 		CTierSpinner = new JSpinner(model);
-		model = new SpinnerNumberModel(tierChances[5], 0, 100, 1);
+		model = new SpinnerNumberModel(0, 0, 100, 1);
 		DTierSpinner = new JSpinner(model);
-		model = new SpinnerNumberModel(tierChances[6], 0, 100, 1);
+		model = new SpinnerNumberModel(0, 0, 100, 1);
 		ETierSpinner = new JSpinner(model);
-		model = new SpinnerNumberModel(tierChances[7], 0, 100, 1);
+		model = new SpinnerNumberModel(0, 0, 100, 1);
 		FTierSpinner = new JSpinner(model);
 		
 		//also create all the labels
@@ -355,11 +347,11 @@ public class MainWindow {
 		bump1 = new JLabel("  1 tier");
 		bump0 = new JLabel("Stay same");
 		
-		model = new SpinnerNumberModel(bumpChances[0], 0, 100, 1);
+		model = new SpinnerNumberModel(50, 0, 100, 1);
 		bump0Spinner = new JSpinner(model);
-		model = new SpinnerNumberModel(bumpChances[1], 0, 100, 1);
+		model = new SpinnerNumberModel(25, 0, 100, 1);
 		bump1Spinner = new JSpinner(model);
-		model = new SpinnerNumberModel(bumpChances[2], 0, 100, 1);
+		model = new SpinnerNumberModel(25, 0, 100, 1);
 		bump2Spinner = new JSpinner(model);
 		
 		//add components to the panel
