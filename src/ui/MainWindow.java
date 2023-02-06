@@ -8,6 +8,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -19,6 +20,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -30,6 +32,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import data.Fighter;
 import data.TierList;
@@ -128,6 +131,7 @@ public class MainWindow {
 	
 	//other variables	
 	private TierList tierList;
+	private boolean fileLoaded;
 	
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
@@ -222,7 +226,26 @@ public class MainWindow {
 		loadButton = new JButton("Load");
 		Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
 		loadButton.setIcon(new ImageIcon(loadImage));
-		//TODO: add action listener
+		loadButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fileChooser = new JFileChooser(".");
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Documents (*.txt)", "txt");
+				fileChooser.setFileFilter(filter);
+				
+				if(fileChooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) {
+					return;
+				}
+				
+				try {
+					tierList = new TierList(fileChooser.getSelectedFile());
+				} catch(FileNotFoundException e1) {
+					//TODO: handle exceptions
+				} catch(IOException e1) {
+					
+				}
+				
+			}
+		});
 		
 		debugButton = new JButton("Debug");
 		//TODO: add action listener
@@ -553,6 +576,7 @@ public class MainWindow {
 		frame.setVisible(true);
 		
 		//TODO: attempt to load tier list
+		fileLoaded = false;
 	}
 
 }

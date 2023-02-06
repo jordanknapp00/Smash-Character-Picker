@@ -1,7 +1,13 @@
 package data;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -127,17 +133,286 @@ public class TierList {
 		allowSSInCannotGet = true;
 	}
 	
-	/**
-	 * Constructs a new <code>TierList</code> using the specified file.
-	 * 
-	 * @param fileName	The tier list file to load data from.
-	 */
-	public TierList(String fileName) {
+	//TODO: add javadoc
+	public TierList(File file) throws FileNotFoundException, IOException {
 		//start by initializing everything to default values. this way we
 		//can just override stuff that's in the file
 		this();
 		
-		//TODO: load files
+		//file structure is as follows:
+		//
+		//upper double s	0
+		//mid double s		1
+		//lower double s	2
+		//upper s			3
+		//mid s				4
+		//lower s			5
+		//upper a			6
+		//mid a				7
+		//lower a			8
+		//upper b			9
+		//mid b				10
+		//lower b			11
+		//upper c			12
+		//mid c				13
+		//lower c			14
+		//upper d			15
+		//mid d				16
+		//lower d			17
+		//upper e			18
+		//mid e				19
+		//lower e			20
+		//upper f			21
+		//mid f				22
+		//lower f			23
+		
+		BufferedReader in = new BufferedReader(new FileReader(file));
+		
+		//read the first line and keep reading while lines exist
+		String lineAt = in.readLine();
+		while(lineAt != null) {
+			//scroll through the chars in the read line. if one is an equals,
+			//then check for which tier/setting it is
+			String next = "";
+			boolean foundEqual = false;
+			for(int at = 0; at < lineAt.length(); at++) {
+				if(lineAt.charAt(at) != '=') {
+					next += lineAt.charAt(at);
+				}
+				else {
+					//remove space before equals sign and check name
+					foundEqual = true;
+					next = next.substring(0, next.length() - 1);
+					next = next.toLowerCase();
+					
+					switch(next) {
+					case "upper double s":
+						readTier(0, at, lineAt);
+						break;
+					case "mid double s":
+						readTier(1, at, lineAt);
+						break;
+					case "lower double s":
+						readTier(2, at, lineAt);
+						break;
+					case "upper s":
+						readTier(3, at, lineAt);
+						break;
+					case "mid s":
+						readTier(4, at, lineAt);
+						break;
+					case "lower s":
+						readTier(5, at, lineAt);
+						break;
+					case "upper a":
+						readTier(6, at, lineAt);
+						break;
+					case "mid a":
+						readTier(7, at, lineAt);
+						break;
+					case "lower a":
+						readTier(8, at, lineAt);
+						break;
+					case "upper b":
+						readTier(9, at, lineAt);
+						break;
+					case "mid b":
+						readTier(10, at, lineAt);
+						break;
+					case "lower b":
+						readTier(11, at, lineAt);
+						break;
+					case "upper c":
+						readTier(12, at, lineAt);
+						break;
+					case "mid c":
+						readTier(13, at, lineAt);
+						break;
+					case "lower c":
+						readTier(14, at, lineAt);
+						break;
+					case "upper d":
+						readTier(15, at, lineAt);
+						break;
+					case "mid d":
+						readTier(16, at, lineAt);
+						break;
+					case "lower d":
+						readTier(17, at, lineAt);
+						break;
+					case "upper e":
+						readTier(18, at, lineAt);
+						break;
+					case "mid e":
+						readTier(19, at, lineAt);
+						break;
+					case "lower e":
+						readTier(20, at, lineAt);
+						break;
+					case "upper f":
+						readTier(21, at, lineAt);
+						break;
+					case "mid f":
+						readTier(22, at, lineAt);
+						break;
+					case "lower f":
+						readTier(23, at, lineAt);
+						break;
+					case "p1 exclude":
+						readExclude(0, at, lineAt);
+						break;
+					case "p2 exclude":
+						readExclude(1, at, lineAt);
+						break;
+					case "p3 exclude":
+						readExclude(2, at, lineAt);
+						break;
+					case "p4 exclude":
+						readExclude(3, at, lineAt);
+						break;
+					case "p5 exclude":
+						readExclude(4, at, lineAt);
+						break;
+					case "p6 exclude":
+						readExclude(5, at, lineAt);
+						break;
+					case "p7 exclude":
+						readExclude(360, at, lineAt);
+						break;
+					case "p8 exclude":
+						readExclude(7, at, lineAt);
+						break;
+					case "p1 favorite":
+						readFavorite(0, at, lineAt);
+						break;
+					case "p2 favorite":
+						readFavorite(1, at, lineAt);
+						break;
+					case "p3 favorite":
+						readFavorite(2, at, lineAt);
+						break;
+					case "p4 favorite":
+						readFavorite(3, at, lineAt);
+						break;
+					case "p5 favorite":
+						readFavorite(4, at, lineAt);
+						break;
+					case "p6 favorite":
+						readFavorite(5, at, lineAt);
+						break;
+					case "p7 favorite":
+						readFavorite(6, at, lineAt);
+						break;
+					case "p8 favorite":
+						readFavorite(7, at, lineAt);
+						break;
+					case "tier chances":
+						readSetting(1, at, lineAt);
+						break;
+					case "cannot get size":
+						readSetting(2, at, lineAt);
+						break;
+					case "allow ss in cannot get":
+						readSetting(3, at, lineAt);
+						break;
+					case "allow s in cannot get":
+						readSetting(4, at, lineAt);
+						break;
+					case "players":
+						readSetting(5, at, lineAt);
+						break;
+					case "bump chances":
+						readSetting(6, at, lineAt);
+						break;
+					default:
+						in.close();
+						throw new IOException("Error on line " + next);
+					}
+				}
+			}
+		}
+	}
+	
+	private void readTier(int tier, int startAt, String line) {
+		//convers the comma-separated line into an array of strings. first
+		//we get the substring from character index 2, to skip over the
+		//equals and space. then we split on commas, giving us an array
+		String[] currentLine = line.substring(2).split(",");
+		
+		//go through the fighters and add them. duplicates will be ignored
+		//automatically by addFighter()
+		for(String fighterAt: currentLine) {
+			Fighter newFighter = new Fighter(fighterAt, tier);
+			addFighter(newFighter);
+		}
+	}
+	
+	private void readExclude(int player, int startAt, String line) throws IOException {
+		String[] currentLine = line.substring(2).split(",");
+		
+		for(String fighterAt: currentLine) {
+			Fighter toAdd = getFighter(fighterAt);
+			
+			if(toAdd == null) {
+				throw new IOException("Fighter with name " + fighterAt +
+						" was added to player " + (player + 1) + "'s " +
+						"exclusion list, but no fighter with that name " +
+						"was defined beforehand.");
+			}
+			
+			exclusionList.get(player).add(toAdd);
+		}
+	}
+	
+	private void readFavorite(int player, int startAt, String line) throws IOException {
+		String[] currentLine = line.substring(2).split(",");
+		
+		for(String fighterAt: currentLine) {
+			Fighter toAdd = getFighter(fighterAt);
+			
+			if(toAdd == null) {
+				throw new IOException("Fighter with name " + fighterAt +
+						" was added to player " + (player + 1) + "'s " +
+						"favorite list, but no fighter with that name " +
+						"was defined beforehand.");
+			}
+			
+			favoriteList.get(player).add(toAdd);
+		}
+	}
+	
+	private void readSetting(int id, int startAt, String line) throws IOException {
+		//settings id's
+		//
+		//1 = tier chances (comma-separated list)
+		//2 = cannot get size (integer between 0 and 15) TODO: consider changing max size?
+		//3 = allow ss in cannot get (true or false, 1 or 0)
+		//4 = allow s in cannot get (true or false, 1 or 0)
+		//5 = number of players (int between 2 and 8)
+		//6 = bumo chances (comma-separated list)
+		
+		//TODO: read settings
+	}
+	
+	/**
+	 * Adds the specified <code>Fighter</code> to the tier list, if a fighter
+	 * with the same name doesn't already exist in the tier list.
+	 * 
+	 * @param toAdd	The <code>Fighter</code> to add.
+	 * @return		<code>true</code> if the fighter is added successfully,
+	 * 				<code>false</code> if it is not (i.e. a fighter with the
+	 * 				same name is already in the tier list).
+	 */
+	public boolean addFighter(Fighter toAdd) {
+		if(contains(toAdd)) {
+			return false;
+		}
+		
+		tierList.get(toAdd.getTier()).add(toAdd);
+		fighterNames.add(toAdd.getName());
+		lowercaseNames.put(toAdd.getName().toLowerCase(), toAdd);
+		
+		return true;
 	}
 	
 	/**
@@ -204,6 +479,18 @@ public class TierList {
 		}
 		
 		return -1;
+	}
+	
+	/**
+	 * Returns the <code>Fighter</code> object with the given name.
+	 * 
+	 * @param name	The name of the fighter to return.
+	 * @return		The <code>Fighter</code> object with the given name, or
+	 * 				<code>null</code> if no fighter with that name is in the
+	 * 				tier list.
+	 */
+	public Fighter getFighter(String name) {
+		return lowercaseNames.get(name.toLowerCase());
 	}
 	
 	@Override
