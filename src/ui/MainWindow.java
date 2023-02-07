@@ -238,12 +238,28 @@ public class MainWindow {
 				
 				try {
 					tierList = new TierList(fileChooser.getSelectedFile());
+					fileLoaded = true;
 				} catch(FileNotFoundException e1) {
-					//TODO: handle exceptions
-				} catch(IOException e1) {
+					results.setText("File " + fileChooser.getSelectedFile().getName() +
+							" not found!");
+					Util.error(e1);
 					
+					tierList = null;
+					fileLoaded = false;
+				} catch(IOException e1) {
+					results.setText("IOException when reading " +
+							fileChooser.getSelectedFile().getName() + "!\n" +
+							"See the debug log for details.");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
 				}
 				
+				//if file was loaded, update the UI
+				if(fileLoaded) {
+					Util.log(tierList.toString());
+				}
 			}
 		});
 		

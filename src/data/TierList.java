@@ -7,7 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,6 +51,8 @@ public class TierList {
 	
 	//Settings stuff
 	
+	int numPlayers;
+	
 	private int[] tierChances;
 	private int[] bumpChances;
 	
@@ -75,6 +76,7 @@ public class TierList {
 	 * 		empty <code>List</code>s of <code>Fighter</code>s, while the
 	 * 		<code>fighterNames</code> set and <code>lowercaseNames</code>
 	 * 		map will also be empty.</li>
+	 * 	<li>The number of players will be 2.</li>
 	 *	<li>The exclusion and favorites lists will be initialized with empty
 	 *		lists for all 8 players.</li>
 	 *	<li>The global cannot get queue will be empty, while the individual
@@ -108,6 +110,8 @@ public class TierList {
 		exclusionList = new ArrayList<Set<Fighter>>();
 		favoriteList = new ArrayList<Set<Fighter>>();
 		
+		numPlayers = 2;
+		
 		cannotGetSize = 10;
 		cannotGet = new ArrayDeque<Fighter>();
 		individualCannotGet = new ArrayList<Queue<Fighter>>();
@@ -133,7 +137,14 @@ public class TierList {
 		allowSSInCannotGet = true;
 	}
 	
-	//TODO: add javadoc
+	/**
+	 * Construct a <code>TierList</code> using data from the given file.
+	 * 
+	 * @param file	The <code>File</code> from which to load data.
+	 * @throws FileNotFoundException	Thrown if the file given does not exist.
+	 * @throws IOException				Thrown if the data in the file is
+	 * 									invalid in any way.
+	 */
 	public TierList(File file) throws FileNotFoundException, IOException {
 		//start by initializing everything to default values. this way we
 		//can just override stuff that's in the file
@@ -330,14 +341,37 @@ public class TierList {
 					}
 				}
 			}
+			
+			//if any lines are found that aren't valid, stop reading file
+			//and throw an error. unless the line is blank or it starts with
+			//a #, which is a comment
+			if(!foundEqual && !next.equals("") && !(next.charAt(0) == '#')) {
+				in.close();
+				throw new IOException("Invalid line: " + next);
+			}
+			
+			lineAt = in.readLine();
 		}
+		
+		in.close();
 	}
 	
+	/**
+	 * Reads the given line and creates <code>Fighter</code> objects to add
+	 * to the specified tier in the tier list.
+	 * 
+	 * @param tier		The tier index being added to.
+	 * @param startAt	The index at which data begins in <code>line</code>.
+	 * 					The name of the tier (i.e. "Upper Double S = ") will
+	 * 					be given before the relevant data, so this value
+	 * 					allows us to skip that information.
+	 * @param line		The full line read from the file.
+	 */
 	private void readTier(int tier, int startAt, String line) {
 		//convers the comma-separated line into an array of strings. first
 		//we get the substring from character index 2, to skip over the
 		//equals and space. then we split on commas, giving us an array
-		String[] currentLine = line.substring(2).split(",");
+		String[] currentLine = line.substring(startAt + 2).split(",");
 		
 		//go through the fighters and add them. duplicates will be ignored
 		//automatically by addFighter()
@@ -347,8 +381,20 @@ public class TierList {
 		}
 	}
 	
+	/**
+	 * Reads the given line and inserts the fighters into the specified
+	 * player's exclusion list.
+	 * 
+	 * @param player		The player having their exclusion list set.
+	 * @param startAt		The index at which data beings in <code>line</code>.
+	 * 						See javadoc for <code>readTier()</code> for full
+	 * 						explanation.
+	 * @param line			The full line read from the file.
+	 * @throws IOException	Thrown if a read fighter was not found in the
+	 * 						tier list.
+	 */
 	private void readExclude(int player, int startAt, String line) throws IOException {
-		String[] currentLine = line.substring(2).split(",");
+		String[] currentLine = line.substring(startAt + 2).split(",");
 		
 		for(String fighterAt: currentLine) {
 			Fighter toAdd = getFighter(fighterAt);
@@ -364,8 +410,20 @@ public class TierList {
 		}
 	}
 	
+	/**
+	 * Reads the given line and inserts the fighters into the specified
+	 * player's favorite list.
+	 * 
+	 * @param player		The player having their favorite list set.
+	 * @param startAt		The index at which data beings in <code>line</code>.
+	 * 						See javadoc for <code>readTier()</code> for full
+	 * 						explanation.
+	 * @param line			The full line read from the file.
+	 * @throws IOException	Thrown if a read fighter was not found in the
+	 * 						tier list.
+	 */
 	private void readFavorite(int player, int startAt, String line) throws IOException {
-		String[] currentLine = line.substring(2).split(",");
+		String[] currentLine = line.substring(startAt + 2).split(",");
 		
 		for(String fighterAt: currentLine) {
 			Fighter toAdd = getFighter(fighterAt);
@@ -381,17 +439,161 @@ public class TierList {
 		}
 	}
 	
-	private void readSetting(int id, int startAt, String line) throws IOException {
-		//settings id's
-		//
-		//1 = tier chances (comma-separated list)
-		//2 = cannot get size (integer between 0 and 15) TODO: consider changing max size?
-		//3 = allow ss in cannot get (true or false, 1 or 0)
-		//4 = allow s in cannot get (true or false, 1 or 0)
-		//5 = number of players (int between 2 and 8)
-		//6 = bumo chances (comma-separated list)
+	/**
+	 * Reads the specified setting id. Setting id's are as follows:<br><br>
+	 * <ul>
+	 * 	<li>1 = tier chances (comma-separated list)</li>
+	 * 	<li>2 = cannot get size (integer between 0 and 15)</li> //TODO: consider increasing?
+	 * 	<li>3 = allow ss in cannot get (true or false, 1 or 0)</li>
+	 * 	<li>4 = allow s in cannot get (true or false, 1 or 0)</li>
+	 * 	<li>5 = number of players (integer between 2 and 8)</li>
+	 * 	<li>6 = bump chances (comma-separated list)</li>
+	 * </ul>
+	 * @param id			The setting id being read.
+	 * @param startAt		The index at which data beings in <code>line</code>.
+	 * 						See javadoc for <code>readTier()</code> for full
+	 * 						explanation.
+	 * @param line			The full line read from the file.
+	 * @throws IOException	Thrown if data is invalid in any way.
+	 */
+	private void readSetting(int id, int startAt, String line) throws IOException {	
+		String toRead = line.substring(startAt + 2).toLowerCase();
+		String[] currentLine = toRead.split(",");
+		String errMessage;
 		
-		//TODO: read settings
+		switch(id) {
+		case 2:
+			errMessage = toRead + " is not a valid value for \"Cannot Get Size\" " +
+					"setting. Please provide an integer between 0 and 15.";
+			
+			try {
+				int newCannotGetSize = Integer.parseInt(toRead);
+				
+				if(newCannotGetSize >= 0 && newCannotGetSize <= 15) {
+					cannotGetSize = newCannotGetSize;
+				}
+				else {
+					throw new IOException(errMessage);
+				}
+			} catch(NumberFormatException e) {
+				throw new IOException(errMessage);
+			}
+			
+			break;
+		case 3:
+		case 4:
+			String tier;
+			if(id == 3) {
+				tier = "SS";
+			}
+			else {
+				tier = "S";
+			}
+			
+			errMessage = toRead + " is not a valid value for \" " + tier +
+					" Allowed in Cannot Get\" setting. Please use \"true\" " +
+					"or \"false\", or 0 or 1.";
+			
+			try {
+				boolean newAllowedInCannotGet;
+				
+				if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
+					newAllowedInCannotGet = true;
+				}
+				else if(toRead.equals("false") || Integer.parseInt(toRead) == 0) {
+					newAllowedInCannotGet = false;
+				}
+				else {
+					throw new IOException(errMessage);
+				}
+				
+				if(id == 3) {
+					allowSSInCannotGet = newAllowedInCannotGet;
+				}
+				else {
+					allowSInCannotGet = newAllowedInCannotGet;
+				}
+			} catch(NumberFormatException e) {
+				throw new IOException(errMessage);
+			}
+			
+			break;
+		case 5:
+			errMessage = toRead + " is not a valid value for \"Number of " +
+					"Players\" setting. Please provide a number between " +
+					"2 and 8.";
+			
+			try {
+				int newNumPlayers = Integer.parseInt(toRead);
+				
+				if(newNumPlayers >= 2 && newNumPlayers <= 8) {
+					numPlayers = newNumPlayers;
+				}
+				else {
+					throw new IOException(errMessage);
+				}
+			} catch(NumberFormatException e) {
+				throw new IOException(errMessage);
+			}
+			
+			break;
+		case 1:
+			if(currentLine.length != 8) {
+				throw new IOException("Error processing custom tier chances. " +
+						"Please provide exactly 8 values, comma-separated.");
+			}
+			
+			int[] newTierChances = new int[8];
+			int sum = 0;
+			
+			try {
+				for(int at = 0; at < 8; at++) {
+					newTierChances[at] = Integer.parseInt(currentLine[at]);
+					sum += newTierChances[at];
+				}
+			} catch(NumberFormatException e) {
+				throw new IOException("Error processing custom tier chances. " +
+						"One of the values is not a number.");
+			}
+			
+			if(sum != 100) {
+				throw new IOException("Error processing custom tier chances. " +
+						"The values do not add up to 100.");
+			}
+			
+			for(int at = 0; at < 8; at++) {
+				tierChances[at] = newTierChances[at];
+			}
+			
+			break;
+		case 6:
+			if(currentLine.length != 3) {
+				throw new IOException("Error processing custom bump chances. " +
+						"Please provide exactly 3 values, comma-separated.");
+			}
+			
+			int[] newBumpChances = new int[3];
+			sum = 0;
+			
+			try {
+				for(int at = 0; at < 3; at++) {
+					newBumpChances[at] = Integer.parseInt(currentLine[at]);
+					sum += newBumpChances[at];
+				}
+			} catch(NumberFormatException e) {
+				throw new IOException("Error processing custom bump chances. " +
+						"One of the values is not a number.");
+			}
+			
+			if(sum != 100) {
+				throw new IOException("Error processing custom bump chances. " +
+						"The values do not add up to 100.");
+			}
+			
+			for(int at = 0; at < 3; at++) {
+				bumpChances[at] = newBumpChances[at];
+			}
+		}
 	}
 	
 	/**
