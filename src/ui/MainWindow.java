@@ -258,7 +258,7 @@ public class MainWindow {
 				
 				//if file was loaded, update the UI
 				if(fileLoaded) {
-					Util.log(tierList.toString());
+					Util.log("The following data was loaded as the tier list:\n" + tierList.toString());
 				}
 			}
 		});

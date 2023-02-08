@@ -702,17 +702,27 @@ public class TierList {
 	
 	@Override
 	public String toString() {
-		StringBuffer retString = new StringBuffer(500);
+		//allocate 1000 characters (will probably end up needing more, but
+		//we'll stave off reallocating for a while)
+		StringBuffer retString = new StringBuffer(1000);
 		
 		for(int at = 0; at < NUM_TIERS; at++) {
 			String tierAt = Util.tierToString(at);
 			
 			if(at == 0 || at == 2) {
-				retString.append(tierAt + ":\t" + tierList.get(at));
+				retString.append(tierAt + ":\t" + tierList.get(at) + "\n");
 			}
 			else {
-				retString.append(tierAt + ":\t\t" + tierList.get(at));
+				retString.append(tierAt + ":\t\t" + tierList.get(at) + "\n");
 			}
+		}
+		
+		for(int at = 0; at < 8; at++) {
+			retString.append("Player " + (at + 1) + " exclude:\t" + exclusionList.get(at) + "\n");
+		}
+		
+		for(int at = 0; at < 8; at++) {
+			retString.append("Player " + (at + 1) + " favorite:\t" + favoriteList.get(at) + "\n");
 		}
 		
 		return retString.toString();
