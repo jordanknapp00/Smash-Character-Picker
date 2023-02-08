@@ -339,6 +339,10 @@ public class TierList {
 						in.close();
 						throw new IOException("Error on line " + next);
 					}
+					
+					//can break the for loop and move on to the next line
+					//if we found something
+					break;
 				}
 			}
 			
@@ -370,8 +374,9 @@ public class TierList {
 	private void readTier(int tier, int startAt, String line) {
 		//convers the comma-separated line into an array of strings. first
 		//we get the substring from character index 2, to skip over the
-		//equals and space. then we split on commas, giving us an array
-		String[] currentLine = line.substring(startAt + 2).split(",");
+		//equals and space. then we split on commas with optional spaces,
+		//giving us an array
+		String[] currentLine = line.substring(startAt + 2).split(",\\s*");
 		
 		//go through the fighters and add them. duplicates will be ignored
 		//automatically by addFighter()
@@ -394,7 +399,7 @@ public class TierList {
 	 * 						tier list.
 	 */
 	private void readExclude(int player, int startAt, String line) throws IOException {
-		String[] currentLine = line.substring(startAt + 2).split(",");
+		String[] currentLine = line.substring(startAt + 2).split(",\\s*");
 		
 		for(String fighterAt: currentLine) {
 			Fighter toAdd = getFighter(fighterAt);
@@ -423,7 +428,7 @@ public class TierList {
 	 * 						tier list.
 	 */
 	private void readFavorite(int player, int startAt, String line) throws IOException {
-		String[] currentLine = line.substring(startAt + 2).split(",");
+		String[] currentLine = line.substring(startAt + 2).split(",\\s*");
 		
 		for(String fighterAt: currentLine) {
 			Fighter toAdd = getFighter(fighterAt);
@@ -458,7 +463,7 @@ public class TierList {
 	 */
 	private void readSetting(int id, int startAt, String line) throws IOException {	
 		String toRead = line.substring(startAt + 2).toLowerCase();
-		String[] currentLine = toRead.split(",");
+		String[] currentLine = toRead.split(",\\s*");
 		String errMessage;
 		
 		switch(id) {
