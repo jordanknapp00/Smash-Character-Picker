@@ -51,7 +51,7 @@ public class TierList {
 	
 	//Settings stuff
 	
-	int numPlayers;
+	private int numPlayers;
 	
 	private int[] tierChances;
 	private int[] bumpChances;
@@ -726,5 +726,127 @@ public class TierList {
 		}
 		
 		return retString.toString();
+	}
+	
+	/**
+	 * @return	The current max size of the "Cannot Get" queue.
+	 */
+	public int getCannotGetSize() {
+		return cannotGetSize;
+	}
+	
+	/**
+	 * Sets the max size of the "Cannot Get" queue to the given value, as
+	 * long as it's between 0 and 15.
+	 * 
+	 * @param newCannotGetSize	The new max size of the "Cannot Get" queue.
+	 * @return					<code>true</code> if the operation was
+	 * 							successful, <Code>false</code> if not.
+	 */
+	public boolean setCannotGetSize(int newCannotGetSize) {
+		//TODO: set up constants for min and max
+		if(newCannotGetSize >= 0 && newCannotGetSize <= 15) {
+			cannotGetSize = newCannotGetSize;
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @return	The current number of players.
+	 */
+	public int getNumPlayers() {
+		return numPlayers;
+	}
+	
+	/**
+	 * Set the number of players to a given value.
+	 * 
+	 * @param newNumPlayers	The new number of players, between 2 and 8.
+	 * @return				<code>true</code> if the operation was successful,
+	 * 						<code>false</code> if it was not.
+	 */
+	public boolean setNumPlayers(int newNumPlayers) {
+		if(newNumPlayers < 2 || newNumPlayers > 8) {
+			return false;
+		}
+		
+		numPlayers = newNumPlayers;
+		return true;
+	}
+	
+	/**
+	 * @return	<code>true</code> if S tiers are allowed in the "Cannot Get"
+	 * 			queue, <code>false</code> if they are not.
+	 */
+	public boolean getAllowSInCannotGet() {
+		return allowSInCannotGet;
+	}
+	
+	/**
+	 * Updates the status of whether S tiers are allowed in the "Cannot Get"
+	 * queue.
+	 * 
+	 * @param newAllowSInCannotGet	Whether or not S tiers are allowed in
+	 * 								the "Cannot Get" queue.
+	 */
+	public void setAllowSInCannotGet(boolean newAllowSInCannotGet) {
+		allowSInCannotGet = newAllowSInCannotGet;
+	}
+	
+	/**
+	 * @return	<code>true</code> if SS tiers are allowed in the "Cannot Get"
+	 * 			queue, <code>false</code> if they are not.
+	 */
+	public boolean getAllowSSInCannotGet() {
+		return allowSSInCannotGet;
+	}
+	
+	/**
+	 * Updates the status of whether SS tiers are allowed in the "Cannot Get"
+	 * queue.
+	 * 
+	 * @param newAllowSSInCannotGet	Whether or not S tiers are allowed in the
+	 * 								"Cannot Get" queue.
+	 */
+	public void setAllowSSInCannotGet(boolean newAllowSSInCannotGet) {
+		allowSSInCannotGet = newAllowSSInCannotGet;
+	}
+	
+	/**
+	 * Get the percent chance of getting the given tier.
+	 * 
+	 * @param tier	The tier (from 0 to <code><i><b>NUM_TIERS</i></b> - 1</code>
+	 * 				to get the chance of.
+	 * @return		The chance (from 0 to 100) of getting that tier, or -1
+	 * 				if a tier outside the above ranges is given.
+	 */
+	public int getTierChance(int tier) {
+		if(tier < 0 || tier >= NUM_TIERS) {
+			return -1;
+		}
+		
+		return tierChances[tier];
+	}
+	
+	/**
+	 * Get the percent chance of bumping the given number of tiers.
+	 * 
+	 * @param bumpAmount	The number of tiers to bump (0 to 2).
+	 * @return				The chance (from 0 to 100) of bumping that amount,
+	 * 						or -1 if the value given is outside the above range.
+	 */
+	public int getBumpChance(int bumpAmount) {
+		if(bumpAmount < 0 || bumpAmount > 2) {
+			return -1;
+		}
+		
+		return bumpChances[bumpAmount];
+	}
+	
+	public boolean updateTierBumpChances(int[] newTierChances, int[] newBumpChances) {
+		//TODO: implement this
+		return false;
 	}
 }
