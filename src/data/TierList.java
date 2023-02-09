@@ -382,6 +382,11 @@ public class TierList {
 		//go through the fighters and add them. duplicates will be ignored
 		//automatically by addFighter()
 		for(String fighterAt: currentLine) {
+			//skip blank ones
+			if(fighterAt.equals("")) {
+				continue;
+			}
+			
 			Fighter newFighter = new Fighter(fighterAt, tier);
 			addFighter(newFighter);
 		}
@@ -403,6 +408,11 @@ public class TierList {
 		String[] currentLine = line.substring(startAt + 2).split(",\\s*");
 		
 		for(String fighterAt: currentLine) {
+			//skip blank ones
+			if(fighterAt.equals("")) {
+				continue;
+			}
+			
 			Fighter toAdd = getFighter(fighterAt);
 			
 			if(toAdd == null) {
@@ -432,6 +442,11 @@ public class TierList {
 		String[] currentLine = line.substring(startAt + 2).split(",\\s*");
 		
 		for(String fighterAt: currentLine) {
+			//skip blank ones
+			if(fighterAt.equals("")) {
+				continue;
+			}
+			
 			Fighter toAdd = getFighter(fighterAt);
 			
 			if(toAdd == null) {
