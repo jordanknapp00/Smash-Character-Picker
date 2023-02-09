@@ -35,6 +35,7 @@ import util.Util;
 public class TierList {
 	
 	private static final int NUM_TIERS = 24;
+	private static final int CANNOT_GET_MAX = 15;
 	
 	//Tier list data, including a variety of ways to access the tier list
 	//itself, either by tier or by name. Names are stored in a set to
@@ -448,7 +449,7 @@ public class TierList {
 	 * Reads the specified setting id. Setting id's are as follows:<br><br>
 	 * <ul>
 	 * 	<li>1 = tier chances (comma-separated list)</li>
-	 * 	<li>2 = cannot get size (integer between 0 and 15)</li> //TODO: consider increasing?
+	 * 	<li>2 = cannot get size (integer between 0 and <code><b><i>CANNOT_GET_MAX</i></b></code>)</li>
 	 * 	<li>3 = allow ss in cannot get (true or false, 1 or 0)</li>
 	 * 	<li>4 = allow s in cannot get (true or false, 1 or 0)</li>
 	 * 	<li>5 = number of players (integer between 2 and 8)</li>
@@ -469,12 +470,13 @@ public class TierList {
 		switch(id) {
 		case 2:
 			errMessage = toRead + " is not a valid value for \"Cannot Get Size\" " +
-					"setting. Please provide an integer between 0 and 15.";
+					"setting. Please provide an integer between 0 and " +
+					CANNOT_GET_MAX + ".";
 			
 			try {
 				int newCannotGetSize = Integer.parseInt(toRead);
 				
-				if(newCannotGetSize >= 0 && newCannotGetSize <= 15) {
+				if(newCannotGetSize >= 0 && newCannotGetSize <= CANNOT_GET_MAX) {
 					cannotGetSize = newCannotGetSize;
 				}
 				else {
@@ -737,15 +739,14 @@ public class TierList {
 	
 	/**
 	 * Sets the max size of the "Cannot Get" queue to the given value, as
-	 * long as it's between 0 and 15.
+	 * long as it's between 0 and <code><i><b>CANNOT_GET_MAX</i></b></code>.
 	 * 
 	 * @param newCannotGetSize	The new max size of the "Cannot Get" queue.
 	 * @return					<code>true</code> if the operation was
 	 * 							successful, <Code>false</code> if not.
 	 */
 	public boolean setCannotGetSize(int newCannotGetSize) {
-		//TODO: set up constants for min and max
-		if(newCannotGetSize >= 0 && newCannotGetSize <= 15) {
+		if(newCannotGetSize >= 0 && newCannotGetSize <= CANNOT_GET_MAX) {
 			cannotGetSize = newCannotGetSize;
 			return true;
 		}
