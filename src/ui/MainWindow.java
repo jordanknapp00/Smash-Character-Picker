@@ -8,9 +8,8 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Queue;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -19,6 +18,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,11 +27,8 @@ import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
-import data.Fighter;
 import data.TierList;
 import util.Util;
 
@@ -128,6 +125,7 @@ public class MainWindow {
 	
 	//other variables	
 	private TierList tierList;
+	private boolean fileLoaded;
 	
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
@@ -222,7 +220,49 @@ public class MainWindow {
 		loadButton = new JButton("Load");
 		Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
 		loadButton.setIcon(new ImageIcon(loadImage));
-		//TODO: add action listener
+		loadButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fileChooser = new JFileChooser(".");
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Documents (*.txt)", "txt");
+				fileChooser.setFileFilter(filter);
+				
+				if(fileChooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) {
+					return;
+				}
+				
+				try {
+					tierList = new TierList(fileChooser.getSelectedFile());
+					fileLoaded = true;
+				} catch(FileNotFoundException e1) {
+					results.setText("File " + fileChooser.getSelectedFile().getName() +
+							" not found!");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
+				} catch(IOException e1) {
+					results.setText("IOException when reading " +
+							fileChooser.getSelectedFile().getName() + "!\n" +
+							"See the debug log for details.");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
+				}
+				
+				//if file was loaded, update the UI
+				if(fileLoaded) {
+					Util.log("The following data was loaded as the tier list:\n" + tierList.toString());
+					
+					cannotGetSizeSpinner.setValue(tierList.getCannotGetSize());
+					allowSSInCannotGet.setSelected(tierList.getAllowSSInCannotGet());
+					allowSInCannotGet.setSelected(tierList.getAllowSInCannotGet());
+					numPlayersSpinner.setValue(tierList.getNumPlayers());
+					
+					updateTierBumpChances();
+				}
+			}
+		});
 		
 		debugButton = new JButton("Debug");
 		//TODO: add action listener
@@ -553,6 +593,22 @@ public class MainWindow {
 		frame.setVisible(true);
 		
 		//TODO: attempt to load tier list
+		fileLoaded = false;
+	}
+	
+	private void updateTierBumpChances() {
+		SSTierSpinner.setValue(tierList.getTierChance(0));
+		STierSpinner.setValue(tierList.getTierChance(1));
+		ATierSpinner.setValue(tierList.getTierChance(2));
+		BTierSpinner.setValue(tierList.getTierChance(3));
+		CTierSpinner.setValue(tierList.getTierChance(4));
+		DTierSpinner.setValue(tierList.getTierChance(5));
+		ETierSpinner.setValue(tierList.getTierChance(6));
+		FTierSpinner.setValue(tierList.getTierChance(7));
+		
+		bump0Spinner.setValue(tierList.getBumpChance(0));
+		bump1Spinner.setValue(tierList.getBumpChance(1));
+		bump2Spinner.setValue(tierList.getBumpChance(2));
 	}
 
 }
