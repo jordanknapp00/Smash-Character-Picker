@@ -818,13 +818,12 @@ public class TierList {
 	/**
 	 * Get the percent chance of getting the given tier.
 	 * 
-	 * @param tier	The tier (from 0 to <code><i><b>NUM_TIERS</i></b> - 1</code>
-	 * 				to get the chance of.
+	 * @param tier	The tier (from 0 to 8) to get the chance of.
 	 * @return		The chance (from 0 to 100) of getting that tier, or -1
 	 * 				if a tier outside the above ranges is given.
 	 */
 	public int getTierChance(int tier) {
-		if(tier < 0 || tier >= NUM_TIERS) {
+		if(tier < 0 || tier >= 8) {
 			return -1;
 		}
 		
@@ -846,8 +845,54 @@ public class TierList {
 		return bumpChances[bumpAmount];
 	}
 	
+	/**
+	 * Updates the tier and bump chances to new values, as long as those new
+	 * values are valid. The sum of the tier and bump chances must each add
+	 * up to 100.
+	 * 
+	 * @param newTierChances	An array consisting of 8 numbers, representing
+	 * 							the percent chance of getting tiers from SS
+	 * 							to FF. The sum of its contents should be 100.
+	 * @param newBumpChances	An array consisting of 3 numbers, representing
+	 * 							the percent chance of bumping 0, 1, or 2
+	 * 							tiers upward. The sum of its content should
+	 * 							be 100.
+	 * @return					<code>true</code> if the new tier and bump
+	 * 							chances are both valid and have been applied,
+	 * 							<code>false</code> otherwise.
+	 */
 	public boolean updateTierBumpChances(int[] newTierChances, int[] newBumpChances) {
-		//TODO: implement this
-		return false;
+		//prevent index out of bounds errors, make sure we always have
+		//exactly the sizes we're expecting
+		if(newTierChances.length != 8 || newBumpChances.length != 3) {
+			return false;
+		}
+		
+		int tierSum = 0;
+		for(int at = 0; at < 8; at++) {
+			tierSum += newTierChances[at];
+		}
+		
+		int bumpSum = 0;
+		for(int at = 0; at < 3; at++) {
+			bumpSum += newBumpChances[at];
+		}
+		
+		//if both are correct, update the actual values and return true
+		if(tierSum == 100 && bumpSum == 100) {
+			for(int at = 0; at < 8; at++) {
+				tierChances[at] = newTierChances[at];
+			}
+			
+			for(int at = 0; at < 3; at++) {
+				bumpChances[at] = newBumpChances[at];
+			}
+			
+			return true;
+		}
+		//otherwise, return false
+		else {
+			return false;
+		}
 	}
 }

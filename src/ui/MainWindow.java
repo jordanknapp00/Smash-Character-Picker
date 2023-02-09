@@ -10,8 +10,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Queue;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -29,12 +27,8 @@ import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import data.Fighter;
 import data.TierList;
 import util.Util;
 
@@ -259,6 +253,13 @@ public class MainWindow {
 				//if file was loaded, update the UI
 				if(fileLoaded) {
 					Util.log("The following data was loaded as the tier list:\n" + tierList.toString());
+					
+					cannotGetSizeSpinner.setValue(tierList.getCannotGetSize());
+					allowSSInCannotGet.setSelected(tierList.getAllowSSInCannotGet());
+					allowSInCannotGet.setSelected(tierList.getAllowSInCannotGet());
+					numPlayersSpinner.setValue(tierList.getNumPlayers());
+					
+					updateTierBumpChances();
 				}
 			}
 		});
@@ -593,6 +594,21 @@ public class MainWindow {
 		
 		//TODO: attempt to load tier list
 		fileLoaded = false;
+	}
+	
+	private void updateTierBumpChances() {
+		SSTierSpinner.setValue(tierList.getTierChance(0));
+		STierSpinner.setValue(tierList.getTierChance(1));
+		ATierSpinner.setValue(tierList.getTierChance(2));
+		BTierSpinner.setValue(tierList.getTierChance(3));
+		CTierSpinner.setValue(tierList.getTierChance(4));
+		DTierSpinner.setValue(tierList.getTierChance(5));
+		ETierSpinner.setValue(tierList.getTierChance(6));
+		FTierSpinner.setValue(tierList.getTierChance(7));
+		
+		bump0Spinner.setValue(tierList.getBumpChance(0));
+		bump1Spinner.setValue(tierList.getBumpChance(1));
+		bump2Spinner.setValue(tierList.getBumpChance(2));
 	}
 
 }
