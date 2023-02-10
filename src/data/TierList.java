@@ -35,7 +35,6 @@ import util.Util;
 public class TierList {
 	
 	private static final int NUM_TIERS = 24;
-	private static final int CANNOT_GET_MAX = 15;
 	
 	//Tier list data, including a variety of ways to access the tier list
 	//itself, either by tier or by name. Names are stored in a set to
@@ -50,57 +49,22 @@ public class TierList {
 	private List<Set<Fighter>> exclusionList;
 	private List<Set<Fighter>> favoriteList;
 	
-	//Settings stuff
-	
-	private int numPlayers;
-	
-	private int[] tierChances;
-	private int[] bumpChances;
-	
-	private boolean allowSInCannotGet;
-	private boolean allowSSInCannotGet;
-	
-	//Cannot Get stuff
-	
-	private int cannotGetSize;
-	
 	private Queue<Fighter> cannotGet;
 	private List<Queue<Fighter>> individualCannotGet;
 	
 	/**
 	 * Constructs an empty <code>TierList</code> with the following default
-	 * settings:
-	 * <br><br>
+	 * parameters:
 	 * <ul>
 	 * 	<li>The tier list itself will be empty. The internal data structures
 	 * 		will consist of a <code>List</code> containing <b><i><code>NUM_TIERS</code></b></i>
 	 * 		empty <code>List</code>s of <code>Fighter</code>s, while the
 	 * 		<code>fighterNames</code> set and <code>lowercaseNames</code>
 	 * 		map will also be empty.</li>
-	 * 	<li>The number of players will be 2.</li>
 	 *	<li>The exclusion and favorites lists will be initialized with empty
 	 *		lists for all 8 players.</li>
 	 *	<li>The global cannot get queue will be empty, while the individual
 	 *		cannot get queue will be initialized to empty for all 8 players.</li>
-	 *	<li>The tier chances will be the following:
-	 *		<ul>
-	 *			<li>SS Tier: 10%</li>
-	 *			<li>S Tier:  20%</li>
-	 *			<li>A Tier:  25%</li>
-	 *			<li>B Tier:  25%</li>
-	 *			<li>C Tier:  20%</li>
-	 *			<li>D Tier:   0%</li>
-	 *			<li>E Tier:   0%</li>
-	 *			<li>F Tier:   0%</li>
-	 *		</ul></li>
-	 *	<li>The bump chances will be the following:
-	 *		<ul>
-	 *			<li>Stay the same tier: 50%</li>
-	 *			<li>Bump up 1 tier:     25%</li>
-	 *			<li>Bump up 2 tiers:    25%</li>
-	 *		</ul></li>
-	 *	<li>Both S and SS tiers will be allowed in the cannot get, and the
-	 *		cannot get size will be set to 10.</li>
 	 * </ul>
 	 */
 	public TierList() {
@@ -111,9 +75,6 @@ public class TierList {
 		exclusionList = new ArrayList<Set<Fighter>>();
 		favoriteList = new ArrayList<Set<Fighter>>();
 		
-		numPlayers = 2;
-		
-		cannotGetSize = 10;
 		cannotGet = new ArrayDeque<Fighter>();
 		individualCannotGet = new ArrayList<Queue<Fighter>>();
 		
@@ -130,12 +91,6 @@ public class TierList {
 			
 			individualCannotGet.add(new ArrayDeque<Fighter>());
 		}
-		
-		tierChances = new int[] {10, 20, 25, 25, 20, 0, 0, 0};
-		bumpChances = new int[] {50, 25, 25};
-		
-		allowSInCannotGet = true;
-		allowSSInCannotGet = true;
 	}
 	
 	/**
@@ -146,11 +101,7 @@ public class TierList {
 	 * @throws IOException				Thrown if the data in the file is
 	 * 									invalid in any way.
 	 */
-	public TierList(File file) throws FileNotFoundException, IOException {
-		//start by initializing everything to default values. this way we
-		//can just override stuff that's in the file
-		this();
-		
+	public Settings loadFile(File file) throws FileNotFoundException, IOException {
 		//file structure is as follows:
 		//
 		//upper double s	0

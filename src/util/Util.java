@@ -27,6 +27,13 @@ public final class Util {
 	public static JTextArea debug;
 	
 	/**
+	 * The maximum size of the "Cannot Get" queue. Value is used in both
+	 * <code>MainWindow</code> and <code>TierList</code> for verifying
+	 * inputs, so I'm putting it here.
+	 */
+	public static final int CANNOT_GET_MAX = 15;
+	
+	/**
 	 * Private constructor to prevent instantiating the <code>Util</code> class.
 	 */
 	private Util() {
