@@ -102,6 +102,15 @@ public class TierList {
 	 * 									invalid in any way.
 	 */
 	public Settings loadFile(File file) throws FileNotFoundException, IOException {
+		//settings variables that will be used to instantiate the Settings
+		//object returned by this method, initialized with default values
+		int numPlayers = 2;
+		int[] tierChances = {10, 20, 25, 25, 20, 0, 0, 0};
+		int[] bumpChances = {50, 25, 25};
+		int cannotGetSize = 10;
+		boolean allowSInCannotGet = false;
+		boolean allowSSInCannotGet = true;
+		
 		//file structure is as follows:
 		//
 		//upper double s	0
@@ -138,166 +147,166 @@ public class TierList {
 			//then check for which tier/setting it is
 			String next = "";
 			boolean foundEqual = false;
-			for(int at = 0; at < lineAt.length(); at++) {
-				if(lineAt.charAt(at) != '=') {
-					next += lineAt.charAt(at);
-				}
-				else {
-					//remove space before equals sign and check name
+			for(char at: lineAt.toCharArray()) {
+				next += at;
+				
+				if(at == '=') {
 					foundEqual = true;
-					next = next.substring(0, next.length() - 1);
-					next = next.toLowerCase();
-					
-					switch(next) {
-					case "upper double s":
-						readTier(0, at, lineAt);
-						break;
-					case "mid double s":
-						readTier(1, at, lineAt);
-						break;
-					case "lower double s":
-						readTier(2, at, lineAt);
-						break;
-					case "upper s":
-						readTier(3, at, lineAt);
-						break;
-					case "mid s":
-						readTier(4, at, lineAt);
-						break;
-					case "lower s":
-						readTier(5, at, lineAt);
-						break;
-					case "upper a":
-						readTier(6, at, lineAt);
-						break;
-					case "mid a":
-						readTier(7, at, lineAt);
-						break;
-					case "lower a":
-						readTier(8, at, lineAt);
-						break;
-					case "upper b":
-						readTier(9, at, lineAt);
-						break;
-					case "mid b":
-						readTier(10, at, lineAt);
-						break;
-					case "lower b":
-						readTier(11, at, lineAt);
-						break;
-					case "upper c":
-						readTier(12, at, lineAt);
-						break;
-					case "mid c":
-						readTier(13, at, lineAt);
-						break;
-					case "lower c":
-						readTier(14, at, lineAt);
-						break;
-					case "upper d":
-						readTier(15, at, lineAt);
-						break;
-					case "mid d":
-						readTier(16, at, lineAt);
-						break;
-					case "lower d":
-						readTier(17, at, lineAt);
-						break;
-					case "upper e":
-						readTier(18, at, lineAt);
-						break;
-					case "mid e":
-						readTier(19, at, lineAt);
-						break;
-					case "lower e":
-						readTier(20, at, lineAt);
-						break;
-					case "upper f":
-						readTier(21, at, lineAt);
-						break;
-					case "mid f":
-						readTier(22, at, lineAt);
-						break;
-					case "lower f":
-						readTier(23, at, lineAt);
-						break;
-					case "p1 exclude":
-						readExclude(0, at, lineAt);
-						break;
-					case "p2 exclude":
-						readExclude(1, at, lineAt);
-						break;
-					case "p3 exclude":
-						readExclude(2, at, lineAt);
-						break;
-					case "p4 exclude":
-						readExclude(3, at, lineAt);
-						break;
-					case "p5 exclude":
-						readExclude(4, at, lineAt);
-						break;
-					case "p6 exclude":
-						readExclude(5, at, lineAt);
-						break;
-					case "p7 exclude":
-						readExclude(360, at, lineAt);
-						break;
-					case "p8 exclude":
-						readExclude(7, at, lineAt);
-						break;
-					case "p1 favorite":
-						readFavorite(0, at, lineAt);
-						break;
-					case "p2 favorite":
-						readFavorite(1, at, lineAt);
-						break;
-					case "p3 favorite":
-						readFavorite(2, at, lineAt);
-						break;
-					case "p4 favorite":
-						readFavorite(3, at, lineAt);
-						break;
-					case "p5 favorite":
-						readFavorite(4, at, lineAt);
-						break;
-					case "p6 favorite":
-						readFavorite(5, at, lineAt);
-						break;
-					case "p7 favorite":
-						readFavorite(6, at, lineAt);
-						break;
-					case "p8 favorite":
-						readFavorite(7, at, lineAt);
-						break;
-					case "tier chances":
-						readSetting(1, at, lineAt);
-						break;
-					case "cannot get size":
-						readSetting(2, at, lineAt);
-						break;
-					case "allow ss in cannot get":
-						readSetting(3, at, lineAt);
-						break;
-					case "allow s in cannot get":
-						readSetting(4, at, lineAt);
-						break;
-					case "players":
-						readSetting(5, at, lineAt);
-						break;
-					case "bump chances":
-						readSetting(6, at, lineAt);
-						break;
-					default:
-						in.close();
-						throw new IOException("Error on line " + next);
-					}
-					
-					//can break the for loop and move on to the next line
-					//if we found something
 					break;
 				}
 			}
 			
+			//remove space before equals sign and check name
+			next = next.substring(0, next.length() - 1);
+			next = next.toLowerCase();
+			int posInLine = next.length();
+			
+			switch(next) {
+			case "upper double s":
+				readTier(0, posInLine, lineAt);
+				break;
+			case "mid double s":
+				readTier(1, posInLine, lineAt);
+				break;
+			case "lower double s":
+				readTier(2, posInLine, lineAt);
+				break;
+			case "upper s":
+				readTier(3, posInLine, lineAt);
+				break;
+			case "mid s":
+				readTier(4, posInLine, lineAt);
+				break;
+			case "lower s":
+				readTier(5, posInLine, lineAt);
+				break;
+			case "upper a":
+				readTier(6, posInLine, lineAt);
+				break;
+			case "mid a":
+				readTier(7, posInLine, lineAt);
+				break;
+			case "lower a":
+				readTier(8, posInLine, lineAt);
+				break;
+			case "upper b":
+				readTier(9, posInLine, lineAt);
+				break;
+			case "mid b":
+				readTier(10, posInLine, lineAt);
+				break;
+			case "lower b":
+				readTier(11, posInLine, lineAt);
+				break;
+			case "upper c":
+				readTier(12, posInLine, lineAt);
+				break;
+			case "mid c":
+				readTier(13, posInLine, lineAt);
+				break;
+			case "lower c":
+				readTier(14, posInLine, lineAt);
+				break;
+			case "upper d":
+				readTier(15, posInLine, lineAt);
+				break;
+			case "mid d":
+				readTier(16, posInLine, lineAt);
+				break;
+			case "lower d":
+				readTier(17, posInLine, lineAt);
+				break;
+			case "upper e":
+				readTier(18, posInLine, lineAt);
+				break;
+			case "mid e":
+				readTier(19, posInLine, lineAt);
+				break;
+			case "lower e":
+				readTier(20, posInLine, lineAt);
+				break;
+			case "upper f":
+				readTier(21, posInLine, lineAt);
+				break;
+			case "mid f":
+				readTier(22, posInLine, lineAt);
+				break;
+			case "lower f":
+				readTier(23, posInLine, lineAt);
+				break;
+			case "p1 exclude":
+				readExclude(0, posInLine, lineAt);
+				break;
+			case "p2 exclude":
+				readExclude(1, posInLine, lineAt);
+				break;
+			case "p3 exclude":
+				readExclude(2, posInLine, lineAt);
+				break;
+			case "p4 exclude":
+				readExclude(3, posInLine, lineAt);
+				break;
+			case "p5 exclude":
+				readExclude(4, posInLine, lineAt);
+				break;
+			case "p6 exclude":
+				readExclude(5, posInLine, lineAt);
+				break;
+			case "p7 exclude":
+				readExclude(6, posInLine, lineAt);
+				break;
+			case "p8 exclude":
+				readExclude(7, posInLine, lineAt);
+				break;
+			case "p1 favorite":
+				readFavorite(0, posInLine, lineAt);
+				break;
+			case "p2 favorite":
+				readFavorite(1, posInLine, lineAt);
+				break;
+			case "p3 favorite":
+				readFavorite(2, posInLine, lineAt);
+				break;
+			case "p4 favorite":
+				readFavorite(3, posInLine, lineAt);
+				break;
+			case "p5 favorite":
+				readFavorite(4, posInLine, lineAt);
+				break;
+			case "p6 favorite":
+				readFavorite(5, posInLine, lineAt);
+				break;
+			case "p7 favorite":
+				readFavorite(6, posInLine, lineAt);
+				break;
+			case "p8 favorite":
+				readFavorite(7, posInLine, lineAt);
+				break;
+			//TODO: instead of reading settings (which just calls a method that uses case), just handle each setting here
+			case "tier chances":
+				readSetting(1, at, lineAt);
+				break;
+			case "cannot get size":
+				readSetting(2, at, lineAt);
+				break;
+			case "allow ss in cannot get":
+				readSetting(3, at, lineAt);
+				break;
+			case "allow s in cannot get":
+				readSetting(4, at, lineAt);
+				break;
+			case "players":
+				readSetting(5, at, lineAt);
+				break;
+			case "bump chances":
+				readSetting(6, at, lineAt);
+				break;
+			default:
+				in.close();
+				throw new IOException("Error on line " + next);
+			}
+			
+			//TODO: not sure this is actually possible now
 			//if any lines are found that aren't valid, stop reading file
 			//and throw an error. unless the line is blank or it starts with
 			//a #, which is a comment
@@ -310,6 +319,9 @@ public class TierList {
 		}
 		
 		in.close();
+		
+		return new Settings(numPlayers, tierChances, bumpChances,
+				cannotGetSize, allowSInCannotGet, allowSSInCannotGet);
 	}
 	
 	/**
