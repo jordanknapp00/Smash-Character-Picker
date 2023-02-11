@@ -177,6 +177,47 @@ public final class Util {
 	}
 	
 	/**
+	 * Method that converts a subtier value (from 0 to 23) to a tier value
+	 * (0 to 8). Each tier has 3 subtiers. So this method would convert the
+	 * numerical value of "upper s tier" (4) to a value representing S tier
+	 * in the tier chance system (1).
+	 * 
+	 * @param subTier	The sub-tier to convert, from 0 to 23.
+	 * @return			The higher-level tier value used in the tier chance
+	 * 					system (from 0 to 8), or -1 if the given subtier is
+	 * 					not valid.
+	 */
+	public static int subTierToTier(int subTier) {
+		if(subTier >= 0 && subTier <= 2) {
+			return 0;
+		}
+		else if(subTier >= 3 && subTier <= 5) {
+			return 1;
+		}
+		else if(subTier >= 6 && subTier <= 8) {
+			return 2;
+		}
+		else if(subTier >= 9 && subTier <= 11) {
+			return 3;
+		}
+		else if(subTier >= 12 && subTier <= 14) {
+			return 4;
+		}
+		else if(subTier >= 15 && subTier <= 17) {
+			return 5;
+		}
+		else if(subTier >= 18 && subTier <= 20) {
+			return 6;
+		}
+		else if(subTier >= 21 && subTier <= 23) {
+			return 7;
+		}
+		else {
+			return -1;
+		}
+	}
+	
+	/**
 	 * A static method for converting <code>double</code> values into a
 	 * <code>String</code> to be printed on the stats screen.
 	 * 

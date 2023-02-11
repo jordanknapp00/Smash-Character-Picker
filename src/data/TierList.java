@@ -582,16 +582,40 @@ public class TierList {
 		//first, generate the list of valid fighters for each player
 		ArrayList<List<Fighter>> playerValidCharacters = new ArrayList<List<Fighter>>();
 		for(int playerAt = 0; playerAt < settings.getNumPlayers(); playerAt++) {
-			playerValidCharacters.add(getValidCharacters(playerAt));
+			playerValidCharacters.add(getValidCharacters(playerAt, settings));
 			
 			if(playerValidCharacters.get(playerAt).size() == 0) {
 				//TODO: custom exception for this
 				return null;
 			}
 		}
+		
+		return null;
 	}
 	
-	private List<Fighter> getValidCharacters(int player) {
-		return null;
+	private List<Fighter> getValidCharacters(int player, Settings settings) {
+		ArrayList<Fighter> validChars = new ArrayList<Fighter>();
+		
+		//loop through all the fighters
+		for(int tierAt = 0; tierAt < NUM_TIERS; tierAt++) {
+			//ignore any tier that's turned off
+			if(settings.getTierChance(Util.subTierToTier(tierAt)) == 0) {
+				continue;
+			}
+			
+			for(Fighter fighterAt: tierList.get(tierAt)) {
+				//if the cannot get queue, individual cannot get queue, and
+				//the player's exclusion list don't contain this fighter, add it
+				if(!cannotGet.contains(fighterAt) &&
+						!individualCannotGet.get(player).contains(fighterAt) &&
+						!exclusionList.get(player).contains(fighterAt)) {
+					validChars.add(fighterAt);
+				}
+			}
+		}
+		
+		Util.log("Found " + validChars.size() + " fighters for player " + (player + 1));
+		
+		return validChars;
 	}
 }
