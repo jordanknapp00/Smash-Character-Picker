@@ -166,6 +166,15 @@ public class TierList {
 			//if we didn't find an equals sign at this point, the line is invalid
 			if(!foundEqual) {
 				in.close();
+				
+				//TODO: look into custom exception types.
+				//instead of an IOException for everything, maybe have a
+				//TierListParseException interface, with subclasses that
+				//make it easier to understand exactly what went wrong.
+				//then i don't have to spend so much time with error messages
+				//and stuff, either. a CannotGetSizeException only needs to
+				//be given the value that is invalid
+				
 				throw new IOException("Invalid line: " + next);
 			}
 			
@@ -567,5 +576,22 @@ public class TierList {
 		}
 		
 		return retString.toString();
+	}
+	
+	public Matchup generateBattle(Settings settings) {
+		//first, generate the list of valid fighters for each player
+		ArrayList<List<Fighter>> playerValidCharacters = new ArrayList<List<Fighter>>();
+		for(int playerAt = 0; playerAt < settings.getNumPlayers(); playerAt++) {
+			playerValidCharacters.add(getValidCharacters(playerAt));
+			
+			if(playerValidCharacters.get(playerAt).size() == 0) {
+				//TODO: custom exception for this
+				return null;
+			}
+		}
+	}
+	
+	private List<Fighter> getValidCharacters(int player) {
+		return null;
 	}
 }
