@@ -143,6 +143,13 @@ public class TierList {
 		//read the first line and keep reading while lines exist
 		String lineAt = in.readLine();
 		while(lineAt != null) {
+			//first things first, if the line is blank or it starts with '#',
+			//skip it
+			if(lineAt.equals("") || lineAt.charAt(0) == '#') {
+				lineAt = in.readLine();
+				continue;
+			}
+			
 			//scroll through the chars in the read line. if one is an equals,
 			//then check for which tier/setting it is
 			String next = "";
@@ -156,163 +163,175 @@ public class TierList {
 				}
 			}
 			
-			//remove space before equals sign and check name
-			next = next.substring(0, next.length() - 1);
-			next = next.toLowerCase();
-			int posInLine = next.length();
-			
-			switch(next) {
-			case "upper double s":
-				readTier(0, posInLine, lineAt);
-				break;
-			case "mid double s":
-				readTier(1, posInLine, lineAt);
-				break;
-			case "lower double s":
-				readTier(2, posInLine, lineAt);
-				break;
-			case "upper s":
-				readTier(3, posInLine, lineAt);
-				break;
-			case "mid s":
-				readTier(4, posInLine, lineAt);
-				break;
-			case "lower s":
-				readTier(5, posInLine, lineAt);
-				break;
-			case "upper a":
-				readTier(6, posInLine, lineAt);
-				break;
-			case "mid a":
-				readTier(7, posInLine, lineAt);
-				break;
-			case "lower a":
-				readTier(8, posInLine, lineAt);
-				break;
-			case "upper b":
-				readTier(9, posInLine, lineAt);
-				break;
-			case "mid b":
-				readTier(10, posInLine, lineAt);
-				break;
-			case "lower b":
-				readTier(11, posInLine, lineAt);
-				break;
-			case "upper c":
-				readTier(12, posInLine, lineAt);
-				break;
-			case "mid c":
-				readTier(13, posInLine, lineAt);
-				break;
-			case "lower c":
-				readTier(14, posInLine, lineAt);
-				break;
-			case "upper d":
-				readTier(15, posInLine, lineAt);
-				break;
-			case "mid d":
-				readTier(16, posInLine, lineAt);
-				break;
-			case "lower d":
-				readTier(17, posInLine, lineAt);
-				break;
-			case "upper e":
-				readTier(18, posInLine, lineAt);
-				break;
-			case "mid e":
-				readTier(19, posInLine, lineAt);
-				break;
-			case "lower e":
-				readTier(20, posInLine, lineAt);
-				break;
-			case "upper f":
-				readTier(21, posInLine, lineAt);
-				break;
-			case "mid f":
-				readTier(22, posInLine, lineAt);
-				break;
-			case "lower f":
-				readTier(23, posInLine, lineAt);
-				break;
-			case "p1 exclude":
-				readExclude(0, posInLine, lineAt);
-				break;
-			case "p2 exclude":
-				readExclude(1, posInLine, lineAt);
-				break;
-			case "p3 exclude":
-				readExclude(2, posInLine, lineAt);
-				break;
-			case "p4 exclude":
-				readExclude(3, posInLine, lineAt);
-				break;
-			case "p5 exclude":
-				readExclude(4, posInLine, lineAt);
-				break;
-			case "p6 exclude":
-				readExclude(5, posInLine, lineAt);
-				break;
-			case "p7 exclude":
-				readExclude(6, posInLine, lineAt);
-				break;
-			case "p8 exclude":
-				readExclude(7, posInLine, lineAt);
-				break;
-			case "p1 favorite":
-				readFavorite(0, posInLine, lineAt);
-				break;
-			case "p2 favorite":
-				readFavorite(1, posInLine, lineAt);
-				break;
-			case "p3 favorite":
-				readFavorite(2, posInLine, lineAt);
-				break;
-			case "p4 favorite":
-				readFavorite(3, posInLine, lineAt);
-				break;
-			case "p5 favorite":
-				readFavorite(4, posInLine, lineAt);
-				break;
-			case "p6 favorite":
-				readFavorite(5, posInLine, lineAt);
-				break;
-			case "p7 favorite":
-				readFavorite(6, posInLine, lineAt);
-				break;
-			case "p8 favorite":
-				readFavorite(7, posInLine, lineAt);
-				break;
-			//TODO: instead of reading settings (which just calls a method that uses case), just handle each setting here
-			case "tier chances":
-				readSetting(1, at, lineAt);
-				break;
-			case "cannot get size":
-				readSetting(2, at, lineAt);
-				break;
-			case "allow ss in cannot get":
-				readSetting(3, at, lineAt);
-				break;
-			case "allow s in cannot get":
-				readSetting(4, at, lineAt);
-				break;
-			case "players":
-				readSetting(5, at, lineAt);
-				break;
-			case "bump chances":
-				readSetting(6, at, lineAt);
-				break;
-			default:
-				in.close();
-				throw new IOException("Error on line " + next);
-			}
-			
-			//TODO: not sure this is actually possible now
-			//if any lines are found that aren't valid, stop reading file
-			//and throw an error. unless the line is blank or it starts with
-			//a #, which is a comment
-			if(!foundEqual && !next.equals("") && !(next.charAt(0) == '#')) {
+			//if we didn't find an equals sign at this point, the line is invalid
+			if(!foundEqual) {
 				in.close();
 				throw new IOException("Invalid line: " + next);
+			}
+			
+			//remove space before equals sign and make sure it's all lowercase
+			next = next.substring(0, next.length() - 2);
+			next = next.toLowerCase();
+			int posInLine = next.length() + 1;
+			
+			//if we're parsing exclusion lists, get the second character of
+			//the string, that's going to be the player number
+			if(next.contains("exclude")) {
+				readExclude(Character.getNumericValue(next.charAt(1)) - 1, posInLine, lineAt);
+			}
+			//same thing for favorite lists
+			else if(next.contains("favorite")) {
+				readFavorite(Character.getNumericValue(next.charAt(1)), posInLine, lineAt);
+			}
+			//if this is a valid tier, process it
+			else if(Util.stringToTier(next) != -1) {
+				readTier(Util.stringToTier(next), posInLine, lineAt);
+			}
+			//otherwise, we can assume that we're reading settings. we want
+			//to do all that in this method, because we have these settings
+			//variables and we want to return a Settings object
+			else {
+				//some basic setup used for all settings
+				String toRead = lineAt.substring(posInLine + 2).toLowerCase();
+				String[] currentLine = toRead.split(",\\s*");
+				String errMessage;
+				
+				//check for each setting. basically, for each settings, we're
+				//setting up an error message to be thrown in case the input
+				//is invalid, then we parse the given value, make sure it's
+				//valid, and then we're good to go
+				if(next.equals("cannot get size")) {
+					errMessage = toRead + " is not a valid value for " +
+							"\"Cannot Get Size\" setting. Please provide " +
+							"an integer between 0 and " + Util.CANNOT_GET_MAX + ".";
+					
+					try {
+						cannotGetSize = Integer.parseInt(toRead);
+					} catch(NumberFormatException e) {
+						in.close();
+						throw new IOException(errMessage);
+					}
+					
+					if(cannotGetSize < 0 || cannotGetSize > Util.CANNOT_GET_MAX) {
+						in.close();
+						throw new IOException(errMessage);
+					}
+				}
+				else if(next.equals("allow ss in cannot get")) {
+					errMessage = toRead + " is not a valid value for " +
+							"\"SS allowed in Cannot Get\" setting. Please " +
+							"use \"true\"/\"false\" or 0\1.";
+					
+					try {
+						if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
+							allowSSInCannotGet = true;
+						}
+						else if(toRead.equals("false") || Integer.parseInt(toRead) == 0) {
+							allowSSInCannotGet = false;
+						}
+						else {
+							in.close();
+							throw new IOException(errMessage);
+						}
+					} catch(NumberFormatException e) {
+						in.close();
+						throw new IOException(errMessage);
+					}
+				}
+				else if(next.equals("allow s in cannot get")) {
+					errMessage = toRead + " is not a valid value for " +
+							"\"S allowed in Cannot Get\" setting. Please " +
+							"use \"true\"/\"false\" or 0\1.";
+					
+					try {
+						if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
+							allowSInCannotGet = true;
+						}
+						else if(toRead.equals("false") || Integer.parseInt(toRead) == 0) {
+							allowSInCannotGet = false;
+						}
+						else {
+							in.close();
+							throw new IOException(errMessage);
+						}
+					} catch(NumberFormatException e) {
+						in.close();
+						throw new IOException(errMessage);
+					}
+				}
+				else if(next.equals("players")) {
+					errMessage = toRead + " is not a valid value for " +
+							"\"Number of Players\" setting. Please provide " +
+							"an integer between 2 and 8.";
+					
+					try {
+						numPlayers = Integer.parseInt(toRead);
+					} catch(NumberFormatException e) {
+						in.close();
+						throw new IOException(errMessage);
+					}
+					
+					if(numPlayers < 2 || numPlayers > 8) {
+						in.close();
+						throw new IOException(errMessage);
+					}
+				}
+				else if(next.equals("tier chances")) {
+					errMessage = "Custom tier chances are not valid.";
+					
+					if(currentLine.length != 8) {
+						in.close();
+						throw new IOException(errMessage + " Please provide " +
+								"exactly 8 values, comma-separated");
+					}
+					
+					int sum = 0;
+					
+					try {
+						for(int at = 0; at < 8; at++) {
+							tierChances[at] = Integer.parseInt(currentLine[at]);
+							sum += tierChances[at];
+						}
+					} catch(NumberFormatException e) {
+						in.close();
+						throw new IOException(errMessage + " One of the " +
+								"values is not a number.");
+					}
+					
+					if(sum != 100) {
+						in.close();
+						throw new IOException(errMessage + " The values " +
+								"must add up to 100.");
+					}
+				}
+				else if(next.equals("bump chances")) {
+					errMessage = "Custom bump chances are not valid.";
+					
+					if(currentLine.length != 3) {
+						in.close();
+						throw new IOException(errMessage + " Please provide " +
+								"exactly 3 values, comma-separated");
+					}
+					
+					int sum = 0;
+					
+					try {
+						for(int at = 0; at < 3; at++) {
+							bumpChances[at] = Integer.parseInt(currentLine[at]);
+							sum += bumpChances[at];
+						}
+					} catch(NumberFormatException e) {
+						in.close();
+						throw new IOException(errMessage + " One of the " +
+								"values is not a number.");
+					}
+					
+					if(sum != 100) {
+						in.close();
+						throw new IOException(errMessage + " The values " +
+								"must add up to 100.");
+					}
+				}
 			}
 			
 			lineAt = in.readLine();
@@ -420,164 +439,6 @@ public class TierList {
 			}
 			
 			favoriteList.get(player).add(toAdd);
-		}
-	}
-	
-	/**
-	 * Reads the specified setting id. Setting id's are as follows:<br><br>
-	 * <ul>
-	 * 	<li>1 = tier chances (comma-separated list)</li>
-	 * 	<li>2 = cannot get size (integer between 0 and <code><b><i>CANNOT_GET_MAX</i></b></code>)</li>
-	 * 	<li>3 = allow ss in cannot get (true or false, 1 or 0)</li>
-	 * 	<li>4 = allow s in cannot get (true or false, 1 or 0)</li>
-	 * 	<li>5 = number of players (integer between 2 and 8)</li>
-	 * 	<li>6 = bump chances (comma-separated list)</li>
-	 * </ul>
-	 * @param id			The setting id being read.
-	 * @param startAt		The index at which data beings in <code>line</code>.
-	 * 						See javadoc for <code>readTier()</code> for full
-	 * 						explanation.
-	 * @param line			The full line read from the file.
-	 * @throws IOException	Thrown if data is invalid in any way.
-	 */
-	private void readSetting(int id, int startAt, String line) throws IOException {	
-		String toRead = line.substring(startAt + 2).toLowerCase();
-		String[] currentLine = toRead.split(",\\s*");
-		String errMessage;
-		
-		switch(id) {
-		case 2:
-			errMessage = toRead + " is not a valid value for \"Cannot Get Size\" " +
-					"setting. Please provide an integer between 0 and " +
-					CANNOT_GET_MAX + ".";
-			
-			try {
-				int newCannotGetSize = Integer.parseInt(toRead);
-				
-				if(newCannotGetSize >= 0 && newCannotGetSize <= CANNOT_GET_MAX) {
-					cannotGetSize = newCannotGetSize;
-				}
-				else {
-					throw new IOException(errMessage);
-				}
-			} catch(NumberFormatException e) {
-				throw new IOException(errMessage);
-			}
-			
-			break;
-		case 3:
-		case 4:
-			String tier;
-			if(id == 3) {
-				tier = "SS";
-			}
-			else {
-				tier = "S";
-			}
-			
-			errMessage = toRead + " is not a valid value for \" " + tier +
-					" Allowed in Cannot Get\" setting. Please use \"true\" " +
-					"or \"false\", or 0 or 1.";
-			
-			try {
-				boolean newAllowedInCannotGet;
-				
-				if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
-					newAllowedInCannotGet = true;
-				}
-				else if(toRead.equals("false") || Integer.parseInt(toRead) == 0) {
-					newAllowedInCannotGet = false;
-				}
-				else {
-					throw new IOException(errMessage);
-				}
-				
-				if(id == 3) {
-					allowSSInCannotGet = newAllowedInCannotGet;
-				}
-				else {
-					allowSInCannotGet = newAllowedInCannotGet;
-				}
-			} catch(NumberFormatException e) {
-				throw new IOException(errMessage);
-			}
-			
-			break;
-		case 5:
-			errMessage = toRead + " is not a valid value for \"Number of " +
-					"Players\" setting. Please provide a number between " +
-					"2 and 8.";
-			
-			try {
-				int newNumPlayers = Integer.parseInt(toRead);
-				
-				if(newNumPlayers >= 2 && newNumPlayers <= 8) {
-					numPlayers = newNumPlayers;
-				}
-				else {
-					throw new IOException(errMessage);
-				}
-			} catch(NumberFormatException e) {
-				throw new IOException(errMessage);
-			}
-			
-			break;
-		case 1:
-			if(currentLine.length != 8) {
-				throw new IOException("Error processing custom tier chances. " +
-						"Please provide exactly 8 values, comma-separated.");
-			}
-			
-			int[] newTierChances = new int[8];
-			int sum = 0;
-			
-			try {
-				for(int at = 0; at < 8; at++) {
-					newTierChances[at] = Integer.parseInt(currentLine[at]);
-					sum += newTierChances[at];
-				}
-			} catch(NumberFormatException e) {
-				throw new IOException("Error processing custom tier chances. " +
-						"One of the values is not a number.");
-			}
-			
-			if(sum != 100) {
-				throw new IOException("Error processing custom tier chances. " +
-						"The values do not add up to 100.");
-			}
-			
-			for(int at = 0; at < 8; at++) {
-				tierChances[at] = newTierChances[at];
-			}
-			
-			break;
-		case 6:
-			if(currentLine.length != 3) {
-				throw new IOException("Error processing custom bump chances. " +
-						"Please provide exactly 3 values, comma-separated.");
-			}
-			
-			int[] newBumpChances = new int[3];
-			sum = 0;
-			
-			try {
-				for(int at = 0; at < 3; at++) {
-					newBumpChances[at] = Integer.parseInt(currentLine[at]);
-					sum += newBumpChances[at];
-				}
-			} catch(NumberFormatException e) {
-				throw new IOException("Error processing custom bump chances. " +
-						"One of the values is not a number.");
-			}
-			
-			if(sum != 100) {
-				throw new IOException("Error processing custom bump chances. " +
-						"The values do not add up to 100.");
-			}
-			
-			for(int at = 0; at < 3; at++) {
-				bumpChances[at] = newBumpChances[at];
-			}
 		}
 	}
 	

@@ -52,56 +52,127 @@ public final class Util {
 	 */
 	public static String tierToString(int tier) {
 		switch(tier) {
-			case 0:
-				return "Upper Double S tier";
-			case 1:
-				return "Double S tier";
-			case 2:
-				return "Lower Double S tier";
-			case 3:
-				return "Upper S tier";
-			case 4:
-				return "Mid S tier";
-			case 5:
-				return "Lower S tier";
-			case 6:
-				return "Upper A tier";
-			case 7:
-				return "Mid A tier";
-			case 8:
-				return "Lower A tier";
-			case 9:
-				return "Upper B tier";
-			case 10:
-				return "Mid B tier";
-			case 11:
-				return "Lower B tier";
-			case 12:
-				return "Upper C tier";
-			case 13:
-				return "Mid C tier";
-			case 14:
-				return "Lower C tier";
-			case 15:
-				return "Upper D tier";
-			case 16:
-				return "Mid D tier";
-			case 17:
-				return "Lower D tier";
-			case 18:
-				return "Upper E tier";
-			case 19:
-				return "Mid E tier";
-			case 20:
-				return "Lower E tier";
-			case 21:
-				return "Upper F tier";
-			case 22:
-				return "Mid F tier";
-			case 23:
-				return "Lower F tier";
-			default:
-				return "Invalid tier";
+		case 0:
+			return "Upper Double S tier";
+		case 1:
+			return "Double S tier";
+		case 2:
+			return "Lower Double S tier";
+		case 3:
+			return "Upper S tier";
+		case 4:
+			return "Mid S tier";
+		case 5:
+			return "Lower S tier";
+		case 6:
+			return "Upper A tier";
+		case 7:
+			return "Mid A tier";
+		case 8:
+			return "Lower A tier";
+		case 9:
+			return "Upper B tier";
+		case 10:
+			return "Mid B tier";
+		case 11:
+			return "Lower B tier";
+		case 12:
+			return "Upper C tier";
+		case 13:
+			return "Mid C tier";
+		case 14:
+			return "Lower C tier";
+		case 15:
+			return "Upper D tier";
+		case 16:
+			return "Mid D tier";
+		case 17:
+			return "Lower D tier";
+		case 18:
+			return "Upper E tier";
+		case 19:
+			return "Mid E tier";
+		case 20:
+			return "Lower E tier";
+		case 21:
+			return "Upper F tier";
+		case 22:
+			return "Mid F tier";
+		case 23:
+			return "Lower F tier";
+		default:
+			return "Invalid tier";
+		}
+	}
+	
+	/**
+	 * Converts a tier in <code>String</code> format to integer format, used
+	 * for indexing into the <code>tierList</code> object in the
+	 * <code>TierList</code> class. At this time, this method exists so that
+	 * when loading a file, we know which index we're reading based on the
+	 * name of that line. As such, this method assumes that the word "tier"
+	 * will not be present at the end of the string, as it isn't when
+	 * reading a file.
+	 * 
+	 * @param tier	The name of the tier to get the index of. i.e.
+	 * 				"upper double s" or "mid c"
+	 * @return		The integer representation of that tier, or -1 if the
+	 * 				input is not a recognized tier.
+	 */
+	public static int stringToTier(String tier) {
+		tier = tier.toLowerCase();
+		
+		switch(tier) {
+		case "upper double s":
+			return 0;
+		case "mid double s":
+			return 1;
+		case "lower double s":
+			return 2;
+		case "upper s":
+			return 3;
+		case "mid s":
+			return 4;
+		case "lower s":
+			return 5;
+		case "upper a":
+			return 6;
+		case "mid a":
+			return 7;
+		case "lower a":
+			return 8;
+		case "upper b":
+			return 9;
+		case "mid b":
+			return 10;
+		case "lower b":
+			return 11;
+		case "upper c":
+			return 12;
+		case "mid c":
+			return 13;
+		case "lower c":
+			return 14;
+		case "upper d":
+			return 15;
+		case "mid d":
+			return 16;
+		case "lower d":
+			return 17;
+		case "upper e":
+			return 18;
+		case "mid e":
+			return 19;
+		case "lower e":
+			return 20;
+		case "upper f":
+			return 21;
+		case "mid f":
+			return 22;
+		case "lower f":
+			return 23;
+		default:
+			return -1;
 		}
 	}
 	
