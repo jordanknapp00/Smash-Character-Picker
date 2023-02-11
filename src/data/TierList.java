@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import util.Util;
 
@@ -579,6 +580,9 @@ public class TierList {
 	}
 	
 	public Matchup generateBattle(Settings settings) {
+		//initialize an empty matchup
+		Matchup matchup = new Matchup(settings.getNumPlayers());
+		
 		//first, generate the list of valid fighters for each player
 		ArrayList<List<Fighter>> playerValidCharacters = new ArrayList<List<Fighter>>();
 		for(int playerAt = 0; playerAt < settings.getNumPlayers(); playerAt++) {
@@ -590,7 +594,121 @@ public class TierList {
 			}
 		}
 		
-		return null;
+		//pick a player at random, and then pick a fighter at random from
+		//that player. also get the tier and add it to the matchup
+		int playerToPick = ThreadLocalRandom.current().nextInt(0, settings.getNumPlayers());
+		int numFightersForPlayer = playerValidCharacters.get(playerToPick).size();
+		Fighter chosen = playerValidCharacters.get(playerToPick).get(ThreadLocalRandom.current().nextInt(0, numFightersForPlayer));
+		int tier = chosen.getTier();
+		matchup.addFighter(playerToPick, chosen);
+		
+		Util.log("Picked a fighter at random from player " + (playerToPick + 1));
+		Util.log("That player has " + numFightersForPlayer + " in their valid set.");
+		Util.log("Chose " + chosen + ", so the tier is " + Util.tierToString(tier));
+		
+		//okay, so it's still entirely possible to choose a fighter from a
+		//tier that has no valid fighters for a player. in that case, i
+		//think we just return null and try again, honestly.
+		for(int playerAt = 0; playerAt < settings.getNumPlayers(); playerAt++) {
+			if(playerAt == playerToPick) {
+				continue;
+			}
+			
+			//basically, we're going to include all fighters in the possible
+			//range of tiers. this means we'll need to apply some weighting
+			//based on the bump chances
+			int tier2 = tier - 1;
+			int tier3 = tier - 2;
+			
+			//if we're at the upper end of the tier list, bump down instead
+			//of bumping up. or bump up and down if it's mid double s
+			if(tier == 0) {
+				tier2 = 1;
+				tier3 = 2;
+			}
+			else if(tier == 1) {
+				tier2 = 0;
+				tier3 = 2;
+			}
+			
+			ArrayList<Fighter> inTierOptions = new ArrayList<Fighter>();
+			int countTier1 = 0;
+			int countTier2 = 0;
+			int countTier3 = 0;
+			
+			for(Fighter fighterAt: playerValidCharacters.get(playerAt)) {
+				//skip if it's already been gotten by another player
+				if(matchup.contains(fighterAt)) {
+					continue;
+				}
+				
+				int tierOfChar = fighterAt.getTier();
+				
+				//we need to re-include some kind of weighting for the
+				//number of times a player has gotten a fighter
+				int timesToAdd = -2 * fighterAt.getPlayerBattles(playerAt);
+				
+				//and now weight based on bump chances. this is also where
+				//we skip any fighter that's not in the tier range
+				if(tierOfChar == tier) {
+					timesToAdd += settings.getBumpChance(0);
+					countTier1 += timesToAdd;
+				}
+				else if(tierOfChar == tier2) {
+					timesToAdd += settings.getBumpChance(1);
+					countTier2 += timesToAdd;
+				}
+				else if(tierOfChar == tier3) {
+					timesToAdd += settings.getBumpChance(2);
+					countTier3 += timesToAdd;
+				}
+				else {
+					timesToAdd = 0;
+				}
+				
+				for(int at = 0; at < timesToAdd; at++) {
+					inTierOptions.add(fighterAt);
+				}
+			}
+			
+			if(inTierOptions.size() == 0) {
+				Util.log("Player " + (playerAt + 1) + " has no valid " +
+						"options within tier range.");
+				
+				return null;
+			}
+			
+			Util.log("Player " + (playerAt + 1) + " has " + inTierOptions.size() +
+					" options within tier range.");
+			Util.log("  Of them, " + countTier1 + " are original tier, " +
+					countTier2 + " bump once, and " + countTier3 + " bump twice.");
+			
+			numFightersForPlayer = inTierOptions.size();
+			chosen = inTierOptions.get(ThreadLocalRandom.current().nextInt(0, numFightersForPlayer));
+			matchup.addFighter(playerAt, chosen);
+		}
+		
+		Util.log("===== Successfully generated battle! =====");
+		
+		//remove from cannot get queue first
+		Util.log("The max size of the cannot get buffer is " + settings.getCannotGetSize());
+		Util.log("There are " + cannotGet.size() + " fighters in it, and " +
+				settings.getNumPlayers() + " players.");
+		
+		if(cannotGet.size() >= (settings.getCannotGetSize() * settings.getNumPlayers())) {
+			Util.log("Removing from cannot get...");
+			
+			for(int at = 0; at < settings.getNumPlayers(); at++) {
+				cannotGet.poll();
+			}
+		}
+		
+		//then add to queue
+		for(int playerAt = 0; playerAt < settings.getNumPlayers(); playerAt++) {
+			//TODO: continue here
+		}
+		
+		return matchup;
 	}
 	
 	private List<Fighter> getValidCharacters(int player, Settings settings) {
@@ -615,6 +733,30 @@ public class TierList {
 		}
 		
 		Util.log("Found " + validChars.size() + " fighters for player " + (player + 1));
+		
+		//now is where the fun happens. we want to essentially create a
+		//multiplier for each fighter based on some conditions
+		for(Fighter fighterAt: validChars) {
+			//start with the chance of getting the tier of that fighter
+			int toAppear = settings.getTierChance(Util.subTierToTier(fighterAt.getTier()));
+			
+			//subtract by the number of times this player has already gotten
+			//this fighter, multiplied by 2. so if there's a 25% chance of
+			//getting this tier, but you've already gotten this fighter 3
+			//times, it's basically as if this specific fighter has a 19%
+			//chance for the tier, while every other one has 25%
+			toAppear -= fighterAt.getPlayerBattles(player);
+			
+			//if it's below 0, normalize to 1
+			if(toAppear <= 0) {
+				toAppear = 1;
+			}
+			
+			//then add it that number of times
+			for(int at = 0; at < toAppear; at++) {
+				validChars.add(fighterAt);
+			}
+		}
 		
 		return validChars;
 	}

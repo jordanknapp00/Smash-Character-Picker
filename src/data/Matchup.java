@@ -14,6 +14,8 @@ package data;
  */
 public class Matchup {
 	
+	//TODO: update documentation and make it so player is always 0-indexed
+	
 	private Fighter[] fighters;
 	
 	/**
@@ -83,6 +85,30 @@ public class Matchup {
 		
 		player--;
 		fighters[player] = fighter;
+	}
+	
+	/**
+	 * Get the fighter that the specified player got.
+	 * 
+	 * @param player	The player whose fighter is to be returned.
+	 * @return			The <code>Fighter</code> that the given player got.
+	 * 
+	 * @throws IndexOutOfBoundsException	Thrown if the player is less
+	 * 										than zero or greater than the
+	 * 										size of the matchup, which is
+	 * 										equal to
+	 * 										<code>Settings.numPlayers</code>
+	 * 										at the time of the object's
+	 * 										creation.
+	 */
+	public Fighter getFighter(int player) throws IndexOutOfBoundsException {
+		if(player > fighters.length || player <= 0) {
+			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
+					" fighters, but " + player + " was passed in as player.");
+		}
+		
+		player--;
+		return fighters[player];
 	}
 	
 	public int size() {
