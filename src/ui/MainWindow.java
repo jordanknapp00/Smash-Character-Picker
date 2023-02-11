@@ -29,6 +29,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import data.Settings;
 import data.TierList;
 import util.Util;
 
@@ -230,8 +231,11 @@ public class MainWindow {
 					return;
 				}
 				
+				Settings settings = null;
+				
 				try {
-					tierList = new TierList(fileChooser.getSelectedFile());
+					tierList = new TierList();
+					settings = tierList.loadFile(fileChooser.getSelectedFile());
 					fileLoaded = true;
 				} catch(FileNotFoundException e1) {
 					results.setText("File " + fileChooser.getSelectedFile().getName() +
@@ -254,12 +258,23 @@ public class MainWindow {
 				if(fileLoaded) {
 					Util.log("The following data was loaded as the tier list:\n" + tierList.toString());
 					
-					cannotGetSizeSpinner.setValue(tierList.getCannotGetSize());
-					allowSSInCannotGet.setSelected(tierList.getAllowSSInCannotGet());
-					allowSInCannotGet.setSelected(tierList.getAllowSInCannotGet());
-					numPlayersSpinner.setValue(tierList.getNumPlayers());
+					cannotGetSizeSpinner.setValue(settings.getCannotGetSize());
+					allowSSInCannotGet.setSelected(settings.ssAllowedInCannotGet());
+					allowSInCannotGet.setSelected(settings.sAllowedInCannotGet());
+					numPlayersSpinner.setValue(settings.getNumPlayers());
 					
-					updateTierBumpChances();
+					SSTierSpinner.setValue(settings.getTierChance(0));
+					STierSpinner.setValue(settings.getTierChance(1));
+					ATierSpinner.setValue(settings.getTierChance(2));
+					BTierSpinner.setValue(settings.getTierChance(3));
+					CTierSpinner.setValue(settings.getTierChance(4));
+					DTierSpinner.setValue(settings.getTierChance(5));
+					ETierSpinner.setValue(settings.getTierChance(6));
+					FTierSpinner.setValue(settings.getTierChance(7));
+					
+					bump0Spinner.setValue(settings.getBumpChance(0));
+					bump1Spinner.setValue(settings.getBumpChance(1));
+					bump2Spinner.setValue(settings.getBumpChance(2));
 				}
 			}
 		});
@@ -594,21 +609,6 @@ public class MainWindow {
 		
 		//TODO: attempt to load tier list
 		fileLoaded = false;
-	}
-	
-	private void updateTierBumpChances() {
-		SSTierSpinner.setValue(tierList.getTierChance(0));
-		STierSpinner.setValue(tierList.getTierChance(1));
-		ATierSpinner.setValue(tierList.getTierChance(2));
-		BTierSpinner.setValue(tierList.getTierChance(3));
-		CTierSpinner.setValue(tierList.getTierChance(4));
-		DTierSpinner.setValue(tierList.getTierChance(5));
-		ETierSpinner.setValue(tierList.getTierChance(6));
-		FTierSpinner.setValue(tierList.getTierChance(7));
-		
-		bump0Spinner.setValue(tierList.getBumpChance(0));
-		bump1Spinner.setValue(tierList.getBumpChance(1));
-		bump2Spinner.setValue(tierList.getBumpChance(2));
 	}
 
 }
