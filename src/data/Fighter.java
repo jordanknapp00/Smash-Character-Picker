@@ -22,6 +22,14 @@ public class Fighter {
 	public Fighter(String name, int tier) {
 		this.name = name;
 		this.tier = tier;
+		
+		playerWins = new int[8];
+		playerBattles = new int[8];
+		
+		for(int at = 0; at < 8; at++) {
+			playerWins[at] = 0;
+			playerBattles[at] = 0;
+		}
 	}
 	
 	public String getName() {

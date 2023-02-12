@@ -185,13 +185,14 @@ public class TierList {
 			int posInLine = next.length() + 1;
 			
 			//if we're parsing exclusion lists, get the second character of
-			//the string, that's going to be the player number
+			//the string, that's going to be the player number. be sure to
+			//subtract 1 to get the proper index
 			if(next.contains("exclude")) {
 				readExclude(Character.getNumericValue(next.charAt(1)) - 1, posInLine, lineAt);
 			}
 			//same thing for favorite lists
 			else if(next.contains("favorite")) {
-				readFavorite(Character.getNumericValue(next.charAt(1)), posInLine, lineAt);
+				readFavorite(Character.getNumericValue(next.charAt(1)) - 1, posInLine, lineAt);
 			}
 			//if this is a valid tier, process it
 			else if(Util.stringToTier(next) != -1) {
@@ -732,7 +733,7 @@ public class TierList {
 				individualCannotGet.get(playerAt).add(fighterAt);
 			}
 			
-			Util.log("Player " + (playerAt + 1) + " cannot get " + fighterAt);
+			Util.log("Player " + (playerAt + 1) + " cannot get " + individualCannotGet.get(playerAt));
 		}
 		
 		Util.log("Nobody can get " + cannotGet);
@@ -741,7 +742,8 @@ public class TierList {
 	}
 	
 	private List<Fighter> getValidCharacters(int player, Settings settings) {
-		ArrayList<Fighter> validChars = new ArrayList<Fighter>();
+		ArrayList<Fighter> initialValidChars = new ArrayList<Fighter>();
+		ArrayList<Fighter> finalValidChars = new ArrayList<Fighter>();
 		
 		//loop through all the fighters
 		for(int tierAt = 0; tierAt < NUM_TIERS; tierAt++) {
@@ -756,16 +758,16 @@ public class TierList {
 				if(!cannotGet.contains(fighterAt) &&
 						!individualCannotGet.get(player).contains(fighterAt) &&
 						!exclusionList.get(player).contains(fighterAt)) {
-					validChars.add(fighterAt);
+					initialValidChars.add(fighterAt);
 				}
 			}
 		}
 		
-		Util.log("Found " + validChars.size() + " fighters for player " + (player + 1));
+		Util.log("Found " + initialValidChars.size() + " fighters for player " + (player + 1));
 		
 		//now is where the fun happens. we want to essentially create a
-		//multiplier for each fighter based on some conditions
-		for(Fighter fighterAt: validChars) {
+		//multiplier for each fighter based on some conditions.
+		for(Fighter fighterAt: initialValidChars) {
 			//start with the chance of getting the tier of that fighter
 			int toAppear = settings.getTierChance(Util.subTierToTier(fighterAt.getTier()));
 			
@@ -781,12 +783,14 @@ public class TierList {
 				toAppear = 1;
 			}
 			
-			//then add it that number of times
+			//then add it that number of times. we use a new arraylist here
+			//because otherwise we'd be modifying the arraylist while
+			//iterating over it
 			for(int at = 0; at < toAppear; at++) {
-				validChars.add(fighterAt);
+				finalValidChars.add(fighterAt);
 			}
 		}
 		
-		return validChars;
+		return finalValidChars;
 	}
 }

@@ -1,5 +1,7 @@
 package data;
 
+import util.Util;
+
 /**
  * The <code>Matchup</code> class represents a single battle. It stores the
  * fighters that appeared in the battle in an array, ordered by the player
@@ -115,7 +117,7 @@ public class Matchup {
 	
 	public boolean contains(Fighter o) {
 		for(Fighter at: fighters) {
-			if(at.equals(o)) {
+			if(at != null && at.equals(o)) {
 				return true;
 			}
 		}
@@ -156,7 +158,9 @@ public class Matchup {
 		StringBuilder retString = new StringBuilder();
 		
 		for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
-			retString.append("Player " + (playerAt + 1) + " got " + fighters[playerAt] + "\n");
+			retString.append("Player " + (playerAt + 1) + " got " +
+					fighters[playerAt] + ", " +
+					Util.tierToString(fighters[playerAt].getTier()) + "\n");
 		}
 		
 		return retString.toString();

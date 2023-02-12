@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -21,6 +23,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -29,6 +32,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import data.Matchup;
 import data.Settings;
 import data.TierList;
 import util.Util;
@@ -127,6 +131,8 @@ public class MainWindow {
 	//other variables	
 	private TierList tierList;
 	private boolean fileLoaded;
+	private int numBattles;
+	private Set<Matchup> previousMatchups;
 	
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
@@ -213,7 +219,61 @@ public class MainWindow {
 		bottomPanel = new JPanel(new GridBagLayout());
 		
 		generateButton = new JButton("Generate");
-		//TODO: add anonymous ActionListener that will call a BattleGenerator class
+		generateButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(!fileLoaded) {
+					JOptionPane.showMessageDialog(null, "You must load a tier list first!",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				double startTime = System.currentTimeMillis();
+				
+				numBattles++;
+				
+				Util.log("========== BEGINNING GENERATION OF BATTLE " + numBattles + " ==========");
+				
+				Matchup result = null;
+				Settings settings = getSettings();
+				int tries = 0;
+				while(result == null && !previousMatchups.contains(result) && tries < 100) {
+					tries++;
+					Util.log("======= Try " + tries + " =======");
+					
+					result = tierList.generateBattle(settings, false);
+				}
+				
+				Util.log("========== End battle generation process ==========");
+				
+				String resultString;
+				if(result == null) {
+					resultString = "No valid battles found after 100 tries.";
+				}
+				else {
+					resultString = "Battle #" + numBattles + ":\n" + result.toString();
+				}
+				
+				results.setText(resultString);
+				
+				//finally, enable all the switch stuff if this was the first battle
+				if(numBattles == 1) {
+					switchPanel.setEnabled(true);
+					player1Box.setEnabled(true);
+					player2Box.setEnabled(true);
+					player3Box.setEnabled(true);
+					player4Box.setEnabled(true);
+					player5Box.setEnabled(true);
+					player6Box.setEnabled(true);
+					player7Box.setEnabled(true);
+					player8Box.setEnabled(true);
+					switchButton.setEnabled(true);
+				}
+				
+				double delta = System.currentTimeMillis() - startTime;
+				Util.log("Generation of this battle took " + delta + "ms.");
+			}
+		});
 		
 		skipButton = new JButton("Skip");
 		//TODO: add ActionListener
@@ -605,10 +665,41 @@ public class MainWindow {
 		
 		Util.log("Finished initializing MainWindow UI");
 		
+		fileLoaded = false;
+		numBattles = 0;
+		previousMatchups = new HashSet<Matchup>();
+		
 		frame.setVisible(true);
 		
 		//TODO: attempt to load tier list
 		fileLoaded = false;
+	}
+	
+	/**
+	 * @return	A <code>Settings</code> object representing the current
+	 * 			settings selected in the UI.
+	 */
+	private Settings getSettings() {
+		int[] tierChances = new int[8];
+		int[] bumpChances = new int[3];
+		
+		tierChances[0] = (int) SSTierSpinner.getValue();
+		tierChances[1] = (int) STierSpinner.getValue();
+		tierChances[2] = (int) ATierSpinner.getValue();
+		tierChances[3] = (int) BTierSpinner.getValue();
+		tierChances[4] = (int) CTierSpinner.getValue();
+		tierChances[5] = (int) DTierSpinner.getValue();
+		tierChances[6] = (int) ETierSpinner.getValue();
+		tierChances[7] = (int) FTierSpinner.getValue();
+		
+		bumpChances[0] = (int) bump0Spinner.getValue();
+		bumpChances[1] = (int) bump1Spinner.getValue();
+		bumpChances[2] = (int) bump2Spinner.getValue();
+		
+		return new Settings((int) numPlayersSpinner.getValue(),
+				tierChances, bumpChances,
+				(int) cannotGetSizeSpinner.getValue(),
+				allowSInCannotGet.isSelected(), allowSSInCannotGet.isSelected());
 	}
 
 }
