@@ -579,7 +579,7 @@ public class TierList {
 		return retString.toString();
 	}
 	
-	public Matchup generateBattle(Settings settings) {
+	public Matchup generateBattle(Settings settings, boolean skipping) {
 		//initialize an empty matchup
 		Matchup matchup = new Matchup(settings.getNumPlayers());
 		
@@ -705,8 +705,37 @@ public class TierList {
 		
 		//then add to queue
 		for(int playerAt = 0; playerAt < settings.getNumPlayers(); playerAt++) {
-			//TODO: continue here
+			Fighter fighterAt = matchup.getFighter(playerAt);
+			tier = fighterAt.getTier();
+			
+			if(skipping) {
+				individualCannotGet.get(playerAt).poll();
+			}
+			
+			//assume that we will add, and change to false based on whether
+			//the fighter is S or SS tier and those tiers are not allowed in
+			boolean add = true;
+			if(tier < 3 && !settings.ssAllowedInCannotGet()) {
+				add = false;
+			}
+			else if(tier >= 3 && tier <= 5 && !settings.sAllowedInCannotGet()) {
+				add = false;
+			}
+			
+			if(add) {
+				cannotGet.add(fighterAt);
+			}
+			
+			//if the gotten character is a favorite, don't add it to the
+			//individual cannot get
+			if(!favoriteList.get(playerAt).contains(fighterAt)) {
+				individualCannotGet.get(playerAt).add(fighterAt);
+			}
+			
+			Util.log("Player " + (playerAt + 1) + " cannot get " + fighterAt);
 		}
+		
+		Util.log("Nobody can get " + cannotGet);
 		
 		return matchup;
 	}
