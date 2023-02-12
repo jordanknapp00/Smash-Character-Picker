@@ -276,7 +276,53 @@ public class MainWindow {
 		});
 		
 		skipButton = new JButton("Skip");
-		//TODO: add ActionListener
+		skipButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(!fileLoaded) {
+					JOptionPane.showMessageDialog(null, "You must load a tier list first!",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				if(numBattles == 0) {
+					JOptionPane.showMessageDialog(null, "There must be a battle before " +
+							"you can skip.", "Smash Character Picker",
+							JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				double startTime = System.currentTimeMillis();
+				
+				Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");
+				
+				Matchup result = null;
+				Settings settings = getSettings();
+				int tries = 0;
+				while(result == null && !previousMatchups.contains(result) && tries < 100) {
+					tries++;
+					Util.log("======= Try " + tries + " =======");
+					
+					result = tierList.generateBattle(settings, true);
+				}
+				
+				Util.log("========== End battle generation process ==========");
+				
+				String resultString;
+				if(result == null) {
+					resultString = "No valid battles found after 100 tries.";
+				}
+				else {
+					resultString = "Battle #" + numBattles + ":\n" + result.toString();
+				}
+				
+				results.setText(resultString);
+				
+				double delta = System.currentTimeMillis() - startTime;
+				Util.log("Generation of this battle took " + delta + "ms.");
+			}
+		});
 		
 		loadButton = new JButton("Load");
 		Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
