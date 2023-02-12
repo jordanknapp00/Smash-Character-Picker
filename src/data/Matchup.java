@@ -49,12 +49,12 @@ public class Matchup {
 	 * 											has already been set.
 	 */
 	public void addFighter(int player, Fighter fighter) throws IndexOutOfBoundsException, UnsupportedOperationException {
-		if(player > fighters.length || player <= 0) {
+		if(player >= fighters.length || player < 0) {
 			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
 					" fighters, but " + player + " was passed in as player.");
 		}
 		
-		if(fighters[player - 1] == null) {
+		if(fighters[player] == null) {
 			setFighter(player, fighter);
 		}
 		else {
@@ -78,12 +78,11 @@ public class Matchup {
 	 * 											creation.
 	 */
 	public void setFighter(int player, Fighter fighter) throws IndexOutOfBoundsException {
-		if(player > fighters.length || player <= 0) {
+		if(player >= fighters.length || player < 0) {
 			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
 					" fighters, but " + player + " was passed in as player.");
 		}
 		
-		player--;
 		fighters[player] = fighter;
 	}
 	
@@ -102,12 +101,11 @@ public class Matchup {
 	 * 										creation.
 	 */
 	public Fighter getFighter(int player) throws IndexOutOfBoundsException {
-		if(player > fighters.length || player <= 0) {
+		if(player >= fighters.length || player < 0) {
 			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
 					" fighters, but " + player + " was passed in as player.");
 		}
-		
-		player--;
+
 		return fighters[player];
 	}
 	
