@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -21,6 +23,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -29,6 +32,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import data.Matchup;
 import data.Settings;
 import data.TierList;
 import util.Util;
@@ -127,6 +131,9 @@ public class MainWindow {
 	//other variables	
 	private TierList tierList;
 	private boolean fileLoaded;
+	private int numBattles;
+	private List<Matchup> previousMatchups;
+	private int[] switchVals;
 	
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
@@ -164,15 +171,59 @@ public class MainWindow {
 		//ActionListener too?
 		
 		player1Box = new JCheckBox("P1");
+		player1Box.addActionListener(new SwitchActionListener(1));
 		player2Box = new JCheckBox("P2");
+		player2Box.addActionListener(new SwitchActionListener(2));
 		player3Box = new JCheckBox("P3");
+		player3Box.addActionListener(new SwitchActionListener(3));
 		player4Box = new JCheckBox("P4");
+		player4Box.addActionListener(new SwitchActionListener(4));
 		player5Box = new JCheckBox("P5");
+		player5Box.addActionListener(new SwitchActionListener(5));
 		player6Box = new JCheckBox("P6");
+		player6Box.addActionListener(new SwitchActionListener(6));
 		player7Box = new JCheckBox("P7");
+		player7Box.addActionListener(new SwitchActionListener(7));
 		player8Box = new JCheckBox("P8");
+		player8Box.addActionListener(new SwitchActionListener(8));
 		
 		switchButton = new JButton("Switch");
+		switchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//make sure that we have 2 players selected
+				if(switchVals[0] == 0 || switchVals[1] == 0) {
+					//TODO: at some point, maybe change some of the message types
+					JOptionPane.showMessageDialog(null, "Please select 2 players.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				//subtract 1 from both, since SwitchActionListener is 1-indexed
+				//(because it uses 0 as a sentinel value)
+				int p1 = switchVals[0] - 1;
+				int p2 = switchVals[1] - 1;
+				
+				//if so, we're good to switch using the last matchup
+				Matchup toSwap = previousMatchups.get(previousMatchups.size() - 1);
+				tierList.swapFighters(p1, toSwap.getFighter(p1), p2, toSwap.getFighter(p2));
+				toSwap.swapFighters(p1, p2);
+				
+				results.setText("Battle #" + numBattles + ":\n" + toSwap);
+				
+				//now deselect all after switching and reset switchVals
+				player1Box.setSelected(false);
+				player2Box.setSelected(false);
+				player3Box.setSelected(false);
+				player4Box.setSelected(false);
+				player5Box.setSelected(false);
+				player6Box.setSelected(false);
+				player7Box.setSelected(false);
+				player8Box.setSelected(false);
+				switchVals[0] = 0;
+				switchVals[1] = 0;
+			}
+		});
 		
 		//add components to switchPanel, including some boxes to make things
 		//look a bit nicer
@@ -213,10 +264,113 @@ public class MainWindow {
 		bottomPanel = new JPanel(new GridBagLayout());
 		
 		generateButton = new JButton("Generate");
-		//TODO: add anonymous ActionListener that will call a BattleGenerator class
+		generateButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(!fileLoaded) {
+					JOptionPane.showMessageDialog(null, "You must load a tier list first!",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				double startTime = System.currentTimeMillis();
+				
+				numBattles++;
+				
+				Util.log("========== BEGINNING GENERATION OF BATTLE " + numBattles + " ==========");
+				
+				Matchup result = null;
+				Settings settings = getSettings();
+				int tries = 0;
+				while(result == null && !previousMatchups.contains(result) && tries < 100) {
+					tries++;
+					Util.log("======= Try " + tries + " =======");
+					
+					result = tierList.generateBattle(settings, false);
+				}
+				
+				Util.log("========== End battle generation process ==========");
+				
+				String resultString;
+				if(result == null) {
+					resultString = "No valid battles found after 100 tries.";
+				}
+				else {
+					previousMatchups.add(result);
+					resultString = "Battle #" + numBattles + ":\n" + result.toString();
+				}
+				
+				results.setText(resultString);
+				
+				//finally, enable all the switch stuff if this was the first battle
+				if(numBattles == 1) {
+					switchPanel.setEnabled(true);
+					player1Box.setEnabled(true);
+					player2Box.setEnabled(true);
+					player3Box.setEnabled(true);
+					player4Box.setEnabled(true);
+					player5Box.setEnabled(true);
+					player6Box.setEnabled(true);
+					player7Box.setEnabled(true);
+					player8Box.setEnabled(true);
+					switchButton.setEnabled(true);
+				}
+				
+				double delta = System.currentTimeMillis() - startTime;
+				Util.log("Generation of this battle took " + delta + "ms.");
+			}
+		});
 		
 		skipButton = new JButton("Skip");
-		//TODO: add ActionListener
+		skipButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(!fileLoaded) {
+					JOptionPane.showMessageDialog(null, "You must load a tier list first!",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				if(numBattles == 0) {
+					JOptionPane.showMessageDialog(null, "There must be a battle before " +
+							"you can skip.", "Smash Character Picker",
+							JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				double startTime = System.currentTimeMillis();
+				
+				Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");
+				
+				Matchup result = null;
+				Settings settings = getSettings();
+				int tries = 0;
+				while(result == null && !previousMatchups.contains(result) && tries < 100) {
+					tries++;
+					Util.log("======= Try " + tries + " =======");
+					
+					result = tierList.generateBattle(settings, true);
+				}
+				
+				Util.log("========== End battle generation process ==========");
+				
+				String resultString;
+				if(result == null) {
+					resultString = "No valid battles found after 100 tries.";
+				}
+				else {
+					previousMatchups.remove(previousMatchups.size() - 1);
+					previousMatchups.add(result);
+					resultString = "Battle #" + numBattles + ":\n" + result.toString();
+				}
+				
+				results.setText(resultString);
+				
+				double delta = System.currentTimeMillis() - startTime;
+				Util.log("Generation of this battle took " + delta + "ms.");
+			}
+		});
 		
 		loadButton = new JButton("Load");
 		Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
@@ -605,10 +759,93 @@ public class MainWindow {
 		
 		Util.log("Finished initializing MainWindow UI");
 		
+		fileLoaded = false;
+		numBattles = 0;
+		previousMatchups = new ArrayList<Matchup>();
+		switchVals = new int[2];
+		
 		frame.setVisible(true);
 		
 		//TODO: attempt to load tier list
-		fileLoaded = false;
 	}
-
+	
+	/**
+	 * @return	A <code>Settings</code> object representing the current
+	 * 			settings selected in the UI.
+	 */
+	private Settings getSettings() {
+		int[] tierChances = new int[8];
+		int[] bumpChances = new int[3];
+		
+		tierChances[0] = (int) SSTierSpinner.getValue();
+		tierChances[1] = (int) STierSpinner.getValue();
+		tierChances[2] = (int) ATierSpinner.getValue();
+		tierChances[3] = (int) BTierSpinner.getValue();
+		tierChances[4] = (int) CTierSpinner.getValue();
+		tierChances[5] = (int) DTierSpinner.getValue();
+		tierChances[6] = (int) ETierSpinner.getValue();
+		tierChances[7] = (int) FTierSpinner.getValue();
+		
+		bumpChances[0] = (int) bump0Spinner.getValue();
+		bumpChances[1] = (int) bump1Spinner.getValue();
+		bumpChances[2] = (int) bump2Spinner.getValue();
+		
+		return new Settings((int) numPlayersSpinner.getValue(),
+				tierChances, bumpChances,
+				(int) cannotGetSizeSpinner.getValue(),
+				allowSInCannotGet.isSelected(), allowSSInCannotGet.isSelected());
+	}
+	
+	private class SwitchActionListener implements ActionListener {
+		private int player;
+		private int indexSet;
+		
+		public SwitchActionListener(int player) {
+			this.player = player;
+			indexSet = -1;
+		}
+		
+		public void actionPerformed(ActionEvent e) {
+			JCheckBox clicked = ((JCheckBox) e.getSource());
+			
+			//if we're unchecking, need to remove the current value from
+			//switchVals
+			if(!clicked.isSelected()) {
+				switchVals[indexSet] = 0;
+				indexSet = -1;
+				return;
+			}
+			
+			//make sure there are this many players present
+			if(player > (int) numPlayersSpinner.getValue()) {
+				JOptionPane.showMessageDialog(null, "There are not that many " +
+						"players present.", "Smash Character Picker",
+						JOptionPane.ERROR_MESSAGE);
+				
+				clicked.setSelected(false);
+			}
+			//then check how many are already selected based on what's set
+			//in the switchVals array
+			else if(switchVals[0] != 0 && switchVals[1] != 0) {
+				JOptionPane.showMessageDialog(null, "You can select up to " +
+						"two players.", "Smash Character Picker",
+						JOptionPane.ERROR_MESSAGE);
+				
+				clicked.setSelected(false);
+			}
+			//otherwise, just need to determine whether we're setting index 0 or 1
+			else if(switchVals[0] == 0) {
+				switchVals[0] = player;
+				indexSet = 0;
+				
+				Util.log("Selected player " + player + " in index " + indexSet + " to switch.");
+			}
+			else {
+				switchVals[1] = player;
+				indexSet = 1;
+				
+				Util.log("Selected player " + player + " in index " + indexSet + " to switch.");
+			}
+		}
+	}
 }

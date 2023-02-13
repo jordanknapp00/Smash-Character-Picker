@@ -1,5 +1,7 @@
 package data;
 
+//TODO: add javadoc for stats once it's more fleshed out
+
 /**
  * The <code>Fighter</code> class allows us to keep track of the fighters in
  * a tier list. Before v12, we simply kept lists of <code>String</code>s to
@@ -14,9 +16,20 @@ public class Fighter {
 	private String name;
 	private int tier;
 	
+	private int[] playerWins;
+	private int[] playerBattles;
+	
 	public Fighter(String name, int tier) {
 		this.name = name;
 		this.tier = tier;
+		
+		playerWins = new int[8];
+		playerBattles = new int[8];
+		
+		for(int at = 0; at < 8; at++) {
+			playerWins[at] = 0;
+			playerBattles[at] = 0;
+		}
 	}
 	
 	public String getName() {
@@ -41,6 +54,42 @@ public class Fighter {
 	@Override
 	public String toString() {
 		return name;
+	}
+	
+	public int getPlayerWins(int player) {
+		return playerWins[player];
+	}
+	
+	public int getPlayerBattles(int player) {
+		return playerBattles[player];
+	}
+	
+	public double getPlayerWinrate(int player) {
+		return playerWins[player] / playerBattles[player];
+	}
+	
+	public int getTotalWins() {
+		int sum = 0;
+		
+		for(int at: playerWins) {
+			sum += at;
+		}
+		
+		return sum;
+	}
+	
+	public int getTotalBattles() {
+		int sum = 0;
+		
+		for(int at: playerBattles) {
+			sum += at;
+		}
+		
+		return sum;
+	}
+	
+	public int getTotalWinrate() {
+		return getTotalWins() / getTotalBattles();
 	}
 
 }

@@ -1,5 +1,7 @@
 package data;
 
+import util.Util;
+
 /**
  * The <code>Matchup</code> class represents a single battle. It stores the
  * fighters that appeared in the battle in an array, ordered by the player
@@ -13,6 +15,8 @@ package data;
  *
  */
 public class Matchup {
+	
+	//TODO: update documentation to eliminate references to Settings class
 	
 	private Fighter[] fighters;
 	
@@ -47,12 +51,12 @@ public class Matchup {
 	 * 											has already been set.
 	 */
 	public void addFighter(int player, Fighter fighter) throws IndexOutOfBoundsException, UnsupportedOperationException {
-		if(player > fighters.length || player <= 0) {
+		if(player >= fighters.length || player < 0) {
 			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
 					" fighters, but " + player + " was passed in as player.");
 		}
 		
-		if(fighters[player - 1] == null) {
+		if(fighters[player] == null) {
 			setFighter(player, fighter);
 		}
 		else {
@@ -76,13 +80,35 @@ public class Matchup {
 	 * 											creation.
 	 */
 	public void setFighter(int player, Fighter fighter) throws IndexOutOfBoundsException {
-		if(player > fighters.length || player <= 0) {
+		if(player >= fighters.length || player < 0) {
 			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
 					" fighters, but " + player + " was passed in as player.");
 		}
 		
-		player--;
 		fighters[player] = fighter;
+	}
+	
+	/**
+	 * Get the fighter that the specified player got.
+	 * 
+	 * @param player	The player whose fighter is to be returned.
+	 * @return			The <code>Fighter</code> that the given player got.
+	 * 
+	 * @throws IndexOutOfBoundsException	Thrown if the player is less
+	 * 										than zero or greater than the
+	 * 										size of the matchup, which is
+	 * 										equal to
+	 * 										<code>Settings.numPlayers</code>
+	 * 										at the time of the object's
+	 * 										creation.
+	 */
+	public Fighter getFighter(int player) throws IndexOutOfBoundsException {
+		if(player >= fighters.length || player < 0) {
+			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
+					" fighters, but " + player + " was passed in as player.");
+		}
+
+		return fighters[player];
 	}
 	
 	public int size() {
@@ -91,7 +117,7 @@ public class Matchup {
 	
 	public boolean contains(Fighter o) {
 		for(Fighter at: fighters) {
-			if(at.equals(o)) {
+			if(at != null && at.equals(o)) {
 				return true;
 			}
 		}
@@ -126,13 +152,40 @@ public class Matchup {
 		
 		return true;
 	}
+
+	/**
+	 * Swaps the fighters belonging to the two given players.
+	 * 
+	 * @param player1	The first player whose fighter is being swapped.
+	 * @param player2	The second player whose fighter is being swapped.
+	 * 
+	 * @throws IndexOutOfBoundsException	Thrown if either player is less
+	 * 										than 0 or greater than the size
+	 * 										of the matchup.
+	 */
+	public void swapFighters(int player1, int player2) throws IndexOutOfBoundsException {
+		if(player1 >= fighters.length || player1 < 0) {
+			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
+					" fighters, but " + player1 + " was passed in as player.");
+		}
+		else if(player2 >= fighters.length || player2 < 0) {
+			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
+					" fighters, but " + player2 + " was passed in as player.");
+		}
+		
+		Fighter temp = fighters[player1];
+		fighters[player1] = fighters[player2];
+		fighters[player2] = temp;
+	}
 	
 	@Override
 	public String toString() {
 		StringBuilder retString = new StringBuilder();
 		
 		for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
-			retString.append("Player " + (playerAt + 1) + " got " + fighters[playerAt] + "\n");
+			retString.append("Player " + (playerAt + 1) + " got " +
+					fighters[playerAt] + ", " +
+					Util.tierToString(fighters[playerAt].getTier()) + "\n");
 		}
 		
 		return retString.toString();
