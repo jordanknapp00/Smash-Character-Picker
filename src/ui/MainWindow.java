@@ -10,8 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -132,7 +132,8 @@ public class MainWindow {
 	private TierList tierList;
 	private boolean fileLoaded;
 	private int numBattles;
-	private Set<Matchup> previousMatchups;
+	private List<Matchup> previousMatchups;
+	private int[] switchVals;
 	
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
@@ -170,15 +171,37 @@ public class MainWindow {
 		//ActionListener too?
 		
 		player1Box = new JCheckBox("P1");
+		player1Box.addActionListener(new SwitchActionListener(1));
 		player2Box = new JCheckBox("P2");
+		player2Box.addActionListener(new SwitchActionListener(2));
 		player3Box = new JCheckBox("P3");
+		player3Box.addActionListener(new SwitchActionListener(3));
 		player4Box = new JCheckBox("P4");
+		player4Box.addActionListener(new SwitchActionListener(4));
 		player5Box = new JCheckBox("P5");
+		player5Box.addActionListener(new SwitchActionListener(5));
 		player6Box = new JCheckBox("P6");
+		player6Box.addActionListener(new SwitchActionListener(6));
 		player7Box = new JCheckBox("P7");
+		player7Box.addActionListener(new SwitchActionListener(7));
 		player8Box = new JCheckBox("P8");
+		player8Box.addActionListener(new SwitchActionListener(8));
 		
 		switchButton = new JButton("Switch");
+		switchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//make sure that we have 2 players selected
+				if(switchVals[0] == 0 || switchVals[1] == 0) {
+					//TODO: at some point, maybe change some of the message types
+					JOptionPane.showMessageDialog(null, "Please select 2 players.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				//if so, we're good to switch using the last matchup
+			}
+		});
 		
 		//add components to switchPanel, including some boxes to make things
 		//look a bit nicer
@@ -314,6 +337,7 @@ public class MainWindow {
 					resultString = "No valid battles found after 100 tries.";
 				}
 				else {
+					previousMatchups.add(result);
 					resultString = "Battle #" + numBattles + ":\n" + result.toString();
 				}
 				
@@ -713,12 +737,12 @@ public class MainWindow {
 		
 		fileLoaded = false;
 		numBattles = 0;
-		previousMatchups = new HashSet<Matchup>();
+		previousMatchups = new ArrayList<Matchup>();
+		switchVals = new int[2];
 		
 		frame.setVisible(true);
 		
 		//TODO: attempt to load tier list
-		fileLoaded = false;
 	}
 	
 	/**
@@ -747,5 +771,57 @@ public class MainWindow {
 				(int) cannotGetSizeSpinner.getValue(),
 				allowSInCannotGet.isSelected(), allowSSInCannotGet.isSelected());
 	}
-
+	
+	private class SwitchActionListener implements ActionListener {
+		private int player;
+		private int indexSet;
+		
+		public SwitchActionListener(int player) {
+			this.player = player;
+			indexSet = -1;
+		}
+		
+		public void actionPerformed(ActionEvent e) {
+			JCheckBox clicked = ((JCheckBox) e.getSource());
+			
+			//if we're unchecking, need to remove the current value from
+			//switchVals
+			if(!clicked.isSelected()) {
+				switchVals[indexSet] = 0;
+				indexSet = -1;
+				return;
+			}
+			
+			//make sure there are this many players present
+			if(player > (int) numPlayersSpinner.getValue()) {
+				JOptionPane.showMessageDialog(null, "There are not that many " +
+						"players present.", "Smash Character Picker",
+						JOptionPane.ERROR_MESSAGE);
+				
+				clicked.setSelected(false);
+			}
+			//then check how many are already selected based on what's set
+			//in the switchVals array
+			else if(switchVals[0] != 0 && switchVals[1] != 0) {
+				JOptionPane.showMessageDialog(null, "You can select up to " +
+						"two players.", "Smash Character Picker",
+						JOptionPane.ERROR_MESSAGE);
+				
+				clicked.setSelected(false);
+			}
+			//otherwise, just need to determine whether we're setting index 0 or 1
+			else if(switchVals[0] == 0) {
+				switchVals[0] = player;
+				indexSet = 0;
+				
+				Util.log("Selected player " + player + " in index " + indexSet + " to switch.");
+			}
+			else {
+				switchVals[1] = player;
+				indexSet = 1;
+				
+				Util.log("Selected player " + player + " in index " + indexSet + " to switch.");
+			}
+		}
+	}
 }
