@@ -16,7 +16,7 @@ import util.Util;
  */
 public class Matchup {
 	
-	//TODO: update documentation and make it so player is always 0-indexed
+	//TODO: update documentation to eliminate references to Settings class
 	
 	private Fighter[] fighters;
 	
@@ -151,6 +151,31 @@ public class Matchup {
 		}
 		
 		return true;
+	}
+
+	/**
+	 * Swaps the fighters belonging to the two given players.
+	 * 
+	 * @param player1	The first player whose fighter is being swapped.
+	 * @param player2	The second player whose fighter is being swapped.
+	 * 
+	 * @throws IndexOutOfBoundsException	Thrown if either player is less
+	 * 										than 0 or greater than the size
+	 * 										of the matchup.
+	 */
+	public void swapFighters(int player1, int player2) throws IndexOutOfBoundsException {
+		if(player1 >= fighters.length || player1 < 0) {
+			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
+					" fighters, but " + player1 + " was passed in as player.");
+		}
+		else if(player2 >= fighters.length || player2 < 0) {
+			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
+					" fighters, but " + player2 + " was passed in as player.");
+		}
+		
+		Fighter temp = fighters[player1];
+		fighters[player1] = fighters[player2];
+		fighters[player2] = temp;
 	}
 	
 	@Override

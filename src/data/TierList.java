@@ -793,4 +793,34 @@ public class TierList {
 		
 		return finalValidChars;
 	}
+	
+	/**
+	 * Swaps the specified fighters and players in the cannot get queues.
+	 * 
+	 * @param player1	The first player to swap.
+	 * @param fighter1	The fighter that that the first given player got.
+	 * @param player2	The second player to swap.
+	 * @param fighter2	The fighter that the second given player got.
+	 */
+	public void swapFighters(int player1, Fighter fighter1, int player2, Fighter fighter2) {
+		//remove the fighters if they're present. they may not be because
+		//of favorites lists and all that
+		individualCannotGet.get(player1).remove(fighter1);
+		individualCannotGet.get(player2).remove(fighter2);
+		
+		//and add those fighters to the other player's cannot get, as long as
+		//they aren't in that player's favorites. also don't add if they're
+		//already there, which is allowed
+		if(!favoriteList.get(player1).contains(fighter2) && !individualCannotGet.get(player1).contains(fighter2)) {
+			individualCannotGet.get(player1).add(fighter2);
+		}
+		
+		if(!favoriteList.get(player2).contains(fighter1) && !individualCannotGet.get(player2).contains(fighter1)) {
+			individualCannotGet.get(player2).add(fighter1);
+		}
+		
+		Util.log("Swapped player " + (player1 + 1) + " and " + (player2 + 1) + ".");
+		Util.log("Now, player " + (player1 + 1) + " cannot get " + individualCannotGet.get(player1));
+		Util.log("And player " + (player2 + 1) + " cannot get " + individualCannotGet.get(player2));
+	}
 }

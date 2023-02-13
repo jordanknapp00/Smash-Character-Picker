@@ -199,7 +199,15 @@ public class MainWindow {
 					return;
 				}
 				
+				int p1 = switchVals[0];
+				int p2 = switchVals[1];
+				
 				//if so, we're good to switch using the last matchup
+				Matchup toSwap = previousMatchups.get(previousMatchups.size() - 1);
+				tierList.swapFighters(p1, toSwap.getFighter(p1), p2, toSwap.getFighter(p2));
+				toSwap.swapFighters(p1, p2);
+				
+				results.setText("Battle #" + numBattles + ":" + toSwap);
 			}
 		});
 		
