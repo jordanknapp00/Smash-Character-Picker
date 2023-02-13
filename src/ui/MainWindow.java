@@ -199,15 +199,29 @@ public class MainWindow {
 					return;
 				}
 				
-				int p1 = switchVals[0];
-				int p2 = switchVals[1];
+				//subtract 1 from both, since SwitchActionListener is 1-indexed
+				//(because it uses 0 as a sentinel value)
+				int p1 = switchVals[0] - 1;
+				int p2 = switchVals[1] - 1;
 				
 				//if so, we're good to switch using the last matchup
 				Matchup toSwap = previousMatchups.get(previousMatchups.size() - 1);
 				tierList.swapFighters(p1, toSwap.getFighter(p1), p2, toSwap.getFighter(p2));
 				toSwap.swapFighters(p1, p2);
 				
-				results.setText("Battle #" + numBattles + ":" + toSwap);
+				results.setText("Battle #" + numBattles + ":\n" + toSwap);
+				
+				//now deselect all after switching and reset switchVals
+				player1Box.setSelected(false);
+				player2Box.setSelected(false);
+				player3Box.setSelected(false);
+				player4Box.setSelected(false);
+				player5Box.setSelected(false);
+				player6Box.setSelected(false);
+				player7Box.setSelected(false);
+				player8Box.setSelected(false);
+				switchVals[0] = 0;
+				switchVals[1] = 0;
 			}
 		});
 		
@@ -282,6 +296,7 @@ public class MainWindow {
 					resultString = "No valid battles found after 100 tries.";
 				}
 				else {
+					previousMatchups.add(result);
 					resultString = "Battle #" + numBattles + ":\n" + result.toString();
 				}
 				
@@ -345,6 +360,7 @@ public class MainWindow {
 					resultString = "No valid battles found after 100 tries.";
 				}
 				else {
+					previousMatchups.remove(previousMatchups.size() - 1);
 					previousMatchups.add(result);
 					resultString = "Battle #" + numBattles + ":\n" + result.toString();
 				}
