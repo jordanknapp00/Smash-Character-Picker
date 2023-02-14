@@ -14,6 +14,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import exception.InvalidCannotGetSizeException;
 import exception.InvalidLineException;
 import exception.TierListParseException;
 import util.Util;
@@ -218,20 +219,16 @@ public class TierList {
 				//is invalid, then we parse the given value, make sure it's
 				//valid, and then we're good to go
 				if(next.equals("cannot get size")) {
-					errMessage = toRead + " is not a valid value for " +
-							"\"Cannot Get Size\" setting. Please provide " +
-							"an integer between 0 and " + Util.CANNOT_GET_MAX + ".";
-					
 					try {
 						cannotGetSize = Integer.parseInt(toRead);
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new InvalidCannotGetSizeException(toRead, lineNumber, e);
 					}
 					
 					if(cannotGetSize < 0 || cannotGetSize > Util.CANNOT_GET_MAX) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new InvalidCannotGetSizeException(toRead, lineNumber);
 					}
 				}
 				else if(next.equals("allow ss in cannot get")) {
