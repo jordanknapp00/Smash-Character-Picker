@@ -14,6 +14,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import exception.InvalidLineException;
+import exception.TierListParseException;
 import util.Util;
 
 /**
@@ -102,7 +104,7 @@ public class TierList {
 	 * @throws IOException				Thrown if the data in the file is
 	 * 									invalid in any way.
 	 */
-	public Settings loadFile(File file) throws FileNotFoundException, IOException {
+	public Settings loadFile(File file) throws FileNotFoundException, IOException, TierListParseException {
 		//settings variables that will be used to instantiate the Settings
 		//object returned by this method, initialized with default values
 		int numPlayers = 2;
@@ -143,7 +145,11 @@ public class TierList {
 		
 		//read the first line and keep reading while lines exist
 		String lineAt = in.readLine();
+		int lineNumber = 0;
 		while(lineAt != null) {
+			//line number always increments, even before we skip
+			lineNumber++;
+			
 			//first things first, if the line is blank or it starts with '#',
 			//skip it
 			if(lineAt.equals("") || lineAt.charAt(0) == '#') {
@@ -176,7 +182,7 @@ public class TierList {
 				//and stuff, either. a CannotGetSizeException only needs to
 				//be given the value that is invalid
 				
-				throw new IOException("Invalid line: " + next);
+				throw new InvalidLineException(lineAt, lineNumber);
 			}
 			
 			//remove space before equals sign and make sure it's all lowercase
