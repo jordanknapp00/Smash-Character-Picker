@@ -6,7 +6,8 @@ import util.Util;
  * <code>TierListParseException</code> that represents an invalid Cannot Get
  * size. The Cannot Get size must be a number between 0 and
  * <code>Util.<b><i>CANNOT_GET_MAX</i></b></code>.
- * @author jorda
+ * 
+ * @author Jordan Knapp
  *
  */
 public class InvalidCannotGetSizeException extends TierListParseException {
@@ -28,7 +29,7 @@ public class InvalidCannotGetSizeException extends TierListParseException {
 	}
 	
 	/**
-	 * Construcots an <code>InvalidCannotGetSizeException</code> with an
+	 * Constructs an <code>InvalidCannotGetSizeException</code> with an
 	 * error message containing the given bad value and line number, without
 	 * an associated <code>Throwable</code>.
 	 * 
