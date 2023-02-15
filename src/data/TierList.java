@@ -18,11 +18,9 @@ import exception.BooleanSettingParseException;
 import exception.BooleanSettingParseException.BooleanSetting;
 import exception.IntegerSettingParseException;
 import exception.IntegerSettingParseException.IntegerSetting;
-import exception.IntegerSettingParseException.Setting;
-import exception.InvalidCannotGetAllowException;
-import exception.InvalidCannotGetSizeException;
 import exception.InvalidLineException;
-import exception.InvalidNumPlayersException;
+import exception.ListSettingParseException;
+import exception.ListSettingParseException.ListSetting;
 import exception.TierListParseException;
 import util.Util;
 
@@ -292,13 +290,11 @@ public class TierList {
 								0, 8, IntegerSetting.NUM_PLAYERS);
 					}
 				}
-				else if(next.equals("tier chances")) {
-					errMessage = "Custom tier chances are not valid.";
-					
+				else if(next.equals("tier chances")) {				
 					if(currentLine.length != 8) {
 						in.close();
-						throw new IOException(errMessage + " Please provide " +
-								"exactly 8 values, comma-separated");
+						throw new ListSettingParseException(currentLine.toString(),
+								lineNumber, 8, 100, ListSetting.TIER_CHANCES);
 					}
 					
 					int sum = 0;
@@ -310,23 +306,21 @@ public class TierList {
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage + " One of the " +
-								"values is not a number.");
+						throw new ListSettingParseException(currentLine.toString(),
+								lineNumber, 8, 100, ListSetting.TIER_CHANCES, e);
 					}
 					
 					if(sum != 100) {
 						in.close();
-						throw new IOException(errMessage + " The values " +
-								"must add up to 100.");
+						throw new ListSettingParseException(currentLine.toString(),
+								lineNumber, 8, 100, ListSetting.TIER_CHANCES);
 					}
 				}
-				else if(next.equals("bump chances")) {
-					errMessage = "Custom bump chances are not valid.";
-					
+				else if(next.equals("bump chances")) {					
 					if(currentLine.length != 3) {
 						in.close();
-						throw new IOException(errMessage + " Please provide " +
-								"exactly 3 values, comma-separated");
+						throw new ListSettingParseException(currentLine.toString(),
+								lineNumber, 8, 100, ListSetting.BUMP_CHANCES);
 					}
 					
 					int sum = 0;
@@ -338,14 +332,14 @@ public class TierList {
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage + " One of the " +
-								"values is not a number.");
+						throw new ListSettingParseException(currentLine.toString(),
+								lineNumber, 8, 100, ListSetting.BUMP_CHANCES, e);
 					}
 					
 					if(sum != 100) {
 						in.close();
-						throw new IOException(errMessage + " The values " +
-								"must add up to 100.");
+						throw new ListSettingParseException(currentLine.toString(),
+								lineNumber, 8, 100, ListSetting.BUMP_CHANCES);
 					}
 				}
 			}
