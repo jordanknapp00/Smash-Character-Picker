@@ -39,8 +39,7 @@ public class InvalidLineException extends TierListParseException {
 	}
 	
 	private static String constructErrorMessage(String lineText, int lineNumber) {
-		return "Tier List Parse Error: InvalidLineException on line " +
-				lineNumber + ": \"" + lineText + "\" does not contain a " +
+		return "Line " + lineNumber + ": \"" + lineText + "\" does not contain a " +
 				"valid line identifier (tier or setting).";
 	}
 

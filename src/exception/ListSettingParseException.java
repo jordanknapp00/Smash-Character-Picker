@@ -65,14 +65,16 @@ public class ListSettingParseException extends TierListParseException {
 		switch(setting) {
 		case TIER_CHANCES:
 			settingText = "Tier Chances";
+			break;
 		case BUMP_CHANCES:
 			settingText = "Bump Chances";
+			break;
 		default:
 			settingText = "UNRECOGNIZED SETTING";
 		}
 		
-		return "Tier List Parse Error on line " + lineNumber + ": \"" +
-				badVal + "\" is invalid for setting \"" + settingText +
+		return "Line " + lineNumber + ": \"" + badVal +
+				"\" is invalid for setting \"" + settingText +
 				"\" -- a list of " + numVals + " comma-separated numbers " +
 				"adding to " + sum + " is required.";
 	}

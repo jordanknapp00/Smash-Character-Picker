@@ -60,14 +60,16 @@ public class BooleanSettingParseException extends TierListParseException {
 		switch(setting) {
 		case ALLOW_S:
 			settingText = "Allow S in 'Cannot Get'";
+			break;
 		case ALLOW_SS:
 			settingText = "Allow SS in 'Cannot Get'";
+			break;
 		default:
 			settingText = "UNRECOGNIZED SETTING";
 		}
 		
-		return "Tier List Parse Error on line " + lineNumber + ": \"" +
-				badVal + "\" is invalid for setting \"" + settingText +
+		return "Line " + lineNumber + ": \"" + badVal +
+				"\" is invalid for setting \"" + settingText +
 				"\" -- a boolean value (\"true\"/\"false\" or 0\1) is required.";
 	}
 }

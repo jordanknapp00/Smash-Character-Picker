@@ -62,14 +62,16 @@ public class IntegerSettingParseException extends TierListParseException {
 		switch(setting) {
 		case NUM_PLAYERS:
 			settingText = "Number of players";
+			break;
 		case CANNOT_GET_SIZE:
 			settingText = "'Cannot Get' size";
+			break;
 		default:
 			settingText = "UNRECOGNIZED SETTING";
 		}
 		
-		return "Tier List Parse Error on line " + lineNumber + ": \"" +
-				badVal + "\" is invalid for setting \"" + settingText +
+		return "Line " + lineNumber + ": \"" + badVal +
+				"\" is invalid for setting \"" + settingText +
 				"\" -- a number between " + minVal + " and " + maxVal +
 				" is required.";
 	}

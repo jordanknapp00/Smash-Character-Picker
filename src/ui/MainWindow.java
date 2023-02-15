@@ -35,6 +35,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import data.Matchup;
 import data.Settings;
 import data.TierList;
+import exception.TierListParseException;
 import util.Util;
 
 public class MainWindow {
@@ -400,6 +401,14 @@ public class MainWindow {
 					fileLoaded = false;
 				} catch(IOException e1) {
 					results.setText("IOException when reading " +
+							fileChooser.getSelectedFile().getName() + "!\n" +
+							"See the debug log for details.");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
+				} catch(TierListParseException e1) {
+					results.setText("TierListParseException when reading " +
 							fileChooser.getSelectedFile().getName() + "!\n" +
 							"See the debug log for details.");
 					Util.error(e1);
