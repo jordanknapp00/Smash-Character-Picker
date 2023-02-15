@@ -14,8 +14,12 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import exception.IntegerSettingParseException;
+import exception.IntegerSettingParseException.Setting;
+import exception.InvalidCannotGetAllowException;
 import exception.InvalidCannotGetSizeException;
 import exception.InvalidLineException;
+import exception.InvalidNumPlayersException;
 import exception.TierListParseException;
 import util.Util;
 
@@ -212,7 +216,6 @@ public class TierList {
 				//some basic setup used for all settings
 				String toRead = lineAt.substring(posInLine + 2).toLowerCase();
 				String[] currentLine = toRead.split(",\\s*");
-				String errMessage;
 				
 				//check for each setting. basically, for each settings, we're
 				//setting up an error message to be thrown in case the input
@@ -223,19 +226,17 @@ public class TierList {
 						cannotGetSize = Integer.parseInt(toRead);
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new InvalidCannotGetSizeException(toRead, lineNumber, e);
+						throw new IntegerSettingParseException(toRead, lineNumber,
+								0, Util.CANNOT_GET_MAX, Setting.CANNOT_GET_SIZE, e);
 					}
 					
 					if(cannotGetSize < 0 || cannotGetSize > Util.CANNOT_GET_MAX) {
 						in.close();
-						throw new InvalidCannotGetSizeException(toRead, lineNumber);
+						throw new IntegerSettingParseException(toRead, lineNumber,
+								0, Util.CANNOT_GET_MAX, Setting.CANNOT_GET_SIZE);
 					}
 				}
 				else if(next.equals("allow ss in cannot get")) {
-					errMessage = toRead + " is not a valid value for " +
-							"\"SS allowed in Cannot Get\" setting. Please " +
-							"use \"true\"/\"false\" or 0\1.";
-					
 					try {
 						if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
 							allowSSInCannotGet = true;
@@ -245,18 +246,14 @@ public class TierList {
 						}
 						else {
 							in.close();
-							throw new IOException(errMessage);
+							throw new InvalidCannotGetAllowException(toRead, lineNumber);
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new InvalidCannotGetAllowException(toRead, lineNumber, e);
 					}
 				}
-				else if(next.equals("allow s in cannot get")) {
-					errMessage = toRead + " is not a valid value for " +
-							"\"S allowed in Cannot Get\" setting. Please " +
-							"use \"true\"/\"false\" or 0\1.";
-					
+				else if(next.equals("allow s in cannot get")) {					
 					try {
 						if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
 							allowSInCannotGet = true;
@@ -266,28 +263,26 @@ public class TierList {
 						}
 						else {
 							in.close();
-							throw new IOException(errMessage);
+							throw new InvalidCannotGetAllowException(toRead, lineNumber);
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new InvalidCannotGetAllowException(toRead, lineNumber, e);
 					}
 				}
-				else if(next.equals("players")) {
-					errMessage = toRead + " is not a valid value for " +
-							"\"Number of Players\" setting. Please provide " +
-							"an integer between 2 and 8.";
-					
+				else if(next.equals("players")) {					
 					try {
 						numPlayers = Integer.parseInt(toRead);
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new IntegerSettingParseException(toRead, lineNumber,
+								0, 8, Setting.NUM_PLAYERS, e);
 					}
 					
 					if(numPlayers < 2 || numPlayers > 8) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new IntegerSettingParseException(toRead, lineNumber,
+								0, 8, Setting.NUM_PLAYERS);
 					}
 				}
 				else if(next.equals("tier chances")) {
