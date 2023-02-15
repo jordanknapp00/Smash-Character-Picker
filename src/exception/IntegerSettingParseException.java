@@ -5,14 +5,14 @@ package exception;
  * setting errors. This exception is used for any settings which are supposed
  * to take an integer between two values.
  * 
- * @author Jordan Knap
+ * @author Jordan Knapp
  *
  */
 public class IntegerSettingParseException extends TierListParseException {
 	
 	private static final long serialVersionUID = 1L;
 
-	public enum Setting {
+	public enum IntegerSetting {
 		NUM_PLAYERS,
 		CANNOT_GET_SIZE
 	};
@@ -34,7 +34,7 @@ public class IntegerSettingParseException extends TierListParseException {
 	 * 						<code>NumberFormatException</code>.
 	 */
 	public IntegerSettingParseException(String badVal, int lineNumber,
-			int minVal, int maxVal, Setting setting, Throwable cause) {
+			int minVal, int maxVal, IntegerSetting setting, Throwable cause) {
 		super(constructErrorMessage(badVal, lineNumber, minVal, maxVal, setting), cause);
 	}
 	
@@ -52,12 +52,12 @@ public class IntegerSettingParseException extends TierListParseException {
 	 * 						creating the error message.
 	 */
 	public IntegerSettingParseException(String badVal, int lineNumber,
-			int minVal, int maxVal, Setting setting) {
+			int minVal, int maxVal, IntegerSetting setting) {
 		super(constructErrorMessage(badVal, lineNumber, minVal, maxVal, setting));
 	}
 	
 	private static String constructErrorMessage(String badVal, int lineNumber,
-			int minVal, int maxVal, Setting setting) {
+			int minVal, int maxVal, IntegerSetting setting) {
 		String settingText;
 		switch(setting) {
 		case NUM_PLAYERS:

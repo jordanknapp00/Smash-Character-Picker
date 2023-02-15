@@ -14,7 +14,10 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import exception.BooleanSettingParseException;
+import exception.BooleanSettingParseException.BooleanSetting;
 import exception.IntegerSettingParseException;
+import exception.IntegerSettingParseException.IntegerSetting;
 import exception.IntegerSettingParseException.Setting;
 import exception.InvalidCannotGetAllowException;
 import exception.InvalidCannotGetSizeException;
@@ -227,13 +230,13 @@ public class TierList {
 					} catch(NumberFormatException e) {
 						in.close();
 						throw new IntegerSettingParseException(toRead, lineNumber,
-								0, Util.CANNOT_GET_MAX, Setting.CANNOT_GET_SIZE, e);
+								0, Util.CANNOT_GET_MAX, IntegerSetting.CANNOT_GET_SIZE, e);
 					}
 					
 					if(cannotGetSize < 0 || cannotGetSize > Util.CANNOT_GET_MAX) {
 						in.close();
 						throw new IntegerSettingParseException(toRead, lineNumber,
-								0, Util.CANNOT_GET_MAX, Setting.CANNOT_GET_SIZE);
+								0, Util.CANNOT_GET_MAX, IntegerSetting.CANNOT_GET_SIZE);
 					}
 				}
 				else if(next.equals("allow ss in cannot get")) {
@@ -246,11 +249,13 @@ public class TierList {
 						}
 						else {
 							in.close();
-							throw new InvalidCannotGetAllowException(toRead, lineNumber);
+							throw new BooleanSettingParseException(toRead, lineNumber,
+									BooleanSetting.ALLOW_SS);
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new InvalidCannotGetAllowException(toRead, lineNumber, e);
+						throw new BooleanSettingParseException(toRead, lineNumber,
+								BooleanSetting.ALLOW_SS, e);
 					}
 				}
 				else if(next.equals("allow s in cannot get")) {					
@@ -263,11 +268,13 @@ public class TierList {
 						}
 						else {
 							in.close();
-							throw new InvalidCannotGetAllowException(toRead, lineNumber);
+							throw new BooleanSettingParseException(toRead, lineNumber,
+									BooleanSetting.ALLOW_S);
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new InvalidCannotGetAllowException(toRead, lineNumber, e);
+						throw new BooleanSettingParseException(toRead, lineNumber,
+								BooleanSetting.ALLOW_S, e);
 					}
 				}
 				else if(next.equals("players")) {					
@@ -276,13 +283,13 @@ public class TierList {
 					} catch(NumberFormatException e) {
 						in.close();
 						throw new IntegerSettingParseException(toRead, lineNumber,
-								0, 8, Setting.NUM_PLAYERS, e);
+								0, 8, IntegerSetting.NUM_PLAYERS, e);
 					}
 					
 					if(numPlayers < 2 || numPlayers > 8) {
 						in.close();
 						throw new IntegerSettingParseException(toRead, lineNumber,
-								0, 8, Setting.NUM_PLAYERS);
+								0, 8, IntegerSetting.NUM_PLAYERS);
 					}
 				}
 				else if(next.equals("tier chances")) {
