@@ -26,6 +26,6 @@ p3 favorite = Donkey Kong, Marth
 tier chances = 10, 20, 25, 25, 20, 0, 0, 0
 bump chances = 70, 15, 15
 cannot get size = 10
-allow ss in cannot get = true
+allow ss in cannot get = false
 allow s in cannot get = true
 players = 3

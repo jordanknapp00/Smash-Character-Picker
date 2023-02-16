@@ -239,10 +239,16 @@ public class TierList {
 				}
 				else if(next.equals("allow ss in cannot get")) {
 					try {
-						if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
+						if(toRead.equals("true")) {
 							allowSSInCannotGet = true;
 						}
-						else if(toRead.equals("false") || Integer.parseInt(toRead) == 0) {
+						else if(toRead.equals("false")) {
+							allowSSInCannotGet = true;
+						}
+						else if(Integer.parseInt(toRead) == 1) {
+							allowSSInCannotGet = true;
+						}
+						else if(Integer.parseInt(toRead) == 0) {
 							allowSSInCannotGet = false;
 						}
 						else {
@@ -258,10 +264,16 @@ public class TierList {
 				}
 				else if(next.equals("allow s in cannot get")) {					
 					try {
-						if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
+						if(toRead.equals("true")) {
 							allowSInCannotGet = true;
 						}
-						else if(toRead.equals("false") || Integer.parseInt(toRead) == 0) {
+						else if(toRead.equals("false")) {
+							allowSInCannotGet = true;
+						}
+						else if(Integer.parseInt(toRead) == 1) {
+							allowSInCannotGet = true;
+						}
+						else if(Integer.parseInt(toRead) == 0) {
 							allowSInCannotGet = false;
 						}
 						else {

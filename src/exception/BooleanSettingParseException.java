@@ -70,6 +70,6 @@ public class BooleanSettingParseException extends TierListParseException {
 		
 		return "Line " + lineNumber + ": \"" + badVal +
 				"\" is invalid for setting \"" + settingText +
-				"\" -- a boolean value (\"true\"/\"false\" or 0\1) is required.";
+				"\" -- a boolean value (\"true\"/\"false\" or \"0\"/\"1\") is required.";
 	}
 }
