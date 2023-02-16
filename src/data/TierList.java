@@ -19,7 +19,6 @@ import exception.BooleanSettingParseException;
 import exception.BooleanSettingParseException.BooleanSetting;
 import exception.IntegerSettingParseException;
 import exception.IntegerSettingParseException.IntegerSetting;
-import exception.InvalidLineException;
 import exception.ListSettingParseException;
 import exception.ListSettingParseException.ListSetting;
 import exception.TierListParseException;
@@ -154,15 +153,8 @@ public class TierList {
 		String lineAt = in.readLine();
 		int lineNumber = 0;
 		while(lineAt != null) {
-			//line number always increments, even before we skip
+			//increment current line number
 			lineNumber++;
-			
-			//first things first, if the line is blank or it starts with '#',
-			//skip it
-			if(lineAt.equals("") || lineAt.charAt(0) == '#') {
-				lineAt = in.readLine();
-				continue;
-			}
 			
 			//scroll through the chars in the read line. if one is an equals,
 			//then check for which tier/setting it is
@@ -177,19 +169,10 @@ public class TierList {
 				}
 			}
 			
-			//if we didn't find an equals sign at this point, the line is invalid
+			//if we didn't find an equals sign at this point, we can skip the line
 			if(!foundEqual) {
-				in.close();
-				
-				//TODO: look into custom exception types.
-				//instead of an IOException for everything, maybe have a
-				//TierListParseException interface, with subclasses that
-				//make it easier to understand exactly what went wrong.
-				//then i don't have to spend so much time with error messages
-				//and stuff, either. a CannotGetSizeException only needs to
-				//be given the value that is invalid
-				
-				throw new InvalidLineException(lineAt, lineNumber);
+				lineAt = in.readLine();
+				continue;
 			}
 			
 			//remove space before equals sign and make sure it's all lowercase
