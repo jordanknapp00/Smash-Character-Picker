@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -305,7 +306,7 @@ public class TierList {
 				else if(next.equals("tier chances")) {				
 					if(currentLine.length != 8) {
 						in.close();
-						throw new ListSettingParseException(currentLine.toString(),
+						throw new ListSettingParseException(Arrays.toString(currentLine),
 								lineNumber, 8, 100, ListSetting.TIER_CHANCES);
 					}
 					
@@ -314,24 +315,31 @@ public class TierList {
 					try {
 						for(int at = 0; at < 8; at++) {
 							tierChances[at] = Integer.parseInt(currentLine[at]);
+							
+							if(tierChances[at] < 0 || tierChances[at] > 100) {
+								in.close();
+								throw new ListSettingParseException(Arrays.toString(currentLine),
+										lineNumber, 8, 100, ListSetting.TIER_CHANCES);
+							}
+							
 							sum += tierChances[at];
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new ListSettingParseException(currentLine.toString(),
+						throw new ListSettingParseException(Arrays.toString(currentLine),
 								lineNumber, 8, 100, ListSetting.TIER_CHANCES, e);
 					}
 					
 					if(sum != 100) {
 						in.close();
-						throw new ListSettingParseException(currentLine.toString(),
+						throw new ListSettingParseException(Arrays.toString(currentLine),
 								lineNumber, 8, 100, ListSetting.TIER_CHANCES);
 					}
 				}
 				else if(next.equals("bump chances")) {					
 					if(currentLine.length != 3) {
 						in.close();
-						throw new ListSettingParseException(currentLine.toString(),
+						throw new ListSettingParseException(Arrays.toString(currentLine),
 								lineNumber, 8, 100, ListSetting.BUMP_CHANCES);
 					}
 					
@@ -340,17 +348,24 @@ public class TierList {
 					try {
 						for(int at = 0; at < 3; at++) {
 							bumpChances[at] = Integer.parseInt(currentLine[at]);
+							
+							if(tierChances[at] < 0 || tierChances[at] > 100) {
+								in.close();
+								throw new ListSettingParseException(Arrays.toString(currentLine),
+										lineNumber, 8, 100, ListSetting.TIER_CHANCES);
+							}
+							
 							sum += bumpChances[at];
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new ListSettingParseException(currentLine.toString(),
+						throw new ListSettingParseException(Arrays.toString(currentLine),
 								lineNumber, 8, 100, ListSetting.BUMP_CHANCES, e);
 					}
 					
 					if(sum != 100) {
 						in.close();
-						throw new ListSettingParseException(currentLine.toString(),
+						throw new ListSettingParseException(Arrays.toString(currentLine),
 								lineNumber, 8, 100, ListSetting.BUMP_CHANCES);
 					}
 				}

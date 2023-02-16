@@ -76,6 +76,7 @@ public class ListSettingParseException extends TierListParseException {
 		return "Line " + lineNumber + ": \"" + badVal +
 				"\" is invalid for setting \"" + settingText +
 				"\" -- a list of " + numVals + " comma-separated numbers " +
-				"adding to " + sum + " is required.";
+				"adding to " + sum + " is required. Those numbers must be " +
+				"positive integers between 0 and 100.";
 	}
 }
