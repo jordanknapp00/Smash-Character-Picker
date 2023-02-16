@@ -243,7 +243,7 @@ public class TierList {
 							allowSSInCannotGet = true;
 						}
 						else if(toRead.equals("false")) {
-							allowSSInCannotGet = true;
+							allowSSInCannotGet = false;
 						}
 						else if(Integer.parseInt(toRead) == 1) {
 							allowSSInCannotGet = true;
@@ -268,7 +268,7 @@ public class TierList {
 							allowSInCannotGet = true;
 						}
 						else if(toRead.equals("false")) {
-							allowSInCannotGet = true;
+							allowSInCannotGet = false;
 						}
 						else if(Integer.parseInt(toRead) == 1) {
 							allowSInCannotGet = true;
