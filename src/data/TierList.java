@@ -21,6 +21,7 @@ import exception.IntegerSettingParseException;
 import exception.IntegerSettingParseException.IntegerSetting;
 import exception.ListSettingParseException;
 import exception.ListSettingParseException.ListSetting;
+import exception.NoValidFightersException;
 import exception.TierListParseException;
 import util.Util;
 
@@ -589,7 +590,7 @@ public class TierList {
 		return retString.toString();
 	}
 	
-	public Matchup generateBattle(Settings settings, boolean skipping) {
+	public Matchup generateBattle(Settings settings, boolean skipping) throws NoValidFightersException {
 		//initialize an empty matchup
 		Matchup matchup = new Matchup(settings.getNumPlayers());
 		
@@ -599,8 +600,7 @@ public class TierList {
 			playerValidCharacters.add(getValidCharacters(playerAt, settings));
 			
 			if(playerValidCharacters.get(playerAt).size() == 0) {
-				//TODO: custom exception for this
-				return null;
+				throw new NoValidFightersException(playerAt, false);
 			}
 		}
 		
@@ -682,10 +682,7 @@ public class TierList {
 			}
 			
 			if(inTierOptions.size() == 0) {
-				Util.log("Player " + (playerAt + 1) + " has no valid " +
-						"options within tier range.");
-				
-				return null;
+				throw new NoValidFightersException(playerAt, true);
 			}
 			
 			Util.log("Player " + (playerAt + 1) + " has " + inTierOptions.size() +

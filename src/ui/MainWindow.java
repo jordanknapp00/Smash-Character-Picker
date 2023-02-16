@@ -35,6 +35,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import data.Matchup;
 import data.Settings;
 import data.TierList;
+import exception.NoValidFightersException;
 import exception.TierListParseException;
 import util.Util;
 
@@ -283,12 +284,24 @@ public class MainWindow {
 				Matchup result = null;
 				Settings settings = getSettings();
 				int tries = 0;
-				while(result == null && !previousMatchups.contains(result) && tries < 100) {
+				do {
 					tries++;
 					Util.log("======= Try " + tries + " =======");
 					
-					result = tierList.generateBattle(settings, false);
-				}
+					try {
+						result = tierList.generateBattle(settings, false);
+					} catch(NoValidFightersException e1) {
+						Util.error(e1);
+						
+						//depending on whether this happened before or after
+						//generating a tier tells us whether we can continue
+						if(!e1.tierRangeSelected()) {
+							Util.log("With no valid fighters for a player, battle generation must halt.");
+							return;
+						}
+					}
+				} while(result == null && !previousMatchups.contains(result) && tries < 100);
+				
 				
 				Util.log("========== End battle generation process ==========");
 				
@@ -347,17 +360,28 @@ public class MainWindow {
 				Matchup result = null;
 				Settings settings = getSettings();
 				int tries = 0;
-				while(result == null && !previousMatchups.contains(result) && tries < 100) {
+				do {
 					tries++;
 					Util.log("======= Try " + tries + " =======");
 					
-					result = tierList.generateBattle(settings, true);
-				}
+					try {
+						result = tierList.generateBattle(settings, true);
+					} catch(NoValidFightersException e1) {
+						Util.error(e1);
+						
+						//depending on whether this happened before or after
+						//generating a tier tells us whether we can continue
+						if(!e1.tierRangeSelected()) {
+							Util.log("With no valid fighters for a player, battle generation must halt.");
+							return;
+						}
+					}
+				} while(result == null && !previousMatchups.contains(result) && tries < 100);
 				
 				Util.log("========== End battle generation process ==========");
 				
 				String resultString;
-				if(result == null) {
+				if(tries == 100) {
 					resultString = "No valid battles found after 100 tries.";
 				}
 				else {
