@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,14 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import exception.BooleanSettingParseException;
+import exception.BooleanSettingParseException.BooleanSetting;
+import exception.IntegerSettingParseException;
+import exception.IntegerSettingParseException.IntegerSetting;
+import exception.ListSettingParseException;
+import exception.ListSettingParseException.ListSetting;
+import exception.NoValidFightersException;
+import exception.TierListParseException;
 import util.Util;
 
 /**
@@ -102,7 +111,7 @@ public class TierList {
 	 * @throws IOException				Thrown if the data in the file is
 	 * 									invalid in any way.
 	 */
-	public Settings loadFile(File file) throws FileNotFoundException, IOException {
+	public Settings loadFile(File file) throws FileNotFoundException, IOException, TierListParseException {
 		//settings variables that will be used to instantiate the Settings
 		//object returned by this method, initialized with default values
 		int numPlayers = 2;
@@ -143,13 +152,10 @@ public class TierList {
 		
 		//read the first line and keep reading while lines exist
 		String lineAt = in.readLine();
+		int lineNumber = 0;
 		while(lineAt != null) {
-			//first things first, if the line is blank or it starts with '#',
-			//skip it
-			if(lineAt.equals("") || lineAt.charAt(0) == '#') {
-				lineAt = in.readLine();
-				continue;
-			}
+			//increment current line number
+			lineNumber++;
 			
 			//scroll through the chars in the read line. if one is an equals,
 			//then check for which tier/setting it is
@@ -164,19 +170,10 @@ public class TierList {
 				}
 			}
 			
-			//if we didn't find an equals sign at this point, the line is invalid
+			//if we didn't find an equals sign at this point, we can skip the line
 			if(!foundEqual) {
-				in.close();
-				
-				//TODO: look into custom exception types.
-				//instead of an IOException for everything, maybe have a
-				//TierListParseException interface, with subclasses that
-				//make it easier to understand exactly what went wrong.
-				//then i don't have to spend so much time with error messages
-				//and stuff, either. a CannotGetSizeException only needs to
-				//be given the value that is invalid
-				
-				throw new IOException("Invalid line: " + next);
+				lineAt = in.readLine();
+				continue;
 			}
 			
 			//remove space before equals sign and make sure it's all lowercase
@@ -205,95 +202,96 @@ public class TierList {
 				//some basic setup used for all settings
 				String toRead = lineAt.substring(posInLine + 2).toLowerCase();
 				String[] currentLine = toRead.split(",\\s*");
-				String errMessage;
 				
 				//check for each setting. basically, for each settings, we're
 				//setting up an error message to be thrown in case the input
 				//is invalid, then we parse the given value, make sure it's
 				//valid, and then we're good to go
 				if(next.equals("cannot get size")) {
-					errMessage = toRead + " is not a valid value for " +
-							"\"Cannot Get Size\" setting. Please provide " +
-							"an integer between 0 and " + Util.CANNOT_GET_MAX + ".";
-					
 					try {
 						cannotGetSize = Integer.parseInt(toRead);
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new IntegerSettingParseException(toRead, lineNumber,
+								0, Util.CANNOT_GET_MAX, IntegerSetting.CANNOT_GET_SIZE, e);
 					}
 					
 					if(cannotGetSize < 0 || cannotGetSize > Util.CANNOT_GET_MAX) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new IntegerSettingParseException(toRead, lineNumber,
+								0, Util.CANNOT_GET_MAX, IntegerSetting.CANNOT_GET_SIZE);
 					}
 				}
 				else if(next.equals("allow ss in cannot get")) {
-					errMessage = toRead + " is not a valid value for " +
-							"\"SS allowed in Cannot Get\" setting. Please " +
-							"use \"true\"/\"false\" or 0\1.";
-					
 					try {
-						if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
+						if(toRead.equals("true")) {
 							allowSSInCannotGet = true;
 						}
-						else if(toRead.equals("false") || Integer.parseInt(toRead) == 0) {
+						else if(toRead.equals("false")) {
+							allowSSInCannotGet = false;
+						}
+						else if(Integer.parseInt(toRead) == 1) {
+							allowSSInCannotGet = true;
+						}
+						else if(Integer.parseInt(toRead) == 0) {
 							allowSSInCannotGet = false;
 						}
 						else {
 							in.close();
-							throw new IOException(errMessage);
+							throw new BooleanSettingParseException(toRead, lineNumber,
+									BooleanSetting.ALLOW_SS);
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new BooleanSettingParseException(toRead, lineNumber,
+								BooleanSetting.ALLOW_SS, e);
 					}
 				}
-				else if(next.equals("allow s in cannot get")) {
-					errMessage = toRead + " is not a valid value for " +
-							"\"S allowed in Cannot Get\" setting. Please " +
-							"use \"true\"/\"false\" or 0\1.";
-					
+				else if(next.equals("allow s in cannot get")) {					
 					try {
-						if(toRead.equals("true") || Integer.parseInt(toRead) == 1) {
+						if(toRead.equals("true")) {
 							allowSInCannotGet = true;
 						}
-						else if(toRead.equals("false") || Integer.parseInt(toRead) == 0) {
+						else if(toRead.equals("false")) {
+							allowSInCannotGet = false;
+						}
+						else if(Integer.parseInt(toRead) == 1) {
+							allowSInCannotGet = true;
+						}
+						else if(Integer.parseInt(toRead) == 0) {
 							allowSInCannotGet = false;
 						}
 						else {
 							in.close();
-							throw new IOException(errMessage);
+							throw new BooleanSettingParseException(toRead, lineNumber,
+									BooleanSetting.ALLOW_S);
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new BooleanSettingParseException(toRead, lineNumber,
+								BooleanSetting.ALLOW_S, e);
 					}
 				}
-				else if(next.equals("players")) {
-					errMessage = toRead + " is not a valid value for " +
-							"\"Number of Players\" setting. Please provide " +
-							"an integer between 2 and 8.";
-					
+				else if(next.equals("players")) {					
 					try {
 						numPlayers = Integer.parseInt(toRead);
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new IntegerSettingParseException(toRead, lineNumber,
+								0, 8, IntegerSetting.NUM_PLAYERS, e);
 					}
 					
 					if(numPlayers < 2 || numPlayers > 8) {
 						in.close();
-						throw new IOException(errMessage);
+						throw new IntegerSettingParseException(toRead, lineNumber,
+								0, 8, IntegerSetting.NUM_PLAYERS);
 					}
 				}
-				else if(next.equals("tier chances")) {
-					errMessage = "Custom tier chances are not valid.";
-					
+				else if(next.equals("tier chances")) {				
 					if(currentLine.length != 8) {
 						in.close();
-						throw new IOException(errMessage + " Please provide " +
-								"exactly 8 values, comma-separated");
+						throw new ListSettingParseException(Arrays.toString(currentLine),
+								lineNumber, 8, 100, ListSetting.TIER_CHANCES);
 					}
 					
 					int sum = 0;
@@ -301,27 +299,32 @@ public class TierList {
 					try {
 						for(int at = 0; at < 8; at++) {
 							tierChances[at] = Integer.parseInt(currentLine[at]);
+							
+							if(tierChances[at] < 0 || tierChances[at] > 100) {
+								in.close();
+								throw new ListSettingParseException(Arrays.toString(currentLine),
+										lineNumber, 8, 100, ListSetting.TIER_CHANCES);
+							}
+							
 							sum += tierChances[at];
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage + " One of the " +
-								"values is not a number.");
+						throw new ListSettingParseException(Arrays.toString(currentLine),
+								lineNumber, 8, 100, ListSetting.TIER_CHANCES, e);
 					}
 					
 					if(sum != 100) {
 						in.close();
-						throw new IOException(errMessage + " The values " +
-								"must add up to 100.");
+						throw new ListSettingParseException(Arrays.toString(currentLine),
+								lineNumber, 8, 100, ListSetting.TIER_CHANCES);
 					}
 				}
-				else if(next.equals("bump chances")) {
-					errMessage = "Custom bump chances are not valid.";
-					
+				else if(next.equals("bump chances")) {					
 					if(currentLine.length != 3) {
 						in.close();
-						throw new IOException(errMessage + " Please provide " +
-								"exactly 3 values, comma-separated");
+						throw new ListSettingParseException(Arrays.toString(currentLine),
+								lineNumber, 8, 100, ListSetting.BUMP_CHANCES);
 					}
 					
 					int sum = 0;
@@ -329,18 +332,25 @@ public class TierList {
 					try {
 						for(int at = 0; at < 3; at++) {
 							bumpChances[at] = Integer.parseInt(currentLine[at]);
+							
+							if(tierChances[at] < 0 || tierChances[at] > 100) {
+								in.close();
+								throw new ListSettingParseException(Arrays.toString(currentLine),
+										lineNumber, 8, 100, ListSetting.TIER_CHANCES);
+							}
+							
 							sum += bumpChances[at];
 						}
 					} catch(NumberFormatException e) {
 						in.close();
-						throw new IOException(errMessage + " One of the " +
-								"values is not a number.");
+						throw new ListSettingParseException(Arrays.toString(currentLine),
+								lineNumber, 8, 100, ListSetting.BUMP_CHANCES, e);
 					}
 					
 					if(sum != 100) {
 						in.close();
-						throw new IOException(errMessage + " The values " +
-								"must add up to 100.");
+						throw new ListSettingParseException(Arrays.toString(currentLine),
+								lineNumber, 8, 100, ListSetting.BUMP_CHANCES);
 					}
 				}
 			}
@@ -580,7 +590,7 @@ public class TierList {
 		return retString.toString();
 	}
 	
-	public Matchup generateBattle(Settings settings, boolean skipping) {
+	public Matchup generateBattle(Settings settings, boolean skipping) throws NoValidFightersException {
 		//initialize an empty matchup
 		Matchup matchup = new Matchup(settings.getNumPlayers());
 		
@@ -590,8 +600,7 @@ public class TierList {
 			playerValidCharacters.add(getValidCharacters(playerAt, settings));
 			
 			if(playerValidCharacters.get(playerAt).size() == 0) {
-				//TODO: custom exception for this
-				return null;
+				throw new NoValidFightersException(playerAt, false);
 			}
 		}
 		
@@ -673,10 +682,7 @@ public class TierList {
 			}
 			
 			if(inTierOptions.size() == 0) {
-				Util.log("Player " + (playerAt + 1) + " has no valid " +
-						"options within tier range.");
-				
-				return null;
+				throw new NoValidFightersException(playerAt, true);
 			}
 			
 			Util.log("Player " + (playerAt + 1) + " has " + inTierOptions.size() +
