@@ -149,8 +149,6 @@ public class MainWindow {
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
 		
-		Util.initDebug();
-		
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		
 		//will be used to set up a majority of the UI
@@ -168,9 +166,6 @@ public class MainWindow {
 		switchPanel.setLayout(new BoxLayout(switchPanel, BoxLayout.Y_AXIS));
 		switchPanel.setToolTipText("Select 2 fighters and hit the switch button, " +
 				"and they will switch fighters.");
-		
-		//TODO: initialize the SwitchManager, which should act as an
-		//ActionListener too?
 		
 		player1Box = new JCheckBox("P1");
 		player1Box.addActionListener(new SwitchActionListener(1));

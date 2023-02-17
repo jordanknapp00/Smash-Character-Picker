@@ -24,7 +24,7 @@ public final class Util {
 	 * and <code>error</code> methods, any class in the program can print
 	 * debug messages.
 	 */
-	public static JTextArea debug;
+	public static JTextArea debug = new JTextArea();
 	
 	/**
 	 * The maximum size of the "Cannot Get" queue. Value is used in both
@@ -240,19 +240,6 @@ public final class Util {
 	}
 	
 	/**
-	 * This simple method only needs to be called once, it just initializes the
-	 * debug <code>JTextArea</code> and sets it so it cannot be edited.
-	 * <br><br>
-	 * This method will be called in the constructor of the
-	 * <code>MainWindow</code> class, so there's no reason to ever call it at
-	 * any other point in the program's execution.
-	 */
-	public static void initDebug() {
-		debug = new JTextArea();
-		debug.setEditable(false);
-	}
-	
-	/**
 	 * This method adds a new debug line to the debug log. "[DEBUG]:" will be
 	 * appended to the front of the message, and a newline will automatically be
 	 * appended to the end, so there is no need to add that when calling the
@@ -261,9 +248,9 @@ public final class Util {
 	 * 
 	 * @param log	The message to be logged.
 	 */
-	public static void log(String log) {
-		System.out.println("[DEBUG]:\t" + log);
-		debug.append("[DEBUG]:\t" + log + "\n");
+	public static void log(String log) {		
+		System.out.println("[DEBUG]:\t\t" + log);
+		debug.append("[DEBUG]:\t\t" + log + "\n");
 	}
 	
 	/**
@@ -274,17 +261,10 @@ public final class Util {
 	 * @param err	A <code>String</code> representing the error message.
 	 */
 	public static void error(String err) {
-		int hourVal = ZonedDateTime.now().getHour();
-		int minVal = ZonedDateTime.now().getMinute();
-		int secVal = ZonedDateTime.now().getSecond();
-		//do this so we can ensure hour/min/sec are always 2 digits
-		DecimalFormat formatter = new DecimalFormat("00");
-		String hour = formatter.format(hourVal);
-		String min = formatter.format(minVal);
-		String sec = formatter.format(secVal);
+		String timestamp = generateTimestamp();
 		
-		System.err.println("[" + hour + ":" + min + ":" + sec + "]:\t" + err);
-		debug.append("[" + hour + ":" + min + ":" + sec + "]:\t" + err + "\n");
+		System.err.println(timestamp + err);
+		debug.append(timestamp + err + "\n");
 	}
 	
 	/**
@@ -295,17 +275,30 @@ public final class Util {
 	 * @param err	The <code>Exception</code> that occurred.
 	 */
 	public static void error(Exception err) {
+		String timestamp = generateTimestamp();
+		
+		System.err.println(timestamp + err);
+		debug.append(timestamp + err + "\n");
+	}
+	
+	/**
+	 * Generates a timestamp with the following format:<br>
+	 * "<code>level</code> [HH:MM:SS]:<code>(tab)</code>"
+	 * 
+	 * @return		A timestamp with the format described above.
+	 */
+	private static String generateTimestamp() {
 		int hourVal = ZonedDateTime.now().getHour();
 		int minVal = ZonedDateTime.now().getMinute();
 		int secVal = ZonedDateTime.now().getSecond();
+		
 		//do this so we can ensure hour/min/sec are always 2 digits
 		DecimalFormat formatter = new DecimalFormat("00");
 		String hour = formatter.format(hourVal);
 		String min = formatter.format(minVal);
 		String sec = formatter.format(secVal);
 		
-		System.err.println("[" + hour + ":" + min + ":" + sec + "]:\t" + err);
-		debug.append("[" + hour + ":" + min + ":" + sec + "]:\t" + err + "\n");
+		return "[" + hour + ":" + min + ":" + sec + "]:\t";
 	}
 	
 	/**
