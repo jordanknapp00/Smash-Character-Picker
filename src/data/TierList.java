@@ -291,10 +291,8 @@ public class TierList {
 					if(currentLine.length != 8) {
 						in.close();
 						throw new ListSettingParseException(Arrays.toString(currentLine),
-								lineNumber, 8, 100, ListSetting.TIER_CHANCES);
+								lineNumber, 8, ListSetting.TIER_CHANCES);
 					}
-					
-					int sum = 0;
 					
 					try {
 						for(int at = 0; at < 8; at++) {
@@ -303,31 +301,21 @@ public class TierList {
 							if(tierChances[at] < 0 || tierChances[at] > 100) {
 								in.close();
 								throw new ListSettingParseException(Arrays.toString(currentLine),
-										lineNumber, 8, 100, ListSetting.TIER_CHANCES);
+										lineNumber, 8, ListSetting.TIER_CHANCES);
 							}
-							
-							sum += tierChances[at];
 						}
 					} catch(NumberFormatException e) {
 						in.close();
 						throw new ListSettingParseException(Arrays.toString(currentLine),
-								lineNumber, 8, 100, ListSetting.TIER_CHANCES, e);
-					}
-					
-					if(sum != 100) {
-						in.close();
-						throw new ListSettingParseException(Arrays.toString(currentLine),
-								lineNumber, 8, 100, ListSetting.TIER_CHANCES);
+								lineNumber, 8, ListSetting.TIER_CHANCES, e);
 					}
 				}
 				else if(next.equals("bump chances")) {					
 					if(currentLine.length != 3) {
 						in.close();
 						throw new ListSettingParseException(Arrays.toString(currentLine),
-								lineNumber, 8, 100, ListSetting.BUMP_CHANCES);
+								lineNumber, 8, ListSetting.BUMP_CHANCES);
 					}
-					
-					int sum = 0;
 					
 					try {
 						for(int at = 0; at < 3; at++) {
@@ -336,21 +324,13 @@ public class TierList {
 							if(tierChances[at] < 0 || tierChances[at] > 100) {
 								in.close();
 								throw new ListSettingParseException(Arrays.toString(currentLine),
-										lineNumber, 8, 100, ListSetting.TIER_CHANCES);
+										lineNumber, 8, ListSetting.TIER_CHANCES);
 							}
-							
-							sum += bumpChances[at];
 						}
 					} catch(NumberFormatException e) {
 						in.close();
 						throw new ListSettingParseException(Arrays.toString(currentLine),
-								lineNumber, 8, 100, ListSetting.BUMP_CHANCES, e);
-					}
-					
-					if(sum != 100) {
-						in.close();
-						throw new ListSettingParseException(Arrays.toString(currentLine),
-								lineNumber, 8, 100, ListSetting.BUMP_CHANCES);
+								lineNumber, 8, ListSetting.BUMP_CHANCES, e);
 					}
 				}
 			}

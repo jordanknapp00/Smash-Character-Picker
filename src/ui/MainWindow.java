@@ -137,6 +137,9 @@ public class MainWindow {
 	private List<Matchup> previousMatchups;
 	private int[] switchVals;
 	
+	private int[] tierChances;
+	private int[] bumpChances;
+	
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
@@ -578,6 +581,85 @@ public class MainWindow {
 		tierChanceBottomPanel = new JPanel(new GridBagLayout());
 		
 		applyButton = new JButton("Apply tier chance settings");
+		applyButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int tierSum = (int) SSTierSpinner.getValue() +
+						(int) STierSpinner.getValue() +
+						(int) ATierSpinner.getValue() + 
+						(int) BTierSpinner.getValue() +
+						(int) CTierSpinner.getValue() +
+						(int) DTierSpinner.getValue() +
+						(int) ETierSpinner.getValue() +
+						(int) FTierSpinner.getValue();
+				
+				int bumpSum = (int) bump0Spinner.getValue() +
+						(int) bump1Spinner.getValue() +
+						(int) bump2Spinner.getValue();
+				
+				//pop up a message based on what's right and what's wrong
+				if(tierSum != 100 && bumpSum != 100) {
+					JOptionPane.showMessageDialog(null, "Neither the custom " +
+							"tier or bump chances add up to 100. They add " +
+							"up to " + tierSum + " and " + bumpSum + ", " +
+							"respectively.", "Smash Character Picker",
+							JOptionPane.ERROR_MESSAGE);
+				}
+				else if(tierSum != 100) {
+					JOptionPane.showMessageDialog(null, "The custom tier " +
+							"chances do not add up to 100, so they will not " +
+							"be applied. They currently add to " + tierSum +
+							". The bump chances are valid and will be applied.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+				}
+				else if(bumpSum != 100) {
+					JOptionPane.showMessageDialog(null, "The custom bump " +
+							"chances to not add up to 100, so they will not " +
+							"be applied. They currently add to " + bumpSum +
+							". The tier chances are valid and will be applied.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "The custom tier " +
+							"and bump chances are valid, and will be applied.",
+							"Smash Character Picker", JOptionPane.INFORMATION_MESSAGE);
+				}
+				
+				//then, set the values appropriately. either change the UI
+				//back to the old values or update our internal values to
+				//the new values
+				if(tierSum != 100) {
+					SSTierSpinner.setValue(tierChances[0]);
+					STierSpinner.setValue(tierChances[1]);
+					ATierSpinner.setValue(tierChances[2]);
+					BTierSpinner.setValue(tierChances[3]);
+					CTierSpinner.setValue(tierChances[4]);
+					DTierSpinner.setValue(tierChances[5]);
+					ETierSpinner.setValue(tierChances[6]);
+					FTierSpinner.setValue(tierChances[7]);
+				}
+				else {
+					tierChances[0] = (int) SSTierSpinner.getValue();
+					tierChances[1] = (int) STierSpinner.getValue();
+					tierChances[2] = (int) ATierSpinner.getValue();
+					tierChances[3] = (int) BTierSpinner.getValue();
+					tierChances[4] = (int) CTierSpinner.getValue();
+					tierChances[5] = (int) DTierSpinner.getValue();
+					tierChances[6] = (int) ETierSpinner.getValue();
+					tierChances[7] = (int) FTierSpinner.getValue();
+				}
+				
+				if(bumpSum != 100) {
+					bump0Spinner.setValue(bumpChances[0]);
+					bump1Spinner.setValue(bumpChances[1]);
+					bump2Spinner.setValue(bumpChances[2]);
+				}
+				else {
+					bumpChances[0] = (int) bump0Spinner.getValue();
+					bumpChances[1] = (int) bump1Spinner.getValue();
+					bumpChances[2] = (int) bump2Spinner.getValue();
+				}
+			}
+		});
 		
 		bumpChanceLabel = new JLabel("Chances of bumping up tiers:");
 		bump2 = new JLabel(" 2 tiers");
@@ -792,6 +874,9 @@ public class MainWindow {
 		previousMatchups = new ArrayList<Matchup>();
 		switchVals = new int[2];
 		
+		tierChances = new int[] {10, 20, 25, 25, 20, 0, 0, 0};
+		bumpChances = new int[] {50, 25, 25};
+		
 		frame.setVisible(true);
 		
 		//TODO: attempt to load tier list
@@ -802,22 +887,6 @@ public class MainWindow {
 	 * 			settings selected in the UI.
 	 */
 	private Settings getSettings() {
-		int[] tierChances = new int[8];
-		int[] bumpChances = new int[3];
-		
-		tierChances[0] = (int) SSTierSpinner.getValue();
-		tierChances[1] = (int) STierSpinner.getValue();
-		tierChances[2] = (int) ATierSpinner.getValue();
-		tierChances[3] = (int) BTierSpinner.getValue();
-		tierChances[4] = (int) CTierSpinner.getValue();
-		tierChances[5] = (int) DTierSpinner.getValue();
-		tierChances[6] = (int) ETierSpinner.getValue();
-		tierChances[7] = (int) FTierSpinner.getValue();
-		
-		bumpChances[0] = (int) bump0Spinner.getValue();
-		bumpChances[1] = (int) bump1Spinner.getValue();
-		bumpChances[2] = (int) bump2Spinner.getValue();
-		
 		return new Settings((int) numPlayersSpinner.getValue(),
 				tierChances, bumpChances,
 				(int) cannotGetSizeSpinner.getValue(),
