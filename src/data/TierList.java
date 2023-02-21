@@ -62,6 +62,8 @@ public class TierList {
 	private Queue<Fighter> cannotGet;
 	private List<Queue<Fighter>> individualCannotGet;
 	
+	private int[] numBattlesPerPlayer;
+	
 	/**
 	 * Constructs an empty <code>TierList</code> with the following default
 	 * parameters:
@@ -101,6 +103,8 @@ public class TierList {
 			
 			individualCannotGet.add(new ArrayDeque<Fighter>());
 		}
+		
+		numBattlesPerPlayer = new int[] {0, 0, 0, 0, 0, 0, 0, 0};
 	}
 	
 	/**
@@ -339,6 +343,17 @@ public class TierList {
 		}
 		
 		in.close();
+		
+		//we want to fill out the number of battles per player. we keep it in
+		//an array as part of the TierList class so it doesn't need to be
+		//recalculated every time a battle is generated
+		for(List<Fighter> tierAt: tierList) {
+			for(Fighter fighterAt: tierAt) {
+				for(int playerAt = 0; playerAt < 8; playerAt++) {
+					numBattlesPerPlayer[playerAt] += fighterAt.getPlayerBattles(playerAt);
+				}
+			}
+		}
 		
 		return new Settings(numPlayers, tierChances, bumpChances,
 				cannotGetSize, allowSInCannotGet, allowSSInCannotGet);
@@ -635,8 +650,12 @@ public class TierList {
 				int tierOfChar = fighterAt.getTier();
 				
 				//we need to re-include some kind of weighting for the
-				//number of times a player has gotten a fighter
-				int timesToAdd = -2 * fighterAt.getPlayerBattles(playerAt);
+				//number of times a player has gotten a fighter. do nothing
+				//if we'd be dividing by zero
+				int timesToAdd = tierOfChar;
+				if(numBattlesPerPlayer[playerAt] != 0) {
+					timesToAdd *= 1 - (fighterAt.getPlayerBattles(playerAt) / numBattlesPerPlayer[playerAt]);
+				}
 				
 				//and now weight based on bump chances. this is also where
 				//we skip any fighter that's not in the tier range
@@ -757,12 +776,15 @@ public class TierList {
 			//start with the chance of getting the tier of that fighter
 			int toAppear = settings.getTierChance(Util.subTierToTier(fighterAt.getTier()));
 			
-			//subtract by the number of times this player has already gotten
-			//this fighter, multiplied by 2. so if there's a 25% chance of
-			//getting this tier, but you've already gotten this fighter 3
-			//times, it's basically as if this specific fighter has a 19%
-			//chance for the tier, while every other one has 25%
-			toAppear -= fighterAt.getPlayerBattles(player);
+			//multiply toAppear by the ratio of times this player has gotten
+			//this fighter to the total battles they've participated in.
+			//well, inverse of the ratio. if a player has gotten Link in 10
+			//of 100 battles, multiply ratio by .9 -- if we multiply by .1,
+			//then getting the fighter more actually increases chances.
+			//of course, we do nothing if we'd be dividing by zero
+			if(numBattlesPerPlayer[player] != 0) {
+				toAppear *= 1 - (fighterAt.getPlayerBattles(player) / numBattlesPerPlayer[player]);
+			}
 			
 			//if it's below 0, normalize to 1
 			if(toAppear <= 0) {
