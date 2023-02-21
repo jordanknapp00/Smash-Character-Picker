@@ -141,6 +141,8 @@ public class MainWindow {
 	private int[] tierChances;
 	private int[] bumpChances;
 	
+	private DebugWindow dbw;
+	
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
@@ -466,7 +468,11 @@ public class MainWindow {
 		});
 		
 		debugButton = new JButton("Debug");
-		//TODO: add action listener
+		debugButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dbw.setVisible(true);
+			}
+		});
 		
 		numPlayersLabel = new JLabel("Number of players: ");
 		SpinnerNumberModel model = new SpinnerNumberModel(2, 2, 8, 1);
@@ -867,6 +873,8 @@ public class MainWindow {
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
 		
 		//TODO: add window listener for stuff like saving stats
+		
+		dbw = new DebugWindow(frame.getWidth(), frame.getHeight(), frame.getX(), frame.getY());
 		
 		Util.log("Finished initializing MainWindow UI");
 		
