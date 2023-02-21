@@ -3,8 +3,7 @@ package exception;
 /**
  * <code>TierListParseException</code> subclass representing invalid list
  * setting errors. This exception is used for any settings which are supposed
- * to take a list of a certain amount of numbers that sum to a certain
- * quantity.
+ * to take a list of a certain amount of numbers.
  * 
  * @author Jordan Knapp
  *
@@ -27,7 +26,6 @@ public class ListSettingParseException extends TierListParseException {
 	 * 						code exception occurred on.
 	 * @param numVals		The correct number of values that are supposed
 	 * 						to be given.
-	 * @param sum			The correct sum of the values.
 	 * @param setting		An enum representing the setting that was being
 	 * 						read when the exception was thrown. Used when
 	 * 						creating the error message.
@@ -36,8 +34,8 @@ public class ListSettingParseException extends TierListParseException {
 	 * 						<code>NumberFormatException</code>.
 	 */
 	public ListSettingParseException(String badVal, int lineNumber, int numVals,
-			int sum, ListSetting setting, Throwable cause) {
-		super(constructErrorMessage(badVal, lineNumber, numVals, sum, setting), cause);
+			ListSetting setting, Throwable cause) {
+		super(constructErrorMessage(badVal, lineNumber, numVals, setting), cause);
 	}
 	
 	/**
@@ -49,18 +47,17 @@ public class ListSettingParseException extends TierListParseException {
 	 * 						code exception occurred on.
 	 * @param numVals		The correct number of values that are supposed
 	 * 						to be given.
-	 * @param sum			The correct sum of the values.
 	 * @param setting		An enum representing the setting that was being
 	 * 						read when the exception was thrown. Used when
 	 * 						creating the error message.
 	 */
 	public ListSettingParseException(String badVal, int lineNumber, int numVals,
-			int sum, ListSetting setting) {
-		super(constructErrorMessage(badVal, lineNumber, numVals, sum, setting));
+			ListSetting setting) {
+		super(constructErrorMessage(badVal, lineNumber, numVals, setting));
 	}
 	
 	private static String constructErrorMessage(String badVal, int lineNumber,
-			int numVals, int sum, ListSetting setting) {
+			int numVals, ListSetting setting) {
 		String settingText;
 		switch(setting) {
 		case TIER_CHANCES:
@@ -76,7 +73,7 @@ public class ListSettingParseException extends TierListParseException {
 		return "Line " + lineNumber + ": \"" + badVal +
 				"\" is invalid for setting \"" + settingText +
 				"\" -- a list of " + numVals + " comma-separated numbers " +
-				"adding to " + sum + " is required. Those numbers must be " +
-				"positive integers between 0 and 100.";
+				"is required. Those numbers must be positive integers " +
+				"between 0 and 100.";
 	}
 }

@@ -8,6 +8,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -137,6 +138,11 @@ public class MainWindow {
 	private List<Matchup> previousMatchups;
 	private int[] switchVals;
 	
+	private int[] tierChances;
+	private int[] bumpChances;
+	
+	private DebugWindow dbw;
+	
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
@@ -148,8 +154,6 @@ public class MainWindow {
 		results = new JTextArea();
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
-		
-		Util.initDebug();
 		
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		
@@ -168,9 +172,6 @@ public class MainWindow {
 		switchPanel.setLayout(new BoxLayout(switchPanel, BoxLayout.Y_AXIS));
 		switchPanel.setToolTipText("Select 2 fighters and hit the switch button, " +
 				"and they will switch fighters.");
-		
-		//TODO: initialize the SwitchManager, which should act as an
-		//ActionListener too?
 		
 		player1Box = new JCheckBox("P1");
 		player1Box.addActionListener(new SwitchActionListener(1));
@@ -467,7 +468,11 @@ public class MainWindow {
 		});
 		
 		debugButton = new JButton("Debug");
-		//TODO: add action listener
+		debugButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dbw.setVisible(true);
+			}
+		});
 		
 		numPlayersLabel = new JLabel("Number of players: ");
 		SpinnerNumberModel model = new SpinnerNumberModel(2, 2, 8, 1);
@@ -583,6 +588,85 @@ public class MainWindow {
 		tierChanceBottomPanel = new JPanel(new GridBagLayout());
 		
 		applyButton = new JButton("Apply tier chance settings");
+		applyButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int tierSum = (int) SSTierSpinner.getValue() +
+						(int) STierSpinner.getValue() +
+						(int) ATierSpinner.getValue() + 
+						(int) BTierSpinner.getValue() +
+						(int) CTierSpinner.getValue() +
+						(int) DTierSpinner.getValue() +
+						(int) ETierSpinner.getValue() +
+						(int) FTierSpinner.getValue();
+				
+				int bumpSum = (int) bump0Spinner.getValue() +
+						(int) bump1Spinner.getValue() +
+						(int) bump2Spinner.getValue();
+				
+				//pop up a message based on what's right and what's wrong
+				if(tierSum != 100 && bumpSum != 100) {
+					JOptionPane.showMessageDialog(null, "Neither the custom " +
+							"tier or bump chances add up to 100. They add " +
+							"up to " + tierSum + " and " + bumpSum + ", " +
+							"respectively.", "Smash Character Picker",
+							JOptionPane.ERROR_MESSAGE);
+				}
+				else if(tierSum != 100) {
+					JOptionPane.showMessageDialog(null, "The custom tier " +
+							"chances do not add up to 100, so they will not " +
+							"be applied. They currently add to " + tierSum +
+							". The bump chances are valid and will be applied.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+				}
+				else if(bumpSum != 100) {
+					JOptionPane.showMessageDialog(null, "The custom bump " +
+							"chances to not add up to 100, so they will not " +
+							"be applied. They currently add to " + bumpSum +
+							". The tier chances are valid and will be applied.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "The custom tier " +
+							"and bump chances are valid, and will be applied.",
+							"Smash Character Picker", JOptionPane.INFORMATION_MESSAGE);
+				}
+				
+				//then, set the values appropriately. either change the UI
+				//back to the old values or update our internal values to
+				//the new values
+				if(tierSum != 100) {
+					SSTierSpinner.setValue(tierChances[0]);
+					STierSpinner.setValue(tierChances[1]);
+					ATierSpinner.setValue(tierChances[2]);
+					BTierSpinner.setValue(tierChances[3]);
+					CTierSpinner.setValue(tierChances[4]);
+					DTierSpinner.setValue(tierChances[5]);
+					ETierSpinner.setValue(tierChances[6]);
+					FTierSpinner.setValue(tierChances[7]);
+				}
+				else {
+					tierChances[0] = (int) SSTierSpinner.getValue();
+					tierChances[1] = (int) STierSpinner.getValue();
+					tierChances[2] = (int) ATierSpinner.getValue();
+					tierChances[3] = (int) BTierSpinner.getValue();
+					tierChances[4] = (int) CTierSpinner.getValue();
+					tierChances[5] = (int) DTierSpinner.getValue();
+					tierChances[6] = (int) ETierSpinner.getValue();
+					tierChances[7] = (int) FTierSpinner.getValue();
+				}
+				
+				if(bumpSum != 100) {
+					bump0Spinner.setValue(bumpChances[0]);
+					bump1Spinner.setValue(bumpChances[1]);
+					bump2Spinner.setValue(bumpChances[2]);
+				}
+				else {
+					bumpChances[0] = (int) bump0Spinner.getValue();
+					bumpChances[1] = (int) bump1Spinner.getValue();
+					bumpChances[2] = (int) bump2Spinner.getValue();
+				}
+			}
+		});
 		
 		bumpChanceLabel = new JLabel("Chances of bumping up tiers:");
 		bump2 = new JLabel(" 2 tiers");
@@ -790,6 +874,8 @@ public class MainWindow {
 		
 		//TODO: add window listener for stuff like saving stats
 		
+		dbw = new DebugWindow(frame.getWidth(), frame.getHeight(), frame.getX(), frame.getY());
+		
 		Util.log("Finished initializing MainWindow UI");
 		
 		fileLoaded = false;
@@ -797,9 +883,71 @@ public class MainWindow {
 		previousMatchups = new ArrayList<Matchup>();
 		switchVals = new int[2];
 		
+		tierChances = new int[] {10, 20, 25, 25, 20, 0, 0, 0};
+		bumpChances = new int[] {50, 25, 25};
+		
 		frame.setVisible(true);
 		
-		//TODO: attempt to load tier list
+		//ask to load a "tier list.txt" file if it exists
+		File tierListMaybe = new File("tier list.txt");
+		if(tierListMaybe.exists() && JOptionPane.showConfirmDialog(null,
+				"Found 'tier list.txt' file.\nLoad it?", "Smash Character Picker",
+				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+			//same file loading code as the ActionListener above
+			Settings settings = null;
+			
+			try {
+				tierList = new TierList();
+				settings = tierList.loadFile(tierListMaybe);
+				fileLoaded = true;
+			} catch(FileNotFoundException e1) {
+				results.setText("File " + tierListMaybe.getName() +
+						" not found!");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			} catch(IOException e1) {
+				results.setText("IOException when reading " +
+						tierListMaybe.getName() + "!\n" +
+						"See the debug log for details.");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			} catch(TierListParseException e1) {
+				results.setText("TierListParseException when reading " +
+						tierListMaybe.getName() + "!\n" +
+						"See the debug log for details.");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			}
+			
+			//if file was loaded, update the UI
+			if(fileLoaded) {
+				Util.log("The following data was loaded as the tier list:\n" + tierList.toString());
+				
+				cannotGetSizeSpinner.setValue(settings.getCannotGetSize());
+				allowSSInCannotGet.setSelected(settings.ssAllowedInCannotGet());
+				allowSInCannotGet.setSelected(settings.sAllowedInCannotGet());
+				numPlayersSpinner.setValue(settings.getNumPlayers());
+				
+				SSTierSpinner.setValue(settings.getTierChance(0));
+				STierSpinner.setValue(settings.getTierChance(1));
+				ATierSpinner.setValue(settings.getTierChance(2));
+				BTierSpinner.setValue(settings.getTierChance(3));
+				CTierSpinner.setValue(settings.getTierChance(4));
+				DTierSpinner.setValue(settings.getTierChance(5));
+				ETierSpinner.setValue(settings.getTierChance(6));
+				FTierSpinner.setValue(settings.getTierChance(7));
+				
+				bump0Spinner.setValue(settings.getBumpChance(0));
+				bump1Spinner.setValue(settings.getBumpChance(1));
+				bump2Spinner.setValue(settings.getBumpChance(2));
+			}
+		}
 	}
 	
 	/**
@@ -807,22 +955,6 @@ public class MainWindow {
 	 * 			settings selected in the UI.
 	 */
 	private Settings getSettings() {
-		int[] tierChances = new int[8];
-		int[] bumpChances = new int[3];
-		
-		tierChances[0] = (int) SSTierSpinner.getValue();
-		tierChances[1] = (int) STierSpinner.getValue();
-		tierChances[2] = (int) ATierSpinner.getValue();
-		tierChances[3] = (int) BTierSpinner.getValue();
-		tierChances[4] = (int) CTierSpinner.getValue();
-		tierChances[5] = (int) DTierSpinner.getValue();
-		tierChances[6] = (int) ETierSpinner.getValue();
-		tierChances[7] = (int) FTierSpinner.getValue();
-		
-		bumpChances[0] = (int) bump0Spinner.getValue();
-		bumpChances[1] = (int) bump1Spinner.getValue();
-		bumpChances[2] = (int) bump2Spinner.getValue();
-		
 		return new Settings((int) numPlayersSpinner.getValue(),
 				tierChances, bumpChances,
 				(int) cannotGetSizeSpinner.getValue(),
