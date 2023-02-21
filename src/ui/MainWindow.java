@@ -8,6 +8,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -879,7 +880,66 @@ public class MainWindow {
 		
 		frame.setVisible(true);
 		
-		//TODO: attempt to load tier list
+		//ask to load a "tier list.txt" file if it exists
+		File tierListMaybe = new File("tier list.txt");
+		if(tierListMaybe.exists() && JOptionPane.showConfirmDialog(null,
+				"Found 'tier list.txt' file.\nLoad it?", "Smash Character Picker",
+				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+			//same file loading code as the ActionListener above
+			Settings settings = null;
+			
+			try {
+				tierList = new TierList();
+				settings = tierList.loadFile(tierListMaybe);
+				fileLoaded = true;
+			} catch(FileNotFoundException e1) {
+				results.setText("File " + tierListMaybe.getName() +
+						" not found!");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			} catch(IOException e1) {
+				results.setText("IOException when reading " +
+						tierListMaybe.getName() + "!\n" +
+						"See the debug log for details.");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			} catch(TierListParseException e1) {
+				results.setText("TierListParseException when reading " +
+						tierListMaybe.getName() + "!\n" +
+						"See the debug log for details.");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			}
+			
+			//if file was loaded, update the UI
+			if(fileLoaded) {
+				Util.log("The following data was loaded as the tier list:\n" + tierList.toString());
+				
+				cannotGetSizeSpinner.setValue(settings.getCannotGetSize());
+				allowSSInCannotGet.setSelected(settings.ssAllowedInCannotGet());
+				allowSInCannotGet.setSelected(settings.sAllowedInCannotGet());
+				numPlayersSpinner.setValue(settings.getNumPlayers());
+				
+				SSTierSpinner.setValue(settings.getTierChance(0));
+				STierSpinner.setValue(settings.getTierChance(1));
+				ATierSpinner.setValue(settings.getTierChance(2));
+				BTierSpinner.setValue(settings.getTierChance(3));
+				CTierSpinner.setValue(settings.getTierChance(4));
+				DTierSpinner.setValue(settings.getTierChance(5));
+				ETierSpinner.setValue(settings.getTierChance(6));
+				FTierSpinner.setValue(settings.getTierChance(7));
+				
+				bump0Spinner.setValue(settings.getBumpChance(0));
+				bump1Spinner.setValue(settings.getBumpChance(1));
+				bump2Spinner.setValue(settings.getBumpChance(2));
+			}
+		}
 	}
 	
 	/**
