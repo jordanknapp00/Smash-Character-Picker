@@ -274,132 +274,14 @@ public class MainWindow {
 		generateButton = new JButton("Generate");
 		generateButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!fileLoaded) {
-					JOptionPane.showMessageDialog(null, "You must load a tier list first!",
-							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
-					
-					return;
-				}
-				
-				double startTime = System.currentTimeMillis();
-				
-				numBattles++;
-				
-				Util.log("========== BEGINNING GENERATION OF BATTLE " + numBattles + " ==========");
-				
-				Matchup result = null;
-				Settings settings = getSettings();
-				int tries = 0;
-				do {
-					tries++;
-					Util.log("======= Try " + tries + " =======");
-					
-					try {
-						result = tierList.generateBattle(settings, false);
-					} catch(NoValidFightersException e1) {
-						Util.error(e1);
-						
-						//depending on whether this happened before or after
-						//generating a tier tells us whether we can continue
-						if(!e1.tierRangeSelected()) {
-							Util.log("With no valid fighters for a player, battle generation must halt.");
-							return;
-						}
-					}
-				} while(result == null && !previousMatchups.contains(result) && tries < 100);
-				
-				
-				Util.log("========== End battle generation process ==========");
-				
-				String resultString;
-				if(result == null) {
-					resultString = "No valid battles found after 100 tries.";
-				}
-				else {
-					previousMatchups.add(result);
-					resultString = "Battle #" + numBattles + ":\n" + result.toString();
-				}
-				
-				results.setText(resultString);
-				
-				//finally, enable all the switch stuff if this was the first battle
-				if(numBattles == 1) {
-					switchPanel.setEnabled(true);
-					player1Box.setEnabled(true);
-					player2Box.setEnabled(true);
-					player3Box.setEnabled(true);
-					player4Box.setEnabled(true);
-					player5Box.setEnabled(true);
-					player6Box.setEnabled(true);
-					player7Box.setEnabled(true);
-					player8Box.setEnabled(true);
-					switchButton.setEnabled(true);
-				}
-				
-				double delta = System.currentTimeMillis() - startTime;
-				Util.log("Generation of this battle took " + delta + "ms.");
+				generateBattle(false);
 			}
 		});
 		
 		skipButton = new JButton("Skip");
 		skipButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!fileLoaded) {
-					JOptionPane.showMessageDialog(null, "You must load a tier list first!",
-							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
-					
-					return;
-				}
-				
-				if(numBattles == 0) {
-					JOptionPane.showMessageDialog(null, "There must be a battle before " +
-							"you can skip.", "Smash Character Picker",
-							JOptionPane.ERROR_MESSAGE);
-					
-					return;
-				}
-				
-				double startTime = System.currentTimeMillis();
-				
-				Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");
-				
-				Matchup result = null;
-				Settings settings = getSettings();
-				int tries = 0;
-				do {
-					tries++;
-					Util.log("======= Try " + tries + " =======");
-					
-					try {
-						result = tierList.generateBattle(settings, true);
-					} catch(NoValidFightersException e1) {
-						Util.error(e1);
-						
-						//depending on whether this happened before or after
-						//generating a tier tells us whether we can continue
-						if(!e1.tierRangeSelected()) {
-							Util.log("With no valid fighters for a player, battle generation must halt.");
-							return;
-						}
-					}
-				} while(result == null && !previousMatchups.contains(result) && tries < 100);
-				
-				Util.log("========== End battle generation process ==========");
-				
-				String resultString;
-				if(tries == 100) {
-					resultString = "No valid battles found after 100 tries.";
-				}
-				else {
-					previousMatchups.remove(previousMatchups.size() - 1);
-					previousMatchups.add(result);
-					resultString = "Battle #" + numBattles + ":\n" + result.toString();
-				}
-				
-				results.setText(resultString);
-				
-				double delta = System.currentTimeMillis() - startTime;
-				Util.log("Generation of this battle took " + delta + "ms.");
+				generateBattle(true);
 			}
 		});
 		
@@ -955,17 +837,93 @@ public class MainWindow {
 		}
 	}
 	
-	/**
-	 * @return	A <code>Settings</code> object representing the current
-	 * 			settings selected in the UI.
-	 */
-	private Settings getSettings() {
-		return new Settings((int) numPlayersSpinner.getValue(),
+	private void generateBattle(boolean skipping) {
+		if(!fileLoaded) {
+			JOptionPane.showMessageDialog(null, "You must load a tier " +
+					"list first!", "Smash Character Picker",
+					JOptionPane.ERROR_MESSAGE);
+			
+			return;
+		}
+		
+		//can't skip if there are no battles
+		if(skipping && numBattles == 0) {
+			JOptionPane.showMessageDialog(null, "You must generate a battle " +
+					"before you can skip.", "Smash Character Picker",
+					JOptionPane.ERROR_MESSAGE);
+			
+			return;
+		}
+		
+		double startTime = System.currentTimeMillis();
+		
+		if(!skipping) {
+			numBattles++;
+			Util.log("========== BEGINNING GENERATION OF BATTLE \" + numBattles + \" ==========");
+		}
+		else {
+			Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");
+		}
+		
+		Matchup result = null;
+		Settings settings = new Settings((int) numPlayersSpinner.getValue(),
 				tierChances, bumpChances,
 				(int) cannotGetSizeSpinner.getValue(),
 				allowSInCannotGet.isSelected(), allowSSInCannotGet.isSelected());
+		int tries = 0;
+		
+		do {
+			tries++;
+			Util.log("======= Try " + tries + " =======");
+			
+			try {
+				result = tierList.generateBattle(settings, skipping);
+			} catch(NoValidFightersException e) {
+				Util.error(e);
+				
+				//depending on whether this happened before or after
+				//generating a tier tells us whether we can continue
+				if(!e.tierRangeSelected()) {
+					Util.log("With no valid fighters for a player, battle " +
+							"generation must halt.");
+					
+					return;
+				}
+			}
+		} while(result == null && !previousMatchups.contains(result) && tries < 100);
+		
+		Util.log("========== End battle generation process ==========");
+		
+		String resultString;
+		if(tries == 100 || result == null) {
+			resultString = "No valid battles found after 100 tries.";
+		}
+		else {
+			previousMatchups.add(result);
+			resultString = "Battle #" + numBattles + ":\n" + result.toString();
+		}
+		
+		results.setText(resultString);
+		statsOutput.setText(result.getStatsOutput());
+		
+		//finally, enable all the stats stuff if that was the first battle
+		if(numBattles == 1) {
+			switchPanel.setEnabled(true);
+            player1Box.setEnabled(true);
+            player2Box.setEnabled(true);
+            player3Box.setEnabled(true);
+            player4Box.setEnabled(true);
+            player5Box.setEnabled(true);
+            player6Box.setEnabled(true);
+            player7Box.setEnabled(true);
+            player8Box.setEnabled(true);
+            switchButton.setEnabled(true); 
+		}
+		
+		double delta = System.currentTimeMillis() - startTime;
+		Util.log("Generation of this battle took " + delta + "ms.");
 	}
-	
+
 	private class SwitchActionListener implements ActionListener {
 		private int player;
 		private int indexSet;
