@@ -123,6 +123,7 @@ public class MainWindow {
 	private JCheckBox allowSInCannotGet;
 	
 	//stats panel components
+	private JTextArea statsOutput;
 	private JLabel playerLabel;
 	private JSpinner winnerSpinner;
 	private JButton pickWinnerButton;
@@ -154,6 +155,10 @@ public class MainWindow {
 		results = new JTextArea();
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
+		
+		statsOutput = new JTextArea();
+		statsOutput.setEditable(false);
+		statsOutput.setFont(statsOutput.getFont().deriveFont(18f));
 		
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		
@@ -776,7 +781,7 @@ public class MainWindow {
 		
 		statsTopPanel = new JPanel(new BorderLayout());
 		statsTopPanel.setBorder(BorderFactory.createTitledBorder("Statistics"));
-		//TODO: handle stats text area
+		statsTopPanel.add(statsOutput);
 		
 		//set up lower stats panel
 		statsBottomPanel = new JPanel(new GridBagLayout());

@@ -1,5 +1,8 @@
 package data;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 //TODO: add javadoc for stats once it's more fleshed out
 
 /**
@@ -64,8 +67,13 @@ public class Fighter {
 		return playerBattles[player];
 	}
 	
-	public double getPlayerWinrate(int player) {
-		return playerWins[player] / playerBattles[player];
+	public String getPlayerWinrate(int player) {
+		if(playerBattles[player] == 0) {
+			return "NaN%";
+		}
+		else {
+			return new BigDecimal((float) playerWins[player] / playerBattles[player]).setScale(2, RoundingMode.FLOOR).toString();
+		}
 	}
 	
 	public int getTotalWins() {
@@ -88,8 +96,13 @@ public class Fighter {
 		return sum;
 	}
 	
-	public int getTotalWinrate() {
-		return getTotalWins() / getTotalBattles();
+	public String getTotalWinrate() {
+		if(getTotalBattles() == 0) {
+			return "NaN%";
+		}
+		else {
+			return new BigDecimal((float) getTotalWins() / getTotalBattles()).setScale(2, RoundingMode.FLOOR).toString();
+		}
 	}
 
 }

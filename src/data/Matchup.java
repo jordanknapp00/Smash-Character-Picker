@@ -180,12 +180,28 @@ public class Matchup {
 	
 	@Override
 	public String toString() {
-		StringBuilder retString = new StringBuilder();
+		StringBuilder retString = new StringBuilder(120);
 		
 		for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
 			retString.append("Player " + (playerAt + 1) + " got " +
 					fighters[playerAt] + ", " +
 					Util.tierToString(fighters[playerAt].getTier()) + "\n");
+		}
+		
+		return retString.toString();
+	}
+	
+	public String getStatsOutput() {
+		StringBuilder retString = new StringBuilder(120);
+		retString.append("Stats for this battle:\n");
+		
+		for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
+			Fighter fighterAt = fighters[playerAt];
+			retString.append("P" + (playerAt + 1) + ": " + fighterAt.getPlayerWinrate(playerAt) +
+					" (" + fighterAt.getPlayerWins(playerAt) + "/" +
+					fighterAt.getPlayerBattles(playerAt) + "). Total: " +
+					fighterAt.getTotalWinrate() + " (" +
+					fighterAt.getTotalWins() + "/" + fighterAt.getTotalBattles() + ").\n");
 		}
 		
 		return retString.toString();
