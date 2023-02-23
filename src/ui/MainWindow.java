@@ -673,7 +673,29 @@ public class MainWindow {
 		winnerSpinner = new JSpinner(model);
 		
 		pickWinnerButton = new JButton("Select winner");
-		//TODO: add action listener
+		pickWinnerButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(numBattles == 0) {
+					JOptionPane.showMessageDialog(null, "There has to be " +
+							"a battle before there can be a winner!",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				Matchup last = previousMatchups.get(previousMatchups.size() - 1);
+				
+				try {
+					last.setWinner((int) winnerSpinner.getValue() - 1);
+				} catch(IndexOutOfBoundsException e1) {
+					JOptionPane.showMessageDialog(null, "There are not that many " +
+							"players in this battle.", "Smash Character Picker",
+							JOptionPane.ERROR_MESSAGE);
+				}
+				
+				statsOutput.setText(last.getStatsOutput());
+			}
+		});
 		
 		searchButton = new JButton("Search");
 		//TODO: add action listener

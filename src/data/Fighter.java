@@ -72,7 +72,7 @@ public class Fighter {
 			return "NaN%";
 		}
 		else {
-			return new BigDecimal((float) playerWins[player] / playerBattles[player]).setScale(2, RoundingMode.FLOOR).toString();
+			return new BigDecimal(((float) playerWins[player] / playerBattles[player]) * 100).setScale(2, RoundingMode.FLOOR).toString() + "%";
 		}
 	}
 	
@@ -101,8 +101,26 @@ public class Fighter {
 			return "NaN%";
 		}
 		else {
-			return new BigDecimal((float) getTotalWins() / getTotalBattles()).setScale(2, RoundingMode.FLOOR).toString();
+			return new BigDecimal(((float) getTotalWins() / getTotalBattles()) * 100).setScale(2, RoundingMode.FLOOR).toString() + "%";
 		}
+	}
+	
+	public void recordWin(int player) {
+		playerWins[player]++;
+		playerBattles[player]++;
+	}
+	
+	public void recordLoss(int player) {
+		playerBattles[player]++;
+	}
+	
+	public void removeWin(int player) {
+		playerWins[player]--;
+		playerBattles[player]--;
+	}
+	
+	public void removeLoss(int player) {
+		playerBattles[player]--;
 	}
 
 }
