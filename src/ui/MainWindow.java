@@ -37,6 +37,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import data.Fighter;
 import data.Matchup;
 import data.Settings;
 import data.TierList;
@@ -710,7 +711,26 @@ public class MainWindow {
 		});
 		
 		searchButton = new JButton("Search");
-		//TODO: add action listener
+		searchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String toSearch = (String) JOptionPane.showInputDialog(null,
+						"Enter fighter to search:", "Smash Character Picker",
+						JOptionPane.QUESTION_MESSAGE, null, null, null);
+				
+				if(toSearch == null) {
+					return;
+				}
+				
+				Fighter fighter = tierList.getFighter(toSearch);
+				
+				if(fighter == null) {
+					statsOutput.setText("Fighter " + toSearch + " not found!");
+					return;
+				}
+				
+				statsOutput.setText(fighter.getStatsData());
+			}
+		});
 		
 		sortButton = new JButton("Sort");
 		//TODO: add action listener

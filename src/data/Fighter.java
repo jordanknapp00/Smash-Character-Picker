@@ -131,5 +131,17 @@ public class Fighter {
 	public void removeLoss(int player) {
 		playerBattles[player]--;
 	}
+	
+	public String getStatsData() {
+		StringBuffer retString = new StringBuffer(225);
+		retString.append("Stats for " + name + ":\n");
+		
+		for(int at = 0; at < 8; at++) {
+			retString.append("Player " + (at + 1) + ": " + getPlayerWinrate(at) + " (" + getPlayerWins(at) + "/" + getPlayerBattles(at) + ")\n");
+		}
+		
+		retString.append("Overall: " + getTotalWinrate() + " (" + getTotalWins() + "/" + getTotalBattles() + ")");
+		return retString.toString();
+	}
 
 }
