@@ -863,4 +863,23 @@ public class TierList {
 		Util.log("Now, player " + (player1 + 1) + " cannot get " + individualCannotGet.get(player1));
 		Util.log("And player " + (player2 + 1) + " cannot get " + individualCannotGet.get(player2));
 	}
+	
+	public HashMap<String, double[]> getStatsMap() {
+		HashMap<String, double[]> retMap = new HashMap<String, double[]>();
+		
+		for(int at = 0; at < NUM_TIERS; at++) {
+			for(Fighter fighterAt: tierList.get(at)) {
+				double[] stats = new double[16];
+				
+				for(int playerAt = 0; playerAt < 8; playerAt++) {
+					stats[playerAt * 2] = fighterAt.getPlayerWins(playerAt);
+					stats[playerAt * 2 + 1] = fighterAt.getPlayerBattles(playerAt);
+				}
+				
+				retMap.put(fighterAt.getName(), stats);
+			}
+		}
+		
+		return retMap;
+	}
 }

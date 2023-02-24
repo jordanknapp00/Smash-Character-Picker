@@ -8,9 +8,13 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -218,6 +222,7 @@ public class MainWindow {
 				toSwap.swapFighters(p1, p2);
 				
 				results.setText("Battle #" + numBattles + ":\n" + toSwap);
+				statsOutput.setText(toSwap.getStatsOutput());
 				
 				//now deselect all after switching and reset switchVals
 				player1Box.setSelected(false);
@@ -795,7 +800,7 @@ public class MainWindow {
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
 		
-		//TODO: add window listener for stuff like saving stats
+		frame.addWindowListener(new MainWindowListener());
 		
 		dbw = new DebugWindow(frame.getWidth(), frame.getHeight(), frame.getX(), frame.getY());
 		
@@ -1010,6 +1015,57 @@ public class MainWindow {
 				
 				Util.log("Selected player " + player + " in index " + indexSet + " to switch.");
 			}
+		}
+	}
+	
+	private class MainWindowListener implements WindowListener {
+		public void windowOpened(WindowEvent e) {
+		}
+
+		public void windowClosing(WindowEvent e) {	
+			if(!fileLoaded) {
+				return;
+			}
+			
+			File statsFile = new File("smash stats.sel");
+			
+			if(!statsFile.exists()) {
+				try {
+					statsFile.createNewFile();
+				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(null, "IOException when " +
+							"saving stats! Could not create stats file.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					Util.error(e1);
+					return;
+				}
+			}
+			
+			try {
+				ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(statsFile));
+				oos.writeObject(tierList.getStatsMap());
+				oos.close();
+			} catch(IOException e1) {
+				JOptionPane.showMessageDialog(null, "IOException when " +
+						"saving stats!", "Smash Character Picker",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		}
+
+		public void windowClosed(WindowEvent e) {
+		}
+
+		public void windowIconified(WindowEvent e) {
+		}
+
+		public void windowDeiconified(WindowEvent e) {
+		}
+
+		public void windowActivated(WindowEvent e) {
+		}
+
+		public void windowDeactivated(WindowEvent e) {
 		}
 	}
 }
