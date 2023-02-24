@@ -327,6 +327,13 @@ public class MainWindow {
 					
 					tierList = null;
 					fileLoaded = false;
+				} catch(ClassNotFoundException e1) {
+					results.setText("ClassNotFoundException when reading " +
+							"stats data!\nSee the debug log for details.");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
 				}
 				
 				//if file was loaded, update the UI

@@ -35,6 +35,15 @@ public class Fighter {
 		}
 	}
 	
+	public Fighter(String name, int tier, double[] stats) {
+		this(name, tier);
+		
+		for(int at = 0; at < 8; at++) {
+			playerWins[at] = (int) stats[at * 2];
+			playerBattles[at] = (int) stats[at * 2 + 1];
+		}
+	}
+	
 	public String getName() {
 		return name;
 	}

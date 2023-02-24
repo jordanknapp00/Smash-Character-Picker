@@ -2,9 +2,11 @@ package data;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +66,8 @@ public class TierList {
 	
 	private int[] numBattlesPerPlayer;
 	
+	private HashMap<String, double[]> stats;
+	
 	/**
 	 * Constructs an empty <code>TierList</code> with the following default
 	 * parameters:
@@ -115,7 +119,7 @@ public class TierList {
 	 * @throws IOException				Thrown if the data in the file is
 	 * 									invalid in any way.
 	 */
-	public Settings loadFile(File file) throws FileNotFoundException, IOException, TierListParseException {
+	public Settings loadFile(File file) throws FileNotFoundException, IOException, TierListParseException, ClassNotFoundException {
 		//settings variables that will be used to instantiate the Settings
 		//object returned by this method, initialized with default values
 		int numPlayers = 2;
@@ -124,6 +128,9 @@ public class TierList {
 		int cannotGetSize = 10;
 		boolean allowSInCannotGet = false;
 		boolean allowSSInCannotGet = true;
+		
+		//try to load stats file first
+		stats = loadStats();
 		
 		//file structure is as follows:
 		//
@@ -385,7 +392,16 @@ public class TierList {
 				continue;
 			}
 			
-			Fighter newFighter = new Fighter(fighterAt, tier);
+			//if we have no stats file loaded or this fighter isn't present
+			//in the stats data, create a fighter with no stats data
+			Fighter newFighter;
+			if(stats == null || !stats.containsKey(fighterAt)) {
+				newFighter = new Fighter(fighterAt, tier);
+			}
+			else {
+				newFighter = new Fighter(fighterAt, tier, stats.get(fighterAt));
+			}
+			
 			addFighter(newFighter);
 		}
 	}
@@ -477,6 +493,22 @@ public class TierList {
 		lowercaseNames.put(toAdd.getName().toLowerCase(), toAdd);
 		
 		return true;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private HashMap<String, double[]> loadStats() throws IOException, ClassNotFoundException {
+		File statsFile = new File("smash stats.sel");
+		
+		//do nothing if the file doesn't exist
+		if(!statsFile.exists()) {
+			return null;
+		}
+		
+		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(statsFile));
+		HashMap<String, double[]> stats = (HashMap<String, double[]>) ois.readObject();
+		ois.close();
+		
+		return stats;
 	}
 	
 	/**
