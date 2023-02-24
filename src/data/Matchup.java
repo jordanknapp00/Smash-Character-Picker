@@ -230,6 +230,7 @@ public class Matchup {
 		}
 		
 		winnerSelected = true;
+		Util.log("Selected player " + (player + 1) + " as the winner.");
 	}
 
 }

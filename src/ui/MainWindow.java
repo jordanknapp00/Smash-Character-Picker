@@ -707,7 +707,14 @@ public class MainWindow {
 		//TODO: add action listener
 		
 		reloadButton = new JButton("⭯");
-		//TODO: add action listener
+		reloadButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(numBattles > 0) {
+					Matchup last = previousMatchups.get(previousMatchups.size() - 1);
+					statsOutput.setText(last.getStatsOutput());
+				}
+			}
+		});
 		
 		statsPanel = new JPanel(new GridBagLayout());
 		gc.gridx = 0;
