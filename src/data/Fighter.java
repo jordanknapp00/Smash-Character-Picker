@@ -3,6 +3,8 @@ package data;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import util.Util;
+
 //TODO: add javadoc for stats once it's more fleshed out
 
 /**
@@ -77,12 +79,7 @@ public class Fighter {
 	}
 	
 	public String getPlayerWinrate(int player) {
-		if(playerBattles[player] == 0) {
-			return "NaN%";
-		}
-		else {
-			return new BigDecimal(((float) playerWins[player] / playerBattles[player]) * 100).setScale(2, RoundingMode.FLOOR).toString() + "%";
-		}
+		return Util.printDouble(((float) playerWins[player] / playerBattles[player]) * 100) + "%";
 	}
 	
 	public int getTotalWins() {
@@ -106,12 +103,7 @@ public class Fighter {
 	}
 	
 	public String getTotalWinrate() {
-		if(getTotalBattles() == 0) {
-			return "NaN%";
-		}
-		else {
-			return new BigDecimal(((float) getTotalWins() / getTotalBattles()) * 100).setScale(2, RoundingMode.FLOOR).toString() + "%";
-		}
+		return Util.printDouble(((float) getTotalWins() / getTotalBattles()) * 100) + "%";
 	}
 	
 	public void recordWin(int player) {
@@ -137,10 +129,13 @@ public class Fighter {
 		retString.append("Stats for " + name + ":\n");
 		
 		for(int at = 0; at < 8; at++) {
-			retString.append("Player " + (at + 1) + ": " + getPlayerWinrate(at) + " (" + getPlayerWins(at) + "/" + getPlayerBattles(at) + ")\n");
+			retString.append("Player " + (at + 1) + ": " + getPlayerWinrate(at) + 
+					" (" + getPlayerWins(at) + "/" + getPlayerBattles(at) + ")\n");
 		}
 		
-		retString.append("Overall: " + getTotalWinrate() + " (" + getTotalWins() + "/" + getTotalBattles() + ")");
+		retString.append("Overall: " + getTotalWinrate() + " (" +
+				getTotalWins() + "/" + getTotalBattles() + ")");
+		
 		return retString.toString();
 	}
 

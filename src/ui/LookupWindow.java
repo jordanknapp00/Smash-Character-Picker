@@ -13,16 +13,18 @@ import java.util.Arrays;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import data.ProgramState;
 import picker.StatsManager;
 import util.Util;
 import data.ComparableArray;
 
-public class LookupWindow {
+public class LookupWindow extends JDialog {
+	
+	private static final long serialVersionUID = 1L;
 	
 	private JFrame frame;
 	private JPanel topPanel;
@@ -39,9 +41,6 @@ public class LookupWindow {
 	private JButton modifyButton;
 	
 	private int selectedOption;
-	
-	private ProgramState state;
-	private StatsManager statsManager;
 	
 	public LookupWindow(ProgramState state, StatsManager statsManager, MainWindow parent) {
 		frame = new JFrame("Smash Character Picker");

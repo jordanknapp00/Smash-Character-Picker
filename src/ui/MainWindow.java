@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -733,7 +734,18 @@ public class MainWindow {
 		});
 		
 		sortButton = new JButton("Sort");
-		//TODO: add action listener
+		sortButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String[] options = {"Fighters' overall win rate", "Players' overall win rate", 
+						"P1 win rate", "P2 win rate", "P3 win rate", "P4 win rate", 
+						"P5 win rate", "P6 win rate", "P7 win rate", "P8 win rate", 
+						"Total battles"};
+				String choice = (String) JOptionPane.showInputDialog(frame, "Sort by:", "Smash Character Picker",
+						JOptionPane.QUESTION_MESSAGE, null, options, "Fighters' overall win rate");
+				
+				int choiceVal = Arrays.asList(options).indexOf(choice);
+			}
+		});
 		
 		modButton = new JButton("Mod");
 		//TODO: add action listener
