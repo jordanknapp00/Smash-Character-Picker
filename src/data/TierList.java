@@ -882,4 +882,19 @@ public class TierList {
 		
 		return retMap;
 	}
+	
+	public ComparableArray[] getLookupResults(int lookupType) {
+		ComparableArray[] results = new ComparableArray[numFighters()];
+		
+		int indexAt = 0;
+		for(int at = 0; at < NUM_TIERS; at++) {
+			for(Fighter fighterAt: tierList.get(at)) {
+				results[indexAt] = new ComparableArray(fighterAt, lookupType);
+				indexAt++;
+			}
+		}
+		
+		Arrays.sort(results);
+		return results;
+	}
 }

@@ -38,6 +38,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import data.ComparableArray;
 import data.Fighter;
 import data.Matchup;
 import data.Settings;
@@ -744,6 +745,18 @@ public class MainWindow {
 						JOptionPane.QUESTION_MESSAGE, null, options, "Fighters' overall win rate");
 				
 				int choiceVal = Arrays.asList(options).indexOf(choice);
+				
+				if(choiceVal == 1) {
+					//
+				}
+				else {
+					ComparableArray[] lookupResult = tierList.getLookupResults(choiceVal);
+					
+					statsOutput.setText("");
+					for(ComparableArray at: lookupResult) {
+						statsOutput.append(at.toString() + "\n");
+					}
+				}
 			}
 		});
 		

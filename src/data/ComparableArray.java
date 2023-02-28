@@ -37,6 +37,16 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	private int battles;
 	private double winrate;
 	
+	public ComparableArray(Fighter fighter, int compareType) {
+		//basically, converting an index from the array defined in the sort
+		//button's action listener to a value of CompareType. the first option
+		//is fighter's overall winrate, but the second option is player's
+		//overall winrate, which isn't handled here. so knowing that 1 will
+		//never be passed in, any other value can be subtracted by 1 to get
+		//the enum value
+		this(fighter, compareType == 0 ? CompareType.FIGHTER_OVERALL_WINRATE : CompareType.values()[compareType - 1]);
+	}
+	
 	public ComparableArray(Fighter fighter, CompareType compareType) {
 		this.fighter = fighter;
 		this.compareType = compareType;
@@ -85,37 +95,34 @@ public class ComparableArray implements Comparable<ComparableArray> {
 			battles = fighter.getPlayerBattles(playerToGet);
 		}
 		
-		winrate = battles / wins;
+		if(wins != 0) {
+			winrate = battles / wins;
+		}
+		else {
+			winrate = -1;
+		}
 	}
 	
 	/**
 	 * @return	The entry in the first column, the name of the character
 	 * 			represented in this row.
 	 */
-	public String getName() {
+	private String getName() {
 		return fighter.getName();
-	}
-	
-	/**
-	 * @return	The entry in the second column, the number of wins this character
-	 * 			has.
-	 */
-	public int getWins() {
-		return wins;
 	}
 	
 	/**
 	 * @return	The entry in the third column, the number of battles this character
 	 * 			has participated in.
 	 */
-	public int getBattles() {
+	private int getBattles() {
 		return battles;
 	}
 	
 	/**
 	 * @return	The winrate for this character, or <code>wins</code>/<code>battles</code>.
 	 */
-	public double getWinrate() {
+	private double getWinrate() {
 		return winrate;
 	}
 
