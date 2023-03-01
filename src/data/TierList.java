@@ -2,9 +2,11 @@ package data;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +66,8 @@ public class TierList {
 	
 	private int[] numBattlesPerPlayer;
 	
+	private HashMap<String, double[]> stats;
+	
 	/**
 	 * Constructs an empty <code>TierList</code> with the following default
 	 * parameters:
@@ -115,7 +119,7 @@ public class TierList {
 	 * @throws IOException				Thrown if the data in the file is
 	 * 									invalid in any way.
 	 */
-	public Settings loadFile(File file) throws FileNotFoundException, IOException, TierListParseException {
+	public Settings loadFile(File file) throws FileNotFoundException, IOException, TierListParseException, ClassNotFoundException {
 		//settings variables that will be used to instantiate the Settings
 		//object returned by this method, initialized with default values
 		int numPlayers = 2;
@@ -124,6 +128,9 @@ public class TierList {
 		int cannotGetSize = 10;
 		boolean allowSInCannotGet = false;
 		boolean allowSSInCannotGet = true;
+		
+		//try to load stats file first
+		stats = loadStats();
 		
 		//file structure is as follows:
 		//
@@ -385,7 +392,16 @@ public class TierList {
 				continue;
 			}
 			
-			Fighter newFighter = new Fighter(fighterAt, tier);
+			//if we have no stats file loaded or this fighter isn't present
+			//in the stats data, create a fighter with no stats data
+			Fighter newFighter;
+			if(stats == null || !stats.containsKey(fighterAt)) {
+				newFighter = new Fighter(fighterAt, tier);
+			}
+			else {
+				newFighter = new Fighter(fighterAt, tier, stats.get(fighterAt));
+			}
+			
 			addFighter(newFighter);
 		}
 	}
@@ -477,6 +493,22 @@ public class TierList {
 		lowercaseNames.put(toAdd.getName().toLowerCase(), toAdd);
 		
 		return true;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private HashMap<String, double[]> loadStats() throws IOException, ClassNotFoundException {
+		File statsFile = new File("smash stats.sel");
+		
+		//do nothing if the file doesn't exist
+		if(!statsFile.exists()) {
+			return null;
+		}
+		
+		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(statsFile));
+		HashMap<String, double[]> stats = (HashMap<String, double[]>) ois.readObject();
+		ois.close();
+		
+		return stats;
 	}
 	
 	/**
@@ -830,5 +862,65 @@ public class TierList {
 		Util.log("Swapped player " + (player1 + 1) + " and " + (player2 + 1) + ".");
 		Util.log("Now, player " + (player1 + 1) + " cannot get " + individualCannotGet.get(player1));
 		Util.log("And player " + (player2 + 1) + " cannot get " + individualCannotGet.get(player2));
+	}
+	
+	public HashMap<String, double[]> getStatsMap() {
+		HashMap<String, double[]> retMap = new HashMap<String, double[]>();
+		
+		for(int at = 0; at < NUM_TIERS; at++) {
+			for(Fighter fighterAt: tierList.get(at)) {
+				double[] stats = new double[16];
+				
+				for(int playerAt = 0; playerAt < 8; playerAt++) {
+					stats[playerAt * 2] = fighterAt.getPlayerWins(playerAt);
+					stats[playerAt * 2 + 1] = fighterAt.getPlayerBattles(playerAt);
+				}
+				
+				retMap.put(fighterAt.getName(), stats);
+			}
+		}
+		
+		return retMap;
+	}
+	
+	public ComparableArray[] getLookupResults(int lookupType) {
+		ComparableArray[] results = new ComparableArray[numFighters()];
+		
+		int indexAt = 0;
+		for(int at = 0; at < NUM_TIERS; at++) {
+			for(Fighter fighterAt: tierList.get(at)) {
+				results[indexAt] = new ComparableArray(fighterAt, lookupType);
+				indexAt++;
+			}
+		}
+		
+		Arrays.sort(results);
+		return results;
+	}
+	
+	public String getPlayerWinrateString() {
+		StringBuffer retString = new StringBuffer(175);
+		
+		int[] playerBattles = new int[8];
+		int[] playerWins = new int[8];
+		
+		for(int tierAt = 0; tierAt < NUM_TIERS; tierAt++) {
+			for(Fighter fighterAt: tierList.get(tierAt)) {
+				for(int playerAt = 0; playerAt < 8; playerAt++) {
+					playerBattles[playerAt] += fighterAt.getPlayerBattles(playerAt);
+					playerWins[playerAt] += fighterAt.getPlayerWins(playerAt);
+				}
+			}
+		}
+		
+		retString.append("Players' Overall Winrate:\n");
+		
+		for(int playerAt = 0; playerAt < 8; playerAt++) {
+			retString.append("P" + (playerAt + 1) + " W% - " +
+					Util.printDouble(((float) playerWins[playerAt] / playerBattles[playerAt]) * 100) + "% (" +
+					playerWins[playerAt] + "/" + playerBattles[playerAt] + ")\n");
+		}
+		
+		return retString.toString();
 	}
 }

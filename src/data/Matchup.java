@@ -19,6 +19,8 @@ public class Matchup {
 	//TODO: update documentation to eliminate references to Settings class
 	
 	private Fighter[] fighters;
+	private boolean winnerSelected;
+	private int winner;
 	
 	/**
 	 * Initialize an empty <code>Matchup</code> with the given size.
@@ -27,6 +29,9 @@ public class Matchup {
 	 */
 	public Matchup(int numPlayers) {
 		fighters = new Fighter[numPlayers];
+		
+		winnerSelected = false;
+		winner = -1;
 	}
 	
 	/**
@@ -40,11 +45,7 @@ public class Matchup {
 	 * 
 	 * @throws IndexOutOfBoundsException		Thrown if the player is less
 	 * 											than zero or greater than the
-	 * 											size of the <code>Matchup</code>,
-	 * 											which is equal to
-	 * 											<code>Settings.numPlayers</code>
-	 * 											at the time of the object's
-	 * 											creation.
+	 * 											size of the <code>Matchup</code>.
 	 * 
 	 * @throws UnsupportedOperationException	Thrown if you attempt to
 	 * 											set a player whose fighter
@@ -73,11 +74,7 @@ public class Matchup {
 	 * 
 	 * @throws IndexOutOfBoundsException		Thrown if the player is less
 	 * 											than zero or greater than the
-	 * 											size of the matchup, which is
-	 * 											equal to
-	 * 											<code>Settings.numPlayers</code>
-	 * 											at the time of the object's
-	 * 											creation.
+	 * 											size of the matchup.
 	 */
 	public void setFighter(int player, Fighter fighter) throws IndexOutOfBoundsException {
 		if(player >= fighters.length || player < 0) {
@@ -96,11 +93,7 @@ public class Matchup {
 	 * 
 	 * @throws IndexOutOfBoundsException	Thrown if the player is less
 	 * 										than zero or greater than the
-	 * 										size of the matchup, which is
-	 * 										equal to
-	 * 										<code>Settings.numPlayers</code>
-	 * 										at the time of the object's
-	 * 										creation.
+	 * 										size of the matchup.
 	 */
 	public Fighter getFighter(int player) throws IndexOutOfBoundsException {
 		if(player >= fighters.length || player < 0) {
@@ -180,7 +173,7 @@ public class Matchup {
 	
 	@Override
 	public String toString() {
-		StringBuilder retString = new StringBuilder();
+		StringBuilder retString = new StringBuilder(120);
 		
 		for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
 			retString.append("Player " + (playerAt + 1) + " got " +
@@ -189,6 +182,55 @@ public class Matchup {
 		}
 		
 		return retString.toString();
+	}
+	
+	public String getStatsOutput() {
+		StringBuilder retString = new StringBuilder(120);
+		retString.append("Stats for this battle:\n");
+		
+		for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
+			Fighter fighterAt = fighters[playerAt];
+			retString.append("P" + (playerAt + 1) + ": " + fighterAt.getPlayerWinrate(playerAt) +
+					" (" + fighterAt.getPlayerWins(playerAt) + "/" +
+					fighterAt.getPlayerBattles(playerAt) + "). Total: " +
+					fighterAt.getTotalWinrate() + " (" +
+					fighterAt.getTotalWins() + "/" + fighterAt.getTotalBattles() + ").\n");
+		}
+		
+		return retString.toString();
+	}
+	
+	public void setWinner(int player) throws IndexOutOfBoundsException {
+		if(player < 0 || player >= fighters.length) {
+			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +
+					" fighters, but " + player + " was passed in as player.");
+		}
+		
+		//if a winner has already been selected, the old values need to be removed
+		if(winnerSelected) {
+			for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
+				if(playerAt == winner) {
+					fighters[playerAt].removeWin(playerAt);
+				}
+				else {
+					fighters[playerAt].removeLoss(playerAt);
+				}
+			}
+		}
+		
+		//then record the win for the right player, and loss for everyone else
+		for(int playerAt = 0; playerAt < fighters.length; playerAt++) {
+			if(playerAt == player) {
+				winner = player;
+				fighters[playerAt].recordWin(playerAt);
+			}
+			else {
+				fighters[playerAt].recordLoss(playerAt);
+			}
+		}
+		
+		winnerSelected = true;
+		Util.log("Selected player " + (player + 1) + " as the winner.");
 	}
 
 }

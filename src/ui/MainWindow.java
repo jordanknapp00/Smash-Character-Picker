@@ -8,10 +8,15 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -33,6 +38,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import data.ComparableArray;
+import data.Fighter;
 import data.Matchup;
 import data.Settings;
 import data.TierList;
@@ -123,12 +130,12 @@ public class MainWindow {
 	private JCheckBox allowSInCannotGet;
 	
 	//stats panel components
+	private JTextArea statsOutput;
 	private JLabel playerLabel;
 	private JSpinner winnerSpinner;
 	private JButton pickWinnerButton;
 	private JButton searchButton;
 	private JButton sortButton;
-	private JButton modButton;
 	private JButton reloadButton;
 	
 	//other variables	
@@ -154,6 +161,10 @@ public class MainWindow {
 		results = new JTextArea();
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
+		
+		statsOutput = new JTextArea();
+		statsOutput.setEditable(false);
+		statsOutput.setFont(statsOutput.getFont().deriveFont(18f));
 		
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		
@@ -213,6 +224,7 @@ public class MainWindow {
 				toSwap.swapFighters(p1, p2);
 				
 				results.setText("Battle #" + numBattles + ":\n" + toSwap);
+				statsOutput.setText(toSwap.getStatsOutput());
 				
 				//now deselect all after switching and reset switchVals
 				player1Box.setSelected(false);
@@ -269,132 +281,14 @@ public class MainWindow {
 		generateButton = new JButton("Generate");
 		generateButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!fileLoaded) {
-					JOptionPane.showMessageDialog(null, "You must load a tier list first!",
-							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
-					
-					return;
-				}
-				
-				double startTime = System.currentTimeMillis();
-				
-				numBattles++;
-				
-				Util.log("========== BEGINNING GENERATION OF BATTLE " + numBattles + " ==========");
-				
-				Matchup result = null;
-				Settings settings = getSettings();
-				int tries = 0;
-				do {
-					tries++;
-					Util.log("======= Try " + tries + " =======");
-					
-					try {
-						result = tierList.generateBattle(settings, false);
-					} catch(NoValidFightersException e1) {
-						Util.error(e1);
-						
-						//depending on whether this happened before or after
-						//generating a tier tells us whether we can continue
-						if(!e1.tierRangeSelected()) {
-							Util.log("With no valid fighters for a player, battle generation must halt.");
-							return;
-						}
-					}
-				} while(result == null && !previousMatchups.contains(result) && tries < 100);
-				
-				
-				Util.log("========== End battle generation process ==========");
-				
-				String resultString;
-				if(result == null) {
-					resultString = "No valid battles found after 100 tries.";
-				}
-				else {
-					previousMatchups.add(result);
-					resultString = "Battle #" + numBattles + ":\n" + result.toString();
-				}
-				
-				results.setText(resultString);
-				
-				//finally, enable all the switch stuff if this was the first battle
-				if(numBattles == 1) {
-					switchPanel.setEnabled(true);
-					player1Box.setEnabled(true);
-					player2Box.setEnabled(true);
-					player3Box.setEnabled(true);
-					player4Box.setEnabled(true);
-					player5Box.setEnabled(true);
-					player6Box.setEnabled(true);
-					player7Box.setEnabled(true);
-					player8Box.setEnabled(true);
-					switchButton.setEnabled(true);
-				}
-				
-				double delta = System.currentTimeMillis() - startTime;
-				Util.log("Generation of this battle took " + delta + "ms.");
+				generateBattle(false);
 			}
 		});
 		
 		skipButton = new JButton("Skip");
 		skipButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!fileLoaded) {
-					JOptionPane.showMessageDialog(null, "You must load a tier list first!",
-							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
-					
-					return;
-				}
-				
-				if(numBattles == 0) {
-					JOptionPane.showMessageDialog(null, "There must be a battle before " +
-							"you can skip.", "Smash Character Picker",
-							JOptionPane.ERROR_MESSAGE);
-					
-					return;
-				}
-				
-				double startTime = System.currentTimeMillis();
-				
-				Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");
-				
-				Matchup result = null;
-				Settings settings = getSettings();
-				int tries = 0;
-				do {
-					tries++;
-					Util.log("======= Try " + tries + " =======");
-					
-					try {
-						result = tierList.generateBattle(settings, true);
-					} catch(NoValidFightersException e1) {
-						Util.error(e1);
-						
-						//depending on whether this happened before or after
-						//generating a tier tells us whether we can continue
-						if(!e1.tierRangeSelected()) {
-							Util.log("With no valid fighters for a player, battle generation must halt.");
-							return;
-						}
-					}
-				} while(result == null && !previousMatchups.contains(result) && tries < 100);
-				
-				Util.log("========== End battle generation process ==========");
-				
-				String resultString;
-				if(tries == 100) {
-					resultString = "No valid battles found after 100 tries.";
-				}
-				else {
-					previousMatchups.remove(previousMatchups.size() - 1);
-					previousMatchups.add(result);
-					resultString = "Battle #" + numBattles + ":\n" + result.toString();
-				}
-				
-				results.setText(resultString);
-				
-				double delta = System.currentTimeMillis() - startTime;
-				Util.log("Generation of this battle took " + delta + "ms.");
+				generateBattle(true);
 			}
 		});
 		
@@ -436,6 +330,13 @@ public class MainWindow {
 					results.setText("TierListParseException when reading " +
 							fileChooser.getSelectedFile().getName() + "!\n" +
 							"See the debug log for details.");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
+				} catch(ClassNotFoundException e1) {
+					results.setText("ClassNotFoundException when reading " +
+							"stats data!\nSee the debug log for details.");
 					Util.error(e1);
 					
 					tierList = null;
@@ -776,7 +677,7 @@ public class MainWindow {
 		
 		statsTopPanel = new JPanel(new BorderLayout());
 		statsTopPanel.setBorder(BorderFactory.createTitledBorder("Statistics"));
-		//TODO: handle stats text area
+		statsTopPanel.add(statsOutput);
 		
 		//set up lower stats panel
 		statsBottomPanel = new JPanel(new GridBagLayout());
@@ -786,19 +687,94 @@ public class MainWindow {
 		winnerSpinner = new JSpinner(model);
 		
 		pickWinnerButton = new JButton("Select winner");
-		//TODO: add action listener
+		pickWinnerButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(numBattles == 0) {
+					JOptionPane.showMessageDialog(null, "There has to be " +
+							"a battle before there can be a winner!",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					return;
+				}
+				
+				Matchup last = previousMatchups.get(previousMatchups.size() - 1);
+				
+				try {
+					last.setWinner((int) winnerSpinner.getValue() - 1);
+				} catch(IndexOutOfBoundsException e1) {
+					JOptionPane.showMessageDialog(null, "There are not that many " +
+							"players in this battle.", "Smash Character Picker",
+							JOptionPane.ERROR_MESSAGE);
+				}
+				
+				statsOutput.setText(last.getStatsOutput());
+			}
+		});
 		
 		searchButton = new JButton("Search");
-		//TODO: add action listener
+		searchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String toSearch = (String) JOptionPane.showInputDialog(null,
+						"Enter fighter to search:", "Smash Character Picker",
+						JOptionPane.QUESTION_MESSAGE, null, null, null);
+				
+				if(toSearch == null) {
+					return;
+				}
+				
+				Fighter fighter = tierList.getFighter(toSearch);
+				
+				if(fighter == null) {
+					statsOutput.setText("Fighter " + toSearch + " not found!");
+					return;
+				}
+				
+				statsOutput.setText(fighter.getStatsData());
+			}
+		});
 		
 		sortButton = new JButton("Sort");
-		//TODO: add action listener
-		
-		modButton = new JButton("Mod");
-		//TODO: add action listener
+		sortButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String[] options = {"Fighters' Overall Winrate", "Players' Overall Winrate", 
+						"P1 Winrate", "P2 Winrate", "P3 Winrate", "P4 Winrate", 
+						"P5 Winrate", "P6 Winrate", "P7 Winrate", "P8 Winrate", 
+						"Total Battles"};
+				
+				String choice = (String) JOptionPane.showInputDialog(frame, "Sort by:", "Smash Character Picker",
+						JOptionPane.QUESTION_MESSAGE, null, options, "Fighters' overall win rate");
+				
+				int choiceVal = Arrays.asList(options).indexOf(choice);
+				
+				//cancel was hit
+				if(choiceVal == -1) {
+					return;
+				}
+				
+				if(choiceVal == 1) {
+					statsOutput.setText(tierList.getPlayerWinrateString());
+					return;
+				}
+				
+				ComparableArray[] lookupResult = tierList.getLookupResults(choiceVal);
+				
+				statsOutput.setText("Sorted by " + options[choiceVal] + ":\n");
+				for(int at = 0; at < lookupResult.length; at++)
+				{
+					statsOutput.append((at + 1) + ". " + lookupResult[at] + "\n");
+				}
+			}
+		});
 		
 		reloadButton = new JButton("⭯");
-		//TODO: add action listener
+		reloadButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(numBattles > 0) {
+					Matchup last = previousMatchups.get(previousMatchups.size() - 1);
+					statsOutput.setText(last.getStatsOutput());
+				}
+			}
+		});
 		
 		statsPanel = new JPanel(new GridBagLayout());
 		gc.gridx = 0;
@@ -814,15 +790,13 @@ public class MainWindow {
 		gc.weightx = .3;
 		statsBottomPanel.add(Box.createRigidArea(new Dimension(3, 0)), gc);
 		gc.gridx = 3;
-		gc.weightx = .35;
+		gc.weightx = .4;
 		statsBottomPanel.add(pickWinnerButton, gc);
 		gc.gridx = 4;
-		gc.weightx = .25;
+		gc.weightx = .2;
 		statsBottomPanel.add(searchButton, gc);
 		gc.gridx = 5;
 		statsBottomPanel.add(sortButton, gc);
-		gc.gridx = 6;
-		statsBottomPanel.add(modButton, gc);
 		gc.gridx = 7;
 		statsBottomPanel.add(reloadButton, gc);
 		
@@ -872,7 +846,7 @@ public class MainWindow {
 		//Create icon
 		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/img/Icon.png")));
 		
-		//TODO: add window listener for stuff like saving stats
+		frame.addWindowListener(new MainWindowListener());
 		
 		dbw = new DebugWindow(frame.getWidth(), frame.getHeight(), frame.getX(), frame.getY());
 		
@@ -950,17 +924,93 @@ public class MainWindow {
 		}
 	}
 	
-	/**
-	 * @return	A <code>Settings</code> object representing the current
-	 * 			settings selected in the UI.
-	 */
-	private Settings getSettings() {
-		return new Settings((int) numPlayersSpinner.getValue(),
+	private void generateBattle(boolean skipping) {
+		if(!fileLoaded) {
+			JOptionPane.showMessageDialog(null, "You must load a tier " +
+					"list first!", "Smash Character Picker",
+					JOptionPane.ERROR_MESSAGE);
+			
+			return;
+		}
+		
+		//can't skip if there are no battles
+		if(skipping && numBattles == 0) {
+			JOptionPane.showMessageDialog(null, "You must generate a battle " +
+					"before you can skip.", "Smash Character Picker",
+					JOptionPane.ERROR_MESSAGE);
+			
+			return;
+		}
+		
+		double startTime = System.currentTimeMillis();
+		
+		if(!skipping) {
+			numBattles++;
+			Util.log("========== BEGINNING GENERATION OF BATTLE \" + numBattles + \" ==========");
+		}
+		else {
+			Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");
+		}
+		
+		Matchup result = null;
+		Settings settings = new Settings((int) numPlayersSpinner.getValue(),
 				tierChances, bumpChances,
 				(int) cannotGetSizeSpinner.getValue(),
 				allowSInCannotGet.isSelected(), allowSSInCannotGet.isSelected());
+		int tries = 0;
+		
+		do {
+			tries++;
+			Util.log("======= Try " + tries + " =======");
+			
+			try {
+				result = tierList.generateBattle(settings, skipping);
+			} catch(NoValidFightersException e) {
+				Util.error(e);
+				
+				//depending on whether this happened before or after
+				//generating a tier tells us whether we can continue
+				if(!e.tierRangeSelected()) {
+					Util.log("With no valid fighters for a player, battle " +
+							"generation must halt.");
+					
+					return;
+				}
+			}
+		} while(result == null && !previousMatchups.contains(result) && tries < 100);
+		
+		Util.log("========== End battle generation process ==========");
+		
+		String resultString;
+		if(tries == 100 || result == null) {
+			resultString = "No valid battles found after 100 tries.";
+		}
+		else {
+			previousMatchups.add(result);
+			resultString = "Battle #" + numBattles + ":\n" + result.toString();
+		}
+		
+		results.setText(resultString);
+		statsOutput.setText(result.getStatsOutput());
+		
+		//finally, enable all the stats stuff if that was the first battle
+		if(numBattles == 1) {
+			switchPanel.setEnabled(true);
+            player1Box.setEnabled(true);
+            player2Box.setEnabled(true);
+            player3Box.setEnabled(true);
+            player4Box.setEnabled(true);
+            player5Box.setEnabled(true);
+            player6Box.setEnabled(true);
+            player7Box.setEnabled(true);
+            player8Box.setEnabled(true);
+            switchButton.setEnabled(true); 
+		}
+		
+		double delta = System.currentTimeMillis() - startTime;
+		Util.log("Generation of this battle took " + delta + "ms.");
 	}
-	
+
 	private class SwitchActionListener implements ActionListener {
 		private int player;
 		private int indexSet;
@@ -1011,6 +1061,57 @@ public class MainWindow {
 				
 				Util.log("Selected player " + player + " in index " + indexSet + " to switch.");
 			}
+		}
+	}
+	
+	private class MainWindowListener implements WindowListener {
+		public void windowOpened(WindowEvent e) {
+		}
+
+		public void windowClosing(WindowEvent e) {	
+			if(!fileLoaded) {
+				return;
+			}
+			
+			File statsFile = new File("smash stats.sel");
+			
+			if(!statsFile.exists()) {
+				try {
+					statsFile.createNewFile();
+				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(null, "IOException when " +
+							"saving stats! Could not create stats file.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
+					Util.error(e1);
+					return;
+				}
+			}
+			
+			try {
+				ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(statsFile));
+				oos.writeObject(tierList.getStatsMap());
+				oos.close();
+			} catch(IOException e1) {
+				JOptionPane.showMessageDialog(null, "IOException when " +
+						"saving stats!", "Smash Character Picker",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		}
+
+		public void windowClosed(WindowEvent e) {
+		}
+
+		public void windowIconified(WindowEvent e) {
+		}
+
+		public void windowDeiconified(WindowEvent e) {
+		}
+
+		public void windowActivated(WindowEvent e) {
+		}
+
+		public void windowDeactivated(WindowEvent e) {
 		}
 	}
 }

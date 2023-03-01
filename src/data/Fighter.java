@@ -1,5 +1,7 @@
 package data;
 
+import util.Util;
+
 //TODO: add javadoc for stats once it's more fleshed out
 
 /**
@@ -29,6 +31,15 @@ public class Fighter {
 		for(int at = 0; at < 8; at++) {
 			playerWins[at] = 0;
 			playerBattles[at] = 0;
+		}
+	}
+	
+	public Fighter(String name, int tier, double[] stats) {
+		this(name, tier);
+		
+		for(int at = 0; at < 8; at++) {
+			playerWins[at] = (int) stats[at * 2];
+			playerBattles[at] = (int) stats[at * 2 + 1];
 		}
 	}
 	
@@ -64,8 +75,8 @@ public class Fighter {
 		return playerBattles[player];
 	}
 	
-	public double getPlayerWinrate(int player) {
-		return playerWins[player] / playerBattles[player];
+	public String getPlayerWinrate(int player) {
+		return Util.printDouble(((float) playerWins[player] / playerBattles[player]) * 100) + "%";
 	}
 	
 	public int getTotalWins() {
@@ -88,8 +99,41 @@ public class Fighter {
 		return sum;
 	}
 	
-	public int getTotalWinrate() {
-		return getTotalWins() / getTotalBattles();
+	public String getTotalWinrate() {
+		return Util.printDouble(((float) getTotalWins() / getTotalBattles()) * 100) + "%";
+	}
+	
+	public void recordWin(int player) {
+		playerWins[player]++;
+		playerBattles[player]++;
+	}
+	
+	public void recordLoss(int player) {
+		playerBattles[player]++;
+	}
+	
+	public void removeWin(int player) {
+		playerWins[player]--;
+		playerBattles[player]--;
+	}
+	
+	public void removeLoss(int player) {
+		playerBattles[player]--;
+	}
+	
+	public String getStatsData() {
+		StringBuffer retString = new StringBuffer(225);
+		retString.append("Stats for " + name + ":\n");
+		
+		for(int at = 0; at < 8; at++) {
+			retString.append("Player " + (at + 1) + ": " + getPlayerWinrate(at) + 
+					" (" + getPlayerWins(at) + "/" + getPlayerBattles(at) + ")\n");
+		}
+		
+		retString.append("Overall: " + getTotalWinrate() + " (" +
+				getTotalWins() + "/" + getTotalBattles() + ")");
+		
+		return retString.toString();
 	}
 
 }
