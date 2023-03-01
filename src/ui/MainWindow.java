@@ -737,25 +737,32 @@ public class MainWindow {
 		sortButton = new JButton("Sort");
 		sortButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String[] options = {"Fighters' overall win rate", "Players' overall win rate", 
-						"P1 win rate", "P2 win rate", "P3 win rate", "P4 win rate", 
-						"P5 win rate", "P6 win rate", "P7 win rate", "P8 win rate", 
-						"Total battles"};
+				String[] options = {"Fighters' Overall Winrate", "Players' Overall Winrate", 
+						"P1 Winrate", "P2 Winrate", "P3 Winrate", "P4 Winrate", 
+						"P5 Winrate", "P6 Winrate", "P7 Winrate", "P8 Winrate", 
+						"Total Battles"};
+				
 				String choice = (String) JOptionPane.showInputDialog(frame, "Sort by:", "Smash Character Picker",
 						JOptionPane.QUESTION_MESSAGE, null, options, "Fighters' overall win rate");
 				
 				int choiceVal = Arrays.asList(options).indexOf(choice);
 				
-				if(choiceVal == 1) {
-					//
+				//cancel was hit
+				if(choiceVal == -1) {
+					return;
 				}
-				else {
-					ComparableArray[] lookupResult = tierList.getLookupResults(choiceVal);
-					
-					statsOutput.setText("");
-					for(ComparableArray at: lookupResult) {
-						statsOutput.append(at.toString() + "\n");
-					}
+				
+				if(choiceVal == 1) {
+					statsOutput.setText(tierList.getPlayerWinrateString());
+					return;
+				}
+				
+				ComparableArray[] lookupResult = tierList.getLookupResults(choiceVal);
+				
+				statsOutput.setText("Sorted by " + options[choiceVal] + ":\n");
+				for(int at = 0; at < lookupResult.length; at++)
+				{
+					statsOutput.append((at + 1) + ". " + lookupResult[at] + "\n");
 				}
 			}
 		});

@@ -897,4 +897,30 @@ public class TierList {
 		Arrays.sort(results);
 		return results;
 	}
+	
+	public String getPlayerWinrateString() {
+		StringBuffer retString = new StringBuffer(175);
+		
+		int[] playerBattles = new int[8];
+		int[] playerWins = new int[8];
+		
+		for(int tierAt = 0; tierAt < NUM_TIERS; tierAt++) {
+			for(Fighter fighterAt: tierList.get(tierAt)) {
+				for(int playerAt = 0; playerAt < 8; playerAt++) {
+					playerBattles[playerAt] += fighterAt.getPlayerBattles(playerAt);
+					playerWins[playerAt] += fighterAt.getPlayerWins(playerAt);
+				}
+			}
+		}
+		
+		retString.append("Players' Overall Winrate:\n");
+		
+		for(int playerAt = 0; playerAt < 8; playerAt++) {
+			retString.append("P" + (playerAt + 1) + " W% - " +
+					Util.printDouble(((float) playerWins[playerAt] / playerBattles[playerAt]) * 100) + "% (" +
+					playerWins[playerAt] + "/" + playerBattles[playerAt] + ")\n");
+		}
+		
+		return retString.toString();
+	}
 }

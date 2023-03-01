@@ -95,8 +95,8 @@ public class ComparableArray implements Comparable<ComparableArray> {
 			battles = fighter.getPlayerBattles(playerToGet);
 		}
 		
-		if(wins != 0) {
-			winrate = battles / wins;
+		if(battles != 0) {
+			winrate = (double) wins / battles;
 		}
 		else {
 			winrate = -1;
@@ -127,8 +127,16 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	}
 
 	public int compareTo(ComparableArray o) {		
+		//handle battles comparison first
 		if(compareType == CompareType.TOTAL_BATTLES) {
-			return Integer.compare(battles, o.getBattles());
+			//if number of battles are equal, sort by name
+			if(battles == o.getBattles()) {
+				return -(fighter.getName().compareTo(o.getName()));
+			}
+			
+			//otherwise, sort by number of battles. inverted because we want
+			//the most battles to go at the top
+			return -Integer.compare(battles, o.getBattles());
 		}
 		
 		if(battles == 0 && o.getBattles() == 0) {
@@ -157,6 +165,10 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	}
 	
 	public String toString() {
+		if(compareType == CompareType.TOTAL_BATTLES) {
+			return fighter.getName() + " - " + battles + " battles";
+		}
+		
 		return fighter.getName() + " - " + Util.printDouble(winrate * 100) + "% (" + wins + "/" + battles + ")";
 	}
 

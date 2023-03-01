@@ -1,8 +1,5 @@
 package data;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-
 import util.Util;
 
 //TODO: add javadoc for stats once it's more fleshed out
