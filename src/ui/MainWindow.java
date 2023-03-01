@@ -136,7 +136,6 @@ public class MainWindow {
 	private JButton pickWinnerButton;
 	private JButton searchButton;
 	private JButton sortButton;
-	private JButton modButton;
 	private JButton reloadButton;
 	
 	//other variables	
@@ -767,9 +766,6 @@ public class MainWindow {
 			}
 		});
 		
-		modButton = new JButton("Mod");
-		//TODO: add action listener
-		
 		reloadButton = new JButton("⭯");
 		reloadButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -794,15 +790,13 @@ public class MainWindow {
 		gc.weightx = .3;
 		statsBottomPanel.add(Box.createRigidArea(new Dimension(3, 0)), gc);
 		gc.gridx = 3;
-		gc.weightx = .35;
+		gc.weightx = .4;
 		statsBottomPanel.add(pickWinnerButton, gc);
 		gc.gridx = 4;
-		gc.weightx = .25;
+		gc.weightx = .2;
 		statsBottomPanel.add(searchButton, gc);
 		gc.gridx = 5;
 		statsBottomPanel.add(sortButton, gc);
-		gc.gridx = 6;
-		statsBottomPanel.add(modButton, gc);
 		gc.gridx = 7;
 		statsBottomPanel.add(reloadButton, gc);
 		
