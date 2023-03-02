@@ -300,42 +300,4 @@ public final class Util {
 		
 		return "[" + hour + ":" + min + ":" + sec + "]:\t";
 	}
-	
-	/**
-	 * A method that returns a better string representation of an array of
-	 * <code>double</code>s than just the memory address. Given that this is
-	 * only used in the context of printing things to the debug log, we're
-	 * assuming that the array will be 16 entries in length.
-	 * 
-	 * @param arr	The array of doubles.
-	 * @return		The values in the array, comma separated.
-	 */
-	public static String doubleArrString(double[] arr) {
-		String returnString = "";
-		for(int at = 0; at < 14; at++) {
-			returnString += arr[at] + ",";
-		}
-		returnString += arr[15];
-		return returnString;
-	}
-	
-	/**
-	 * A method that reverses a <code>ComparableArray</code>. Not an in-place
-	 * reverse, it returns a new object.
-	 * 
-	 * @param start	The <code>ComparableArray</code> to reverse.
-	 * @return		A new <code>ComparableArray</code>, consisting of the given
-	 * 				<code>ComparableArray</code>, but reversed.
-	 */
-	public static ComparableArray[] reverse(ComparableArray[] start) {
-		ComparableArray[] retArr = new ComparableArray[start.length];
-		int j = start.length;
-		for(int at = 0; at < start.length; at++) {
-			retArr[j - 1] = start[at];
-			j--;
-		}
-		
-		return retArr;
-	}
-
 }

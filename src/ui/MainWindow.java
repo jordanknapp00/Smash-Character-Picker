@@ -946,7 +946,7 @@ public class MainWindow {
 		
 		if(!skipping) {
 			numBattles++;
-			Util.log("========== BEGINNING GENERATION OF BATTLE \" + numBattles + \" ==========");
+			Util.log("========== BEGINNING GENERATION OF BATTLE " + numBattles + " ==========");
 		}
 		else {
 			Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");

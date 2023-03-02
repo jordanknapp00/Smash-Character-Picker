@@ -542,42 +542,6 @@ public class TierList {
 	}
 	
 	/**
-	 * Determines the tier of the given <code>Fighter</code>.
-	 * 
-	 * @param toCheck	The <code>Fighter</code> to check.
-	 * @return			The tier of the given fighter (from 0 to
-	 * 					<code><b><i>NUM_TIERS</b></i> - 1</code>), or -1 if
-	 * 					they are not present in the tier list.
-	 */
-	public int tierOf(Fighter toCheck) {
-		return tierOf(toCheck.getName());
-	}
-	
-	/**
-	 * Determines which tier the fighter with the given name is in.
-	 * 
-	 * @param nameToCheck	The name of the fighter to check.
-	 * @return				The tier of the given fighter (from 0 to
-	 * 						<code><b><i>NUM_TIERS</b></i> - 1</code>), or -1
-	 * 						if they are not present in the tier list.
-	 */
-	public int tierOf(String nameToCheck) {
-		if(!contains(nameToCheck)) {
-			return -1;
-		}
-		
-		for(int tierAt = 0; tierAt < NUM_TIERS; tierAt++) {
-			for(Fighter fighterAt: tierList.get(tierAt)) {
-				if(fighterAt.getName().equals(nameToCheck)) {
-					return tierAt;
-				}
-			}
-		}
-		
-		return -1;
-	}
-	
-	/**
 	 * Returns the <code>Fighter</code> object with the given name.
 	 * 
 	 * @param name	The name of the fighter to return.
