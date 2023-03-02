@@ -7,8 +7,6 @@ import java.time.ZonedDateTime;
 
 import javax.swing.JTextArea;
 
-import data.ComparableArray;
-
 /**
  * A class that contains a few static utility methods that are used throughout
  * the program.
