@@ -218,9 +218,8 @@ public class MainWindow {
 			public void actionPerformed(ActionEvent e) {
 				//make sure that we have 2 players selected
 				if(switchVals[0] == 0 || switchVals[1] == 0) {
-					//TODO: at some point, maybe change some of the message types
 					JOptionPane.showMessageDialog(null, "Please select 2 players.",
-							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
 					
 					return;
 				}
@@ -704,7 +703,7 @@ public class MainWindow {
 				if(numBattles == 0) {
 					JOptionPane.showMessageDialog(null, "There has to be " +
 							"a battle before there can be a winner!",
-							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
 					
 					return;
 				}
@@ -716,7 +715,7 @@ public class MainWindow {
 				} catch(IndexOutOfBoundsException e1) {
 					JOptionPane.showMessageDialog(null, "There are not that many " +
 							"players in this battle.", "Smash Character Picker",
-							JOptionPane.ERROR_MESSAGE);
+							JOptionPane.WARNING_MESSAGE);
 				}
 				
 				statsOutput.setText(last.getStatsOutput());
@@ -955,7 +954,7 @@ public class MainWindow {
 		if(!fileLoaded) {
 			JOptionPane.showMessageDialog(null, "You must load a tier " +
 					"list first!", "Smash Character Picker",
-					JOptionPane.ERROR_MESSAGE);
+					JOptionPane.WARNING_MESSAGE);
 			
 			return;
 		}
@@ -964,7 +963,7 @@ public class MainWindow {
 		if(skipping && numBattles == 0) {
 			JOptionPane.showMessageDialog(null, "You must generate a battle " +
 					"before you can skip.", "Smash Character Picker",
-					JOptionPane.ERROR_MESSAGE);
+					JOptionPane.WARNING_MESSAGE);
 			
 			return;
 		}
@@ -1077,7 +1076,7 @@ public class MainWindow {
 			if(player > (int) numPlayersSpinner.getValue()) {
 				JOptionPane.showMessageDialog(null, "There are not that many " +
 						"players present.", "Smash Character Picker",
-						JOptionPane.ERROR_MESSAGE);
+						JOptionPane.WARNING_MESSAGE);
 				
 				clicked.setSelected(false);
 			}
@@ -1086,7 +1085,7 @@ public class MainWindow {
 			else if(switchVals[0] != 0 && switchVals[1] != 0) {
 				JOptionPane.showMessageDialog(null, "You can select up to " +
 						"two players.", "Smash Character Picker",
-						JOptionPane.ERROR_MESSAGE);
+						JOptionPane.WARNING_MESSAGE);
 				
 				clicked.setSelected(false);
 			}
