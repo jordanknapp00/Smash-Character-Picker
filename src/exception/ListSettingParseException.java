@@ -56,6 +56,26 @@ public class ListSettingParseException extends TierListParseException {
 		super(constructErrorMessage(badVal, lineNumber, numVals, setting));
 	}
 	
+	/**
+	 * Constructs the proper error message based on the values passed into
+	 * the constructor. The error message will have the following format:
+	 * <br><br>
+	 * "Line <code>{line number}</code>: "<code>{invalid value}</code> is
+	 * invalid for setting "<code>{setting text based on ListSetting
+	 * value}</code>" -- a list of <code>{correct number of values}</code>
+	 * comma-separated numbers is required. Those numbers must be positive
+	 * integers between 0 and 100."
+	 * 
+	 * @param badVal		The <code>badVal</code> value from the
+	 * 						constructor, i.e. the value that caused the
+	 * 						exception.
+	 * @param lineNumber	The line number that the exception occurred on.
+	 * @param numVals		The correct number of values to have in the list.
+	 * @param setting		The <code>setting</code> value from the
+	 * 						constructor, i.e. which list setting it was that
+	 * 						was being parsed when the exception occurred.
+	 * @return				A string with the format described above.
+	 */
 	private static String constructErrorMessage(String badVal, int lineNumber,
 			int numVals, ListSetting setting) {
 		String settingText;
