@@ -2,18 +2,24 @@ package data;
 
 import util.Util;
 
-//TODO: redo all the javadoc
-
 /**
- * The <code>ComparableArray</code> is actually not an array... or is it? It's
- * an object meant to be used in an array to make it easy to sort the columns
- * of a 2D array. The <code>ComparableArray</code> represents one row of a
- * table, essentially. By implementing the <code>Comparable</code> interface,
- * it becomes possible to sort an array of <code>ComparableArray</code>s by the
- * values of a particular column.
+ * Despite its name, <code>ComparableArray</code> is not itself an array. It's
+ * a class that implements <code>Comparable</code>, designed to be used in
+ * an array to make sorting the fighters of a tier list easier. When creating
+ * an instance of <code>ComparableArray</code>, either an integer or a
+ * <code>CompareType</code> is passed in. This will determine what exactly
+ * is being sorted on in the <code>compareTo()</code> method. The result is
+ * that <code>Arrays.sort()</code> can be used to sort a list of
+ * <code>Fighter</code> objects on a variety of fields.
+ * <br><br>
+ * The following fields can be sorted on:
+ * <ul>
+ * 	<li>Each fighter's overall winrate</li>
+ * 	<li>The winrate of each player (1 through 8) as each fighter</li>
+ * 	<li>The total number of battles each fighter has been in</li>
+ * </ul>
  * 
- * @author Jordan
- *
+ * @author Jordan Knapp
  */
 public class ComparableArray implements Comparable<ComparableArray> {
 	
@@ -37,6 +43,32 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	private int battles;
 	private double winrate;
 	
+	/**
+	 * Creates a <code>ComparableArray</code> containing the given
+	 * <code>Fighter</code>, as well as the <code>CompareType</code>
+	 * represented by the given integer. The expected int values are based
+	 * on the dropdown used in <code>MainWindow</code> to create
+	 * <code>ComparableArray</code>s.
+	 * <br><br>
+	 * The value of <code>compareType</code> roughly corresponds to the index
+	 * of the values in the <code>CompareType</code> enum, with one caveat.
+	 * In <code>MainWindow</code>, the second entry in the dropdown (index 1)
+	 * represents each player's overall winrate, irrespective of the fighters
+	 * in the tier list. That functionality does not use <code>ComparableArray</code>.
+	 * As such, if 0 is passed in as <code>compareType</code>, the first
+	 * <code>CompareType</code>, <code><i><b>FIGHTER_OVERALL_WINRATE</b></i></code>,
+	 * is used. Otherwise, the index of the <code>CompareType</code> used
+	 * corresponds to <code>compareType</code> minus 1.
+	 * <br><br>
+	 * It is not expected that 1 will be passed into this constructor. If it
+	 * is, however, sorting will be done by each fighter's overall winrate,
+	 * as if 0 had been passed in.
+	 * 
+	 * @param fighter		The <code>Fighter</code> that is represented in
+	 * 						this index of the array.
+	 * @param compareType	The type of comparison to be used. See above for
+	 * 						how it works.
+	 */
 	public ComparableArray(Fighter fighter, int compareType) {
 		//basically, converting an index from the array defined in the sort
 		//button's action listener to a value of CompareType. the first option
@@ -47,6 +79,14 @@ public class ComparableArray implements Comparable<ComparableArray> {
 		this(fighter, compareType == 0 ? CompareType.FIGHTER_OVERALL_WINRATE : CompareType.values()[compareType - 1]);
 	}
 	
+	/**
+	 * Create a <code>ComparableArray</code> with the given fighter and
+	 * <code>CompareType</code>.
+	 * 
+	 * @param fighter		The <code>Fighter</code> that is represented in
+	 * 						this index of the array.
+	 * @param compareType	The type of comparison to be used.
+	 */
 	public ComparableArray(Fighter fighter, CompareType compareType) {
 		this.fighter = fighter;
 		this.compareType = compareType;
@@ -104,6 +144,8 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	}
 	
 	/**
+	 * A method needed to allow comparing <code>Fighter</code>'s names.
+	 * 
 	 * @return	The entry in the first column, the name of the character
 	 * 			represented in this row.
 	 */
@@ -112,6 +154,9 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	}
 	
 	/**
+	 * A method needed to allow comparing <code>Fighter</code>'s number of
+	 * battles.
+	 * 
 	 * @return	The entry in the third column, the number of battles this character
 	 * 			has participated in.
 	 */
@@ -120,12 +165,34 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	}
 	
 	/**
+	 * A method needed to allow comparing <code>Fighter</code>'s winrates.
+	 * 
 	 * @return	The winrate for this character, or <code>wins</code>/<code>battles</code>.
 	 */
 	private double getWinrate() {
 		return winrate;
 	}
 
+	/**
+	 * Compares this object with the given object. Exactly how they are
+	 * compared depends on this instance of <code>ComparableArray</code>'s
+	 * <code>compareType</code> field. Ties are broken in the following way:
+	 * <br><br>
+	 * <ul>
+	 * 	<li>First, if comparing only by the total number of battles, ties
+	 * 		are broken using alphabetical order.
+	 * 	</li>
+	 * 	<li>Otherwise, any fighter that has 0 battles is considered to be
+	 * 		"less than" the other fighter. If both havve 0 battles, they are
+	 * 		considered equal, no matter which field is being compared on.
+	 * 	</li>
+	 * 	<li>If both fighters have battles, but an equal winrate, the one
+	 * 		with fewer battles is considered "less than" the other.
+	 * 	</li>
+	 * 	<li>If both fighters have equal winrates and battles, then they are
+	 * 		sorted in alphabetical order
+	 * 	</li>
+	 */
 	public int compareTo(ComparableArray o) {		
 		//handle battles comparison first
 		if(compareType == CompareType.TOTAL_BATTLES) {
@@ -164,6 +231,12 @@ public class ComparableArray implements Comparable<ComparableArray> {
 		return doubComp;
 	}
 	
+	/**
+	 * If sorting by total number of battles, a string is output containing
+	 * the <code>Fighter</code>'s name and the number of battles. If sorting
+	 * by anything else, the string will contain the winrate as well as
+	 * ratio of wins to losses represented by a fraction.
+	 */
 	public String toString() {
 		if(compareType == CompareType.TOTAL_BATTLES) {
 			return fighter.getName() + " - " + battles + " battles";

@@ -52,6 +52,21 @@ public class NoValidFightersException extends Exception {
 		this.tierRangeSelected = tierRangeSelected;
 	}
 	
+	/**
+	 * Constructs the proper error message based on the values passed into
+	 * the constructor. The error message will have the following format:
+	 * <br><br>
+	 * "Player <code>{player}</code> has no valid fighters <code>{</code>in
+	 * generated tier range<code>}/{</code>available at all
+	 * <code>}</code>.
+	 * 
+	 * The text above depends on the value of <code>tierRangeSelected</code>.
+	 * 
+	 * @param player			The player whose fighter was being chosen.
+	 * @param tierRangeSelected	Whether or not this exception occurred after
+	 * 							the tier range had been selected.
+	 * @return					A string with the format described above.
+	 */
 	private static String constructErrorMessage(int player, boolean tierRangeSelected) {
 		String retString = "Player " + (player + 1) + " has no valid fighters ";
 		
@@ -63,6 +78,19 @@ public class NoValidFightersException extends Exception {
 		}
 	}
 	
+	/**
+	 * Get the value of the <code>tierRangeSelected</code> variable. If an
+	 * exception occurs after the tier range is selected, another attempt
+	 * can be made to generate a battle. However, if there are no valid
+	 * fighters in a player's valid set at all, then a battle cannot get
+	 * generated. This value is checked by <code>MainWindow</code> to
+	 * determine whether another attempt should be made.
+	 * 
+	 * @return	<code>true</code> if this exception occurred after the
+	 * 			tier range was already selected, <code>false</code> if it
+	 * 			happened when generating the initial set of valid fighters
+	 * 			for a player.
+	 */
 	public boolean tierRangeSelected() {
 		return tierRangeSelected;
 	}

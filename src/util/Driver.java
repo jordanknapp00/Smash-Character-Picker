@@ -1,4 +1,4 @@
-package picker;
+package util;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;

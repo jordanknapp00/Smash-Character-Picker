@@ -30,8 +30,7 @@ import util.Util;
 /**
  * The <code>TierList</code> class holds all the data about the current
  * tier list loaded in the program. This includes the fighters in each tier,
- * players' exclusion and favorites list, and all the settings. Basically,
- * everything you'd find in a tier list file.
+ * as well as players' exclusion and favorites list.
  * <br><br>
  * The <code>TierList</code> class can either be initialized with default
  * values, or a tier list file name can be passed into the constructor, and
@@ -42,10 +41,13 @@ import util.Util;
  * use the settings data it contains to generate a battle.
  * 
  * @author Jordan Knapp
- *
  */
 public class TierList {
 	
+	/**
+	 * The number of tiers -- we use tiers SS through F, each subdivided 
+	 * into three subtiers, so there are 24 total.
+	 */
 	private static final int NUM_TIERS = 24;
 	
 	//Tier list data, including a variety of ways to access the tier list
@@ -115,9 +117,17 @@ public class TierList {
 	 * Construct a <code>TierList</code> using data from the given file.
 	 * 
 	 * @param file	The <code>File</code> from which to load data.
+	 * 
 	 * @throws FileNotFoundException	Thrown if the file given does not exist.
-	 * @throws IOException				Thrown if the data in the file is
-	 * 									invalid in any way.
+	 * @throws IOException				Thrown if there are errors while
+	 * 									loading the file, such as duplicate
+	 * 									fighters.
+	 * @throws TierListParseException	Thrown if there are any issues
+	 * 									parsing the tier list, such as
+	 * 									invalid settings values.
+	 * @throws ClassNotFoundException	Thrown if the stats file loaded does
+	 * 									not contain a valid <code>HashMap</code>
+	 * 									object.
 	 */
 	public Settings loadFile(File file) throws FileNotFoundException, IOException, TierListParseException, ClassNotFoundException {
 		//settings variables that will be used to instantiate the Settings
@@ -378,7 +388,7 @@ public class TierList {
 	 * @param line		The full line read from the file.
 	 */
 	private void readTier(int tier, int startAt, String line) {
-		//convers the comma-separated line into an array of strings. first
+		//converts the comma-separated line into an array of strings. first
 		//we get the substring from character index 2, to skip over the
 		//equals and space. then we split on commas with optional spaces,
 		//giving us an array
@@ -415,6 +425,7 @@ public class TierList {
 	 * 						See javadoc for <code>readTier()</code> for full
 	 * 						explanation.
 	 * @param line			The full line read from the file.
+	 * 
 	 * @throws IOException	Thrown if a read fighter was not found in the
 	 * 						tier list.
 	 */
@@ -449,6 +460,7 @@ public class TierList {
 	 * 						See javadoc for <code>readTier()</code> for full
 	 * 						explanation.
 	 * @param line			The full line read from the file.
+	 * 
 	 * @throws IOException	Thrown if a read fighter was not found in the
 	 * 						tier list.
 	 */
@@ -495,6 +507,19 @@ public class TierList {
 		return true;
 	}
 	
+	/**
+	 * Attemps to load a file called "smash stats.sel" and store its data in
+	 * a <code>HashMap</code> object that maps <code>String</code>s to an
+	 * array of doubles.
+	 * 
+	 * @return	The <code>HashMap</code> containing loaded stats data.
+	 * 			<code>null</code> will be returned if the file is not found.
+	 * 
+	 * @throws IOException				Thrown if there are errors loading
+	 * 									the file.
+	 * @throws ClassNotFoundException	Thrown if the file does not contain
+	 * 									a valid <code>HashMap</code> file.
+	 */
 	@SuppressWarnings("unchecked")
 	private HashMap<String, double[]> loadStats() throws IOException, ClassNotFoundException {
 		File statsFile = new File("smash stats.sel");
@@ -542,42 +567,6 @@ public class TierList {
 	}
 	
 	/**
-	 * Determines the tier of the given <code>Fighter</code>.
-	 * 
-	 * @param toCheck	The <code>Fighter</code> to check.
-	 * @return			The tier of the given fighter (from 0 to
-	 * 					<code><b><i>NUM_TIERS</b></i> - 1</code>), or -1 if
-	 * 					they are not present in the tier list.
-	 */
-	public int tierOf(Fighter toCheck) {
-		return tierOf(toCheck.getName());
-	}
-	
-	/**
-	 * Determines which tier the fighter with the given name is in.
-	 * 
-	 * @param nameToCheck	The name of the fighter to check.
-	 * @return				The tier of the given fighter (from 0 to
-	 * 						<code><b><i>NUM_TIERS</b></i> - 1</code>), or -1
-	 * 						if they are not present in the tier list.
-	 */
-	public int tierOf(String nameToCheck) {
-		if(!contains(nameToCheck)) {
-			return -1;
-		}
-		
-		for(int tierAt = 0; tierAt < NUM_TIERS; tierAt++) {
-			for(Fighter fighterAt: tierList.get(tierAt)) {
-				if(fighterAt.getName().equals(nameToCheck)) {
-					return tierAt;
-				}
-			}
-		}
-		
-		return -1;
-	}
-	
-	/**
 	 * Returns the <code>Fighter</code> object with the given name.
 	 * 
 	 * @param name	The name of the fighter to return.
@@ -589,6 +578,11 @@ public class TierList {
 		return lowercaseNames.get(name.toLowerCase());
 	}
 	
+	/**
+	 * Returns a <code>String</code> representation of the tier list. Each
+	 * tier is printed, followed by each player's exclusion and favorites
+	 * lists.
+	 */
 	@Override
 	public String toString() {
 		//allocate 1000 characters (will probably end up needing more, but
@@ -617,6 +611,23 @@ public class TierList {
 		return retString.toString();
 	}
 	
+	/**
+	 * Generates a matchup using the given settings data. A <code>Matchup</code>
+	 * containing the fighters for each player will be returned.
+	 * 
+	 * @param settings	The <code>Settings</code> object containing the
+	 * 					settings to use when generating this battle.
+	 * @param skipping	Whether or not this battle is being generated as a
+	 * 					result of skipping the previous one. Will result in
+	 * 					the last battle's results being removed from the
+	 * 					"Cannot Get" system if true.
+	 * @return			A <code>Matchup</code> representing the generated
+	 * 					battle.
+	 * 
+	 * @throws NoValidFightersException	Thrown if a player does not have any
+	 * 									valid fighters, meaning a battle
+	 * 									cannot be generated.
+	 */
 	public Matchup generateBattle(Settings settings, boolean skipping) throws NoValidFightersException {
 		//initialize an empty matchup
 		Matchup matchup = new Matchup(settings.getNumPlayers());
@@ -778,6 +789,27 @@ public class TierList {
 		return matchup;
 	}
 	
+	/**
+	 * Gets the set of valid fighters for the given player, weighted by the
+	 * chance of getting that tier and the number of times the player has
+	 * already gotten that fighter. The number of times the player has gotten
+	 * a particular fighter is retrieved, then divided by the total number of
+	 * battles they have participated in. That value is then multiplied by
+	 * the chance of getting the tier of that fighter. So if Link is in a
+	 * tier that has a 25% chance of being gotten, and player 1 has gotten
+	 * link in 1 out of the 10 battles he's participated in, then Link will
+	 * appear in the list 22 times.
+	 * 
+	 * @param player	The player whose valid fighter set is being generated.
+	 * @param settings	The <code>Settings</code> object being used to
+	 * 					generate this battle. Needed to get the tier chances,
+	 * 					which is used to weight the likelihood of getting a
+	 * 					particular fighter.
+	 * @return			A <code>List</code> containing the fighters that this
+	 * 					player can get, weighted by the chance of getting that
+	 * 					fighter's tier and the number of times the player has
+	 * 					already gotten that fighter.
+	 */
 	private List<Fighter> getValidCharacters(int player, Settings settings) {
 		ArrayList<Fighter> initialValidChars = new ArrayList<Fighter>();
 		ArrayList<Fighter> finalValidChars = new ArrayList<Fighter>();
@@ -815,7 +847,8 @@ public class TierList {
 			//then getting the fighter more actually increases chances.
 			//of course, we do nothing if we'd be dividing by zero
 			if(numBattlesPerPlayer[player] != 0) {
-				toAppear *= 1 - (fighterAt.getPlayerBattles(player) / numBattlesPerPlayer[player]);
+				double ratio = 1 - ((double) fighterAt.getPlayerBattles(player) / numBattlesPerPlayer[player]);
+				toAppear *= ratio;
 			}
 			
 			//if it's below 0, normalize to 1
@@ -864,6 +897,10 @@ public class TierList {
 		Util.log("And player " + (player2 + 1) + " cannot get " + individualCannotGet.get(player2));
 	}
 	
+	/**
+	 * @return	A <code>HashMap</code> object containing the stats data, so
+	 * 			it can be saved in an <code>.sel</code> file.
+	 */
 	public HashMap<String, double[]> getStatsMap() {
 		HashMap<String, double[]> retMap = new HashMap<String, double[]>();
 		
@@ -883,6 +920,17 @@ public class TierList {
 		return retMap;
 	}
 	
+	/**
+	 * Gets the results of a lookup, stored in an array of
+	 * <code>ComparableArray</code>s. The array is sorted based on the
+	 * lookup type.
+	 * 
+	 * @param lookupType	The type of lookup being done. Based off the
+	 * 						dropdown in <code>MainWindow</code>.
+	 * @return				An array of <code>ComparableArray</code> objects,
+	 * 						one for each fighter in the tier list. The array
+	 * 						is sorted based on the lookup type.
+	 */
 	public ComparableArray[] getLookupResults(int lookupType) {
 		ComparableArray[] results = new ComparableArray[numFighters()];
 		
@@ -898,6 +946,13 @@ public class TierList {
 		return results;
 	}
 	
+	/**
+	 * Gets the data for the second lookup type, each player's winrate.
+	 * Each player's total number of wins and battles across all fighters
+	 * are added up.
+	 * 
+	 * @return	A <code>String</code> containing the data described above.
+	 */
 	public String getPlayerWinrateString() {
 		StringBuffer retString = new StringBuffer(175);
 		

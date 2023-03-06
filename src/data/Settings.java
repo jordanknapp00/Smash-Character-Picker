@@ -11,7 +11,6 @@ package data;
  * battle.
  * 
  * @author Jordan Knapp
- *
  */
 public class Settings {
 	
@@ -73,7 +72,8 @@ public class Settings {
 	 * @return		The chance of getting the given tier, or -1 if the
 	 * 				tier is invalid (or if the array passed when creating
 	 * 				this object is invalid, resulting in an
-	 * 				<code>ArrayIndexOutOfBoundsException</code>).
+	 * 				<code>ArrayIndexOutOfBoundsException</code> -- the
+	 * 				exception is caught and -1 is returned).
 	 */
 	public int getTierChance(int tier) {
 		try {
@@ -90,7 +90,8 @@ public class Settings {
 	 * 						-1 if the given value is invalid (or if the
 	 * 						array passed when creating this object is
 	 * 						invalid, resulting in an
-	 * 						<code>ArrayIndexOutOfBoundsException</code>).
+	 * 						<code>ArrayIndexOutOfBoundsException</code> -- the
+	 * 						exception is caught and -1 is returned).
 	 */
 	public int getBumpChance(int bumpAmount) {
 		try {

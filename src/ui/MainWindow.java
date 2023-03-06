@@ -150,6 +150,18 @@ public class MainWindow {
 	
 	private DebugWindow dbw;
 	
+	/**
+	 * The <code>MainWindow</code> makes up the primary UI of the Smash
+	 * Character Picker. This constructor will initialize everything in the
+	 * interface, show the window, and prompt the user to load a tier list
+	 * file if one is found.
+	 * 
+	 * @throws Exception	Exceptions may occur during processes such as 
+	 * 						setting the "look and feel" of the window. Any
+	 * 						exceptions are thrown back to the <code>Driver</code>,
+	 * 						where an error message is displayed before the
+	 * 						program closes.
+	 */
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
@@ -206,9 +218,8 @@ public class MainWindow {
 			public void actionPerformed(ActionEvent e) {
 				//make sure that we have 2 players selected
 				if(switchVals[0] == 0 || switchVals[1] == 0) {
-					//TODO: at some point, maybe change some of the message types
 					JOptionPane.showMessageDialog(null, "Please select 2 players.",
-							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
 					
 					return;
 				}
@@ -692,7 +703,7 @@ public class MainWindow {
 				if(numBattles == 0) {
 					JOptionPane.showMessageDialog(null, "There has to be " +
 							"a battle before there can be a winner!",
-							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
 					
 					return;
 				}
@@ -704,7 +715,7 @@ public class MainWindow {
 				} catch(IndexOutOfBoundsException e1) {
 					JOptionPane.showMessageDialog(null, "There are not that many " +
 							"players in this battle.", "Smash Character Picker",
-							JOptionPane.ERROR_MESSAGE);
+							JOptionPane.WARNING_MESSAGE);
 				}
 				
 				statsOutput.setText(last.getStatsOutput());
@@ -924,11 +935,26 @@ public class MainWindow {
 		}
 	}
 	
+	/**
+	 * Generates a battle using the current tier list. If all goes well,
+	 * the results from the <code>Matchup</code> are printed to the main
+	 * text field. Debug info and any potential errors will be printed to
+	 * the debug log.
+	 * <br><br>
+	 * A running log of all <code>Matchups</code> is kept, to prevent the
+	 * same battle from being generated twice.
+	 * 
+	 * @param skipping	Whether or not the previous battle was skipped. The
+	 * 					matchup counter is not incremented if this is
+	 * 					<code>true</code>. In <code>TierList</code>, the
+	 * 					previous results are also removed from the
+	 * 					"Cannot Get" queue system if a battle is skipped.
+	 */
 	private void generateBattle(boolean skipping) {
 		if(!fileLoaded) {
 			JOptionPane.showMessageDialog(null, "You must load a tier " +
 					"list first!", "Smash Character Picker",
-					JOptionPane.ERROR_MESSAGE);
+					JOptionPane.WARNING_MESSAGE);
 			
 			return;
 		}
@@ -937,7 +963,7 @@ public class MainWindow {
 		if(skipping && numBattles == 0) {
 			JOptionPane.showMessageDialog(null, "You must generate a battle " +
 					"before you can skip.", "Smash Character Picker",
-					JOptionPane.ERROR_MESSAGE);
+					JOptionPane.WARNING_MESSAGE);
 			
 			return;
 		}
@@ -946,7 +972,7 @@ public class MainWindow {
 		
 		if(!skipping) {
 			numBattles++;
-			Util.log("========== BEGINNING GENERATION OF BATTLE \" + numBattles + \" ==========");
+			Util.log("========== BEGINNING GENERATION OF BATTLE " + numBattles + " ==========");
 		}
 		else {
 			Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");
@@ -1011,10 +1037,25 @@ public class MainWindow {
 		Util.log("Generation of this battle took " + delta + "ms.");
 	}
 
+	/**
+	 * The <code>SwitchActionListener</code> acts as an <code>ActionListener</code>
+	 * for all of the switch checkboxes. It will manipulate values in the
+	 * <code>MainWindow</code> class (this is why it is a private inner
+	 * class) that allow the switch button to know what to do.
+	 * 
+	 * @author Jordan Knapp
+	 *
+	 */
 	private class SwitchActionListener implements ActionListener {
 		private int player;
 		private int indexSet;
 		
+		/**
+		 * Creates a <code>SwitchActionListener</code> for the given player.
+		 * 
+		 * @param player	The checkbox (representing a player) for which
+		 * 					this <code>ActionListener</code> will act.
+		 */
 		public SwitchActionListener(int player) {
 			this.player = player;
 			indexSet = -1;
@@ -1035,7 +1076,7 @@ public class MainWindow {
 			if(player > (int) numPlayersSpinner.getValue()) {
 				JOptionPane.showMessageDialog(null, "There are not that many " +
 						"players present.", "Smash Character Picker",
-						JOptionPane.ERROR_MESSAGE);
+						JOptionPane.WARNING_MESSAGE);
 				
 				clicked.setSelected(false);
 			}
@@ -1044,7 +1085,7 @@ public class MainWindow {
 			else if(switchVals[0] != 0 && switchVals[1] != 0) {
 				JOptionPane.showMessageDialog(null, "You can select up to " +
 						"two players.", "Smash Character Picker",
-						JOptionPane.ERROR_MESSAGE);
+						JOptionPane.WARNING_MESSAGE);
 				
 				clicked.setSelected(false);
 			}

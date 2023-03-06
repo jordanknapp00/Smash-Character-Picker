@@ -104,10 +104,24 @@ public class Matchup {
 		return fighters[player];
 	}
 	
+	/**
+	 * @return	The size of this matchup. The number of players/fighters.
+	 */
 	public int size() {
 		return fighters.length;
 	}
 	
+	/**
+	 * Determines if this <code>Matchup</code> contains the given
+	 * <code>Fighter</code>.
+	 * 
+	 * @param o	The <code>Fighter</code> to check whether it is in the
+	 * 			<code>Matchup</code>.
+	 * @return	<code>true</code> if there is a <code>Fighter</code> in this
+	 * 			<code>Matchup</code> whose <code>equals()</code> method
+	 * 			returns <code>true</code> when passed the parameter <code>o</code>.
+	 * 			<code>false</code> if that is not the case.
+	 */
 	public boolean contains(Fighter o) {
 		for(Fighter at: fighters) {
 			if(at != null && at.equals(o)) {
@@ -118,6 +132,11 @@ public class Matchup {
 		return false;
 	}
 
+	/**
+	 * Two <code>Matchup</code>s are considered equal only when they contain
+	 * the same fighters, the order does not matter. They must have the same
+	 * size, so one being a subset of the other does not make them equal.
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if(!(o instanceof Matchup)) {
@@ -171,6 +190,14 @@ public class Matchup {
 		fighters[player2] = temp;
 	}
 	
+	/**
+	 * Gets a <code>String</code> representation of the <code>Matchup</code>,
+	 * which consists of the fighter and tier that each player got in the
+	 * following format:
+	 * <br><br>
+	 * Player {player} got {<code>Fighter</code> name}, tier
+	 * {<code>Fighter</code>'s tier}
+	 */
 	@Override
 	public String toString() {
 		StringBuilder retString = new StringBuilder(120);
@@ -184,6 +211,13 @@ public class Matchup {
 		return retString.toString();
 	}
 	
+	/**
+	 * Gets the stats data for this battle. Each player's winrate as well
+	 * as win-loss ratio as their fighter are printed, as well as that
+	 * fighter's overall winrate and win-loss ratio.
+	 * 
+	 * @return	The stats data for this battle in <code>String</code> format.
+	 */
 	public String getStatsOutput() {
 		StringBuilder retString = new StringBuilder(120);
 		retString.append("Stats for this battle:\n");
@@ -200,6 +234,20 @@ public class Matchup {
 		return retString.toString();
 	}
 	
+	/**
+	 * Sets the specified player as the winner of this battle, and every
+	 * other player as the loser. If a winner has already been set for this
+	 * matchup, the previously-selected winner will have their win removed,
+	 * the previously-selected losers will have their losses removed, and
+	 * the correct wins and losses will be applied.
+	 * 
+	 * @param player	The player who won this battle. Every other player
+	 * 					will be marked as a loser.
+	 * 
+	 * @throws IndexOutOfBoundsException	Thrown if the given player is
+	 * 										less than 0 or greater than the
+	 * 										number of players in this battle.
+	 */
 	public void setWinner(int player) throws IndexOutOfBoundsException {
 		if(player < 0 || player >= fighters.length) {
 			throw new IndexOutOfBoundsException("Matchup was initialized with " + fighters.length +

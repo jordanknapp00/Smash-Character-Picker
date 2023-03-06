@@ -56,9 +56,30 @@ public class IntegerSettingParseException extends TierListParseException {
 		super(constructErrorMessage(badVal, lineNumber, minVal, maxVal, setting));
 	}
 	
+	/**
+	 * Constructs the proper error message based on the values passed into
+	 * the constructor. The error message will have the following format:
+	 * <br><br>
+	 * "Line <code>{line number}</code>: "<code>{invalid value}</code> is
+	 * invalid for setting "<code>{setting text based on IntegerSetting
+	 * value}</code>" -- a number between <code>{minimum value}</code> and
+	 * <code>{maximum value{</code> is required."
+	 * 
+	 * @param badVal		The <code>badVal</code> value from the
+	 * 						constructor, i.e. the value that caused the
+	 * 						exception.
+	 * @param lineNumber	The line number that the exception occurred on.
+	 * @param minVal		The minimum value for this integer setting.
+	 * @param maxVal		The maximum value for this integer setting.
+	 * @param setting		The <code>setting</code> value from the
+	 * 						constructor, i.e. which integer setting it was
+	 * 						that was being parsed when the exception occurred.
+	 * @return				A string with the format described above.
+	 */
 	private static String constructErrorMessage(String badVal, int lineNumber,
 			int minVal, int maxVal, IntegerSetting setting) {
 		String settingText;
+		
 		switch(setting) {
 		case NUM_PLAYERS:
 			settingText = "Number of players";
