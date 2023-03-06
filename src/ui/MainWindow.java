@@ -150,6 +150,18 @@ public class MainWindow {
 	
 	private DebugWindow dbw;
 	
+	/**
+	 * The <code>MainWindow</code> makes up the primary UI of the Smash
+	 * Character Picker. This constructor will initialize everything in the
+	 * interface, show the window, and prompt the user to load a tier list
+	 * file if one is found.
+	 * 
+	 * @throws Exception	Exceptions may occur during processes such as 
+	 * 						setting the "look and feel" of the window. Any
+	 * 						exceptions are thrown back to the <code>Driver</code>,
+	 * 						where an error message is displayed before the
+	 * 						program closes.
+	 */
 	public MainWindow() throws Exception {	
 		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
@@ -924,6 +936,21 @@ public class MainWindow {
 		}
 	}
 	
+	/**
+	 * Generates a battle using the current tier list. If all goes well,
+	 * the results from the <code>Matchup</code> are printed to the main
+	 * text field. Debug info and any potential errors will be printed to
+	 * the debug log.
+	 * <br><br>
+	 * A running log of all <code>Matchups</code> is kept, to prevent the
+	 * same battle from being generated twice.
+	 * 
+	 * @param skipping	Whether or not the previous battle was skipped. The
+	 * 					matchup counter is not incremented if this is
+	 * 					<code>true</code>. In <code>TierList</code>, the
+	 * 					previous results are also removed from the
+	 * 					"Cannot Get" queue system if a battle is skipped.
+	 */
 	private void generateBattle(boolean skipping) {
 		if(!fileLoaded) {
 			JOptionPane.showMessageDialog(null, "You must load a tier " +
@@ -1011,10 +1038,25 @@ public class MainWindow {
 		Util.log("Generation of this battle took " + delta + "ms.");
 	}
 
+	/**
+	 * The <code>SwitchActionListener</code> acts as an <code>ActionListener</code>
+	 * for all of the switch checkboxes. It will manipulate values in the
+	 * <code>MainWindow</code> class (this is why it is a private inner
+	 * class) that allow the switch button to know what to do.
+	 * 
+	 * @author Jordan Knapp
+	 *
+	 */
 	private class SwitchActionListener implements ActionListener {
 		private int player;
 		private int indexSet;
 		
+		/**
+		 * Creates a <code>SwitchActionListener</code> for the given player.
+		 * 
+		 * @param player	The checkbox (representing a player) for which
+		 * 					this <code>ActionListener</code> will act.
+		 */
 		public SwitchActionListener(int player) {
 			this.player = player;
 			indexSet = -1;
