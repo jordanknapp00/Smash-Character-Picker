@@ -1,35 +1,31 @@
-#This is a tier list based on r/SmashBrosUltimate's 2021 tier list
-#This also demonstrates that comments can be added to tier lists
-#Any line that isn't a recognized tier or setting will cause errors unless it starts with a #
-#Oh yeah, blank lines are fine, too
+This is a tier list based on the "Offical Smash Ultimate Tier List v1.0" from r/SmashBrosUltimate,
+a tier list voted on by 70 of the best Smash players in the world.
 
-#Note: The program is not necessarily intended to have gaps in the tier list like this one does. For example, you'll notice that there's no Mid S Tier, there's just upper and lower.
-#This tier list may not be ideal for actually running the program, I just put it here in case someone feels like playing with a "real" tier list, rather than the one me and my
-#brothers use
+https://www.reddit.com/r/SmashBrosUltimate/comments/11b1jrg/ultrank_2023_official_smash_ultimate_tier_list/
 
-upper s = Pikachu, Joker, Pyra/Mythra, Wolf, Palutena, R.O.B., Peach
-lower s = Roy, Zero Suit Samus, Pokemon Trainer, Mr. Game & Watch, Min Min, Snake, Mario, Lucina
-upper a = Shulk, Pac-Man, Wario, Diddy Kong, Fox, Sephiroth, Sonic, Chrom, Steve, Sora, Kazuya
-lower a = Olimar, Young Link, Greninja, Ness, Sheik, Terry, Cloud, Inkling, Mega Man, Yoshi, Captain Falcon
-upper b = Samus, Falco, Pichu, Link, Ken, Byleth, Bowser
-mid b = Luigi, Hero, Wii Fit Trainer, Ryu, Ike, Mii Brawler, Rosalina & Luma, Toon Link, Marth, Bayonetta, Mewtwo, Lucas, Corrin, Dark Pit
-lower b = Meta Knight, Duck Hunt, Robin, Banjo & Kazooie, Villager, Richter, Mii Gunner, Zelda, Jigglypuff, Bowser Jr., Ridley 
-upper c = Ice Climbers, Mii Swordfighter, King K. Rool, Lucario, Incineroar
-lower c = Piranha Plant, King Dedede, Donkey Kong, Kirby, Isabelle
-upper d = Dr. Mario, Ganondorf, Little Mac
+This is also a demonstration that any line that isn't a tier or setting of some kind is just ignored.
+No need to put comment characters in front anymore!
 
-#Settings:
-tier chances = 0, 20, 20, 25, 20, 15, 0, 0
-cannot get size = 12
+upper s = Steve, Pyra/Mythra, Joker
+mid s = Sonic, Fox, R.O.B., Kazuya, Roy, Peach
+lower s = Cloud, Wolf, Diddy Kong, Pikachu, Pac-Man, Snake, Min Min, Palutena, Mr. Game & Watch, Shulk
+upper a = Yoshi, Mario, Lucina, Pokemon Trainer, Wario, Samus
+
+note that i'm splitting the +/- tiers out into +/./- tiers like s tier is described
+that's how the program is designed, so that's what i'm going to do
+
+mid a = Zero Suit Samus, Sephiroth, Olimar, Young Link, Terry, Sora
+lower a = Byleth, Greninja, Ken, Sheik, Ryu, Mii Brawler, Mega Man
+upper b = Captain Falcon, Ness, Falco, Corrin, Chrom, Hero
+mid b = Bayonetta, Inkling, Luigi, Rosalina & Luma, Toon Link, Bowser
+lower b = Meta Knight, Pit, Link, Marth, Pichu, Ice Climbers
+upper c = Wii Fit Trainer, Lucas, Jigglypuff, Ridley, Mii Gunner
+mid c = Robin, Mewtwo, Incineroar, Ike, Banjo & Kazooie
+lower c = Duck Hunt, Simon, Villager, Donkey Kong, Lucario, Bowser Jr.
+upper d = Isabelle, King K. Rool, Zelda, Kirby, Piranha Plant, Mii Swordfighter, Dr. Mario, King Dedede
+mid d = Little Mac, Ganondorf
+
+tier chances = 0, 30, 25, 20, 15, 10, 0, 0
+bump chances = 70, 15, 15
+cannot get size = 15
 allow s in cannot get = true
-#The following is a default setting. I put it here anyways
-players = 2
-#Note: I'm setting it like this because getting bumped up by one is essentially useless here
-bump chances = 67, 0, 33
-
-#You could define some favorites and exlusions down here if you want
-#Right now this does the equivalent of not including them at all
-p1 favorite = 
-p1 exclude = 
-p2 favorite = 
-p2 exclude = 
