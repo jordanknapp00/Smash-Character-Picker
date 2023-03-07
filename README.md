@@ -2,7 +2,7 @@
 
 A program that generates a random matchup for *Super Smash Bros.* using a tier list. For those of us who can never decide what character to play, but are unsatisfied with Smash's built-in random option. It always seems to generate totally unfair matchups. To solve this problem, I created this program. It loads a tier list from a `.txt` file and generates a matchup that can be considered fair by the rules of that tier list. There are various systems included to generate novel matchups throughout a session. There is also a built-in stat-tracking system, allowing you to track the winrates of players and fighters.
 
-This version of the program (v12) sees a more or less total rewrite of the program. I'm actually taking some advantage of object-oriented programming now! Only took about 4 years of this program existing.
+This version of the program (v12) sees a more or less total rewrite of the program. I'm actually taking some advantage of object-oriented programming now! This software has been around since 2019, and I believe it continues to get better over time.
 
 ## General Usage
 
