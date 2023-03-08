@@ -2,8 +2,6 @@ package data;
 
 import util.Util;
 
-//TODO: add javadoc for stats once it's more fleshed out
-
 /**
  * The <code>Fighter</code> class allows us to keep track of the fighters in
  * a tier list. Before v12, we simply kept lists of <code>String</code>s to
