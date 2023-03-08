@@ -1,8 +1,8 @@
-# Smash Character Picker (v11.1)
+# Smash Character Picker (v12)
 
-A program that generates a random matchup for *Super Smash Bros.* using a tier list. For those of us who can never decide what character to play, but are unsatisfied with Smash's built-in random option. It always seems to generate totally unfair matchups. To solve this problem, I created this program. It loads a tier list from a `.txt` file and generates a matchup that can be considered fair by the rules of that tier list. There are various systems included to generate novel matchups throughout a session. There is also a built-in stat-tracking system, allowing you to track the winrates of players and fighters.
+A program that generates a random matchup for *Super Smash Bros.* using a tier list. For those of us who can never decide what character to play, but are unsatisfied with Smash's built-in random option. It always seems to generate totally unfair matchups. To solve this problem, I created this program. It loads a tier list from a file and generates a matchup that can be considered fair by the rules of that tier list. There are various systems included to generate novel matchups throughout a session. There is also a built-in stat-tracking system, allowing you to track the winrates of players and fighters.
 
-This version of the program (v11.1) sees an overhaul of the battle generation system. The new system is designed to improve the odds of getting novel matchups by making use of the statistics data. Basically, a player is less likely to get a fighter that they've already gotten several times before. This only takes effect if you use the statistics system. The battle generation system should also be less likely to be unable to find a matchup, as it focuses on the set of valid characters for each player. Before, it would choose a tier and try to generate a battle for that tier, without any consideration as to whether there were any valid characters available in that tier. It is still important to make sure your "Cannot Get" buffer, tier chances, and bump chances are set adequately to ensure likelihood that you will always have a valid available matchup.
+This version of the program (v12) sees a more or less total rewrite of the program. I'm actually taking some advantage of object-oriented programming now! This software has been around since 2019, and I believe it continues to get better over time.
 
 ## General Usage
 
@@ -20,23 +20,21 @@ On the left side of the window, you'll find various settings that affect the pro
 
 #### Bump Chances
 
-Below the tier chance settings is the bump settings. When a battle generated, a tier is chosen according to the percentages defined by the tier chance settings. However, each player has a chance to be bumped *up* either one or two sub-tiers. For example, the chosen tier may be Mid A tier, but players could conceivably be bumped up to Upper A or Lower S tiers. The chances of being bumped up one or two tiers, or simply staying in the same tier that was initially chosen, is defined by the bump chances. These are also applied by hitting the "Apply tier chance settings" button, and like the tier chances, these values must add up to 100. Note that while players can have their tiers bumped up, they will never be bumped down.
+Below the tier chance settings is the bump settings. When a battle generated, a tier is chosen according to the percentages defined by the tier chance settings. However, each player has a chance to be bumped *up* either one or two sub-tiers. For example, the chosen tier may be Mid A tier, but players could be bumped up to Upper A or Lower S tiers. The chances of being bumped up one or two tiers, or simply staying in the same tier that was initially chosen, is defined by the bump chances. These are also applied by hitting the "Apply tier chance settings" button, and like the tier chances, these values must add up to 100. Tiers are always bumped *up*, never down, except when there are not enough tiers to bump upward, i.e. the top tier or second to top tier was chosen as the initial tier. When the top tier (Upper Double S tier) is selected, tiers can be bumped down one or two tiers. When the second-to-top tier (Mid Double S tier) is chosen, tiers can be bumped up or down one.
 
 #### The "Cannot Get" buffer
 
 Below the tier chance settings, you'll find settings for the "Cannot Get" buffer. After each battle, the fighters that each player got are added to the "Cannot Get" buffer, and they cannot be gotten again *by any player* for a set amount of battles. This is the size of the "Cannot Get" buffer. The default is 5, but it can safely be set higher than this depending on how many fighters are being used, and thus how many possible matchups there are. There are also separate settings to determine whether or not SS and/or S tier characters are allowed in the buffer. If a tier list has a particularly small SS or S tier, it may be desirable to not put those characters in the "Cannot Get" buffer.
 
-**Note**: If the "Cannot Get" buffer's size is set too high, then it could be possible for there to not be any available matchups, because all the fighters are in the "Cannot Get" buffer. In this situation, the program will fail to generate a matchup. "No valid battles found after 100 tries" will be printed to the results field. It is important to set your "Cannot Get" buffer to a size where this will not happen. If this does happen, you are best off simply closing the program and restarting it, being sure to set the "Cannot Get" buffer size lower.
+**Note**: If the "Cannot Get" buffer's size is set too high, then it could be possible for there to not be any available matchups, because all the fighters are in the "Cannot Get" buffer. In this situation, the program will fail to generate a matchup. "No valid battles found after 100 tries" will be printed to the results field. It is important to set your "Cannot Get" buffer to a size where this will not happen. If this does happen, you are best off simply closing the program and restarting it, being sure to set the "Cannot Get" buffer size lower. Note that with enough use of the program, you will eventually run out of valid matchups, as players will have already gotten every fighter they can. As such, the number of battles you can get before running out of valid options is *approximately* equal to the smallest number of valid fighters for a player on your tier list. For example, if your tier list has 82 fighters on it, but a player has 5 fighters on their exclusion list, you can expect to get a max of ~77 battles. In practice, it will likely be less than that due to various factors such as the number of fighters in each tier and pure luck based on the matchups generated.
 
 ## Tier List Files
 
-Tier lists are stored in a simple `.txt` file. Check out the provided tier list files for an example of how to format it. Tiers are denoted by the name of the tier, followed by an equals sign with a space on both sides, and then a comma-separated list of fighters that belong in that tier. Tiers can be listed in any order, and tiers can be excluded entirely if there are no fighters in that tier for your particular tier list. Note that each tier is essentially split into three sub-tiers. There's an Upper A, Mid A, and Lower A. This applies to all tiers.
-
-Note that the program works best when the tiers are consecutive, i.e. putting gaps in the tier list isn't advised. The example `reddit tier list.txt` that is provided does this, as it simply directly copies the r/SmashBrosUltimate official tier list. It shouldn't cause issues with the program, but you may not get as many novel matchups as you would if the tiers were consecutive, because being bumped up that many tiers is impossible.
+Tier lists are stored in a `.txt` file. Check out the provided tier list files for an example of how to format it. Tiers are denoted by the name of the tier, followed by an equals sign with a space on both sides, and then a comma-separated list of fighters that belong in that tier. Tiers can be listed in any order, and tiers can be excluded entirely if there are no fighters in that tier for your particular tier list. However, the tiers must be placed before the definitions for exclusion and favorites lists. If a fighter is on an exclusion/favorite list that wasn't defined in a tier before it, an error will be thrown.
 
 The program will search its directory for `tier list.txt` upon launch, and prompt the user as to whether or not it should be loaded, if the file is found at all. Once a tier list is loaded, the program can be used.
 
-You also have the ability to put comments in a tier list file. Simply start a line with a `#`, and the program will ignore it when loading the tier list, thus allowing the line to function as a comment. Any line that is not blank or not recognized as a tier, setting, or exclusion/favorite list will cause an error when the tier list is loaded.
+Any line that is not recognized as a tier, setting, or exclusion/favorite list will be ignored, so you can include whatever text you want on lines that don't contain tier list data. However, lines that do contain data must be formatted correctly.
 
 ### Exclusion and Favorite Lists
 
@@ -50,9 +48,9 @@ The various settings described above can also be defined in a tier list file. On
 
 - `players = ` will allow you to set the number of players. A number between 2 and 8 is required.
 - `cannot get size = ` will allow you to set the size of the "Cannot Get" buffer. A number between 0 and 15 is required.
-- `allow ss in cannot get = ` and `allow s in cannot get = ` allow you to determine those settings. A value of true or false is required.
-- `tier chances = ` will allow you to set the custom tier chances automatically. Simply provide a comma-separated list of 8 numbers, and ensure they add up to 100. The numbers are just the percentages of each tier, starting from SS down to F. If the given values are valid, the program will apply them as soon as you open the tier list.
-- `bump chances = ` will allow you to set custom bump chances automatically. Simple provide a comma-separated list of 3 numbers; the chance of staying the same tier, bumping up one tier, and bumping up two tiers. These values must add up to 100. If the given values are valid, the program will apply them as soon as you open the tier list.
+- `allow ss in cannot get = ` and `allow s in cannot get = ` allow you to determine those settings. A value of true/false or 0/1 is required.
+- `tier chances = ` will allow you to set the custom tier chances automatically. Simply provide a comma-separated list of 8 numbers, and ensure they add up to 100. The numbers are the percentages of each tier, starting from SS down to F.
+- `bump chances = ` will allow you to set custom bump chances automatically. Simple provide a comma-separated list of 3 numbers; the chance of staying the same tier, bumping up one tier, and bumping up two tiers. These values must add up to 100.
 
 ## Stat Tracking
 
@@ -68,20 +66,10 @@ You can look up the stats of an individual fighter, displaying each player's win
 
 You can sort the fighters by their overall winrate, as well as their winrate when being played by a particular player. You can also sort the fighters by the total number of battles they've appeared in. Finally, you can see each player's overall winrate compared to one another.
 
-### Stat Modification
-
-Did you accidentally select the wrong winner? As mentioned above, this is not a problem. Simply selecting the correct player and hitting the select winner button again will solve the problem, so long as you haven't generated a new battle yet. If you did generate a new battle, you can hit the "Mod" button and type in the name of a fighter to open the modify window. The modify menu lets you adjust each player's individual winrate. You can also rename the character and delete them from the system, though you must also rename/remove the character in the tier list file for this to be permanent.
-
-Adding new fighters to the system is easy. Simply add the fighters to your tier list file, and when the program is opened, they will automatically be added to the system.
-
 ### Stat Files
 
 Statistics are stored in a file called `smash stats.sel`, which is stored in the same directory as the program and tier list file. The stats file simply stores the HashMap object which represents the stats system internally. This means that it is not editable with a text editor. The Smash Character Picker program is only designed to read `smash stats.sel`.
 
 If you want to read `.sel` files other than `smash stats.sel`, you can use the [Smash Stats Viewer](https://github.com/jordanknapp00/Smash-Stats-Viewer). This program allows read-only access to `.sel` files, so you can read various stats files without making modifications.
 
-This version of the program comes with a `smash stats.sel` file. It is intended to be used with `tier list.txt`, not `reddit tier list.txt`.
-
-# License
-
-This project uses the [FPA General Code License](https://about.fairfieldprogramming.org/licenses/code/). In short, you can do whatever you want with this code for non-commerical purposes. In order to use this code for commerical purposes, you must make substantial changes to it. Reorganizing the logic does not count as a substantial change. See [LICENSE.md](LICENSE.md) or the link above for more details.
+This version of the program comes with a `smash stats.sel` file that contains some example data.

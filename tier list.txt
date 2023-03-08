@@ -15,9 +15,11 @@ mid c = Bowser Jr., Peach, Pokemon Trainer, Inkling
 #"Official" lower c tier now that we've gotten rid of Diddy and Pac-Man
 lower c = Simon, Young Link, Dark Pit, Wii Fit Trainer, Meta Knight, Wario
 
-#test
+test comment that has no pound sign
 p2 exclude = Cloud, Snake, Sephiroth
 p3 exclude = Lucario, Joker, Sora
+
+test invalid identifier = should not throw any errors
 
 p1 favorite = Falco, Mewtwo
 p2 favorite = Terry, Ridley
