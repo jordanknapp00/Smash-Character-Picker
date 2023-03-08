@@ -1010,14 +1010,15 @@ public class MainWindow {
 		String resultString;
 		if(tries == 100 || result == null) {
 			resultString = "No valid battles found after 100 tries.";
+			statsOutput.setText("");
 		}
 		else {
 			previousMatchups.add(result);
 			resultString = "Battle #" + numBattles + ":\n" + result.toString();
+			statsOutput.setText(result.getStatsOutput());
 		}
 		
 		results.setText(resultString);
-		statsOutput.setText(result.getStatsOutput());
 		
 		//finally, enable all the stats stuff if that was the first battle
 		if(numBattles == 1) {
