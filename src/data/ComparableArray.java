@@ -41,7 +41,6 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	
 	private int wins;
 	private int battles;
-	private double winrate;
 	
 	/**
 	 * Creates a <code>ComparableArray</code> containing the given
@@ -134,13 +133,6 @@ public class ComparableArray implements Comparable<ComparableArray> {
 			wins = fighter.getPlayerWins(playerToGet);
 			battles = fighter.getPlayerBattles(playerToGet);
 		}
-		
-		if(battles != 0) {
-			winrate = (double) wins / battles;
-		}
-		else {
-			winrate = -1;
-		}
 	}
 	
 	/**
@@ -170,7 +162,7 @@ public class ComparableArray implements Comparable<ComparableArray> {
 	 * @return	The winrate for this character, or <code>wins</code>/<code>battles</code>.
 	 */
 	private double getWinrate() {
-		return winrate;
+		return (float) wins / battles;
 	}
 
 	/**
@@ -209,14 +201,14 @@ public class ComparableArray implements Comparable<ComparableArray> {
 		if(battles == 0 && o.getBattles() == 0) {
 			return 0;
 		}
-		else if(battles == 0 && !(o.getBattles() == 0)) {
-			return -1;
-		}
-		else if(battles != 0 && o.getBattles() == 0) {
+		else if(battles == 0 && o.getBattles() != 0) {
 			return 1;
 		}
+		else if(battles != 0 && o.getBattles() == 0) {
+			return -1;
+		}
 		
-		int doubComp = Double.compare(winrate, o.getWinrate());
+		int doubComp = -Double.compare(getWinrate(), o.getWinrate());
 		
 		if(doubComp == 0) {
 			int batComp = Integer.compare(battles, o.getBattles());
@@ -242,7 +234,7 @@ public class ComparableArray implements Comparable<ComparableArray> {
 			return fighter.getName() + " - " + battles + " battles";
 		}
 		
-		return fighter.getName() + " - " + Util.printDouble(winrate * 100) + "% (" + wins + "/" + battles + ")";
+		return fighter.getName() + " - " + Util.printDouble(getWinrate() * 100) + "% (" + wins + "/" + battles + ")";
 	}
 
 }
