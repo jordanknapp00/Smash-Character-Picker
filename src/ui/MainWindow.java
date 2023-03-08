@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -25,6 +26,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -34,45 +36,17 @@ import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
-import data.ProgramState;
-import picker.BattleGenerator;
-import picker.FileLoaderParser;
-import picker.LookupManager;
-import picker.StatsManager;
+import data.ComparableArray;
+import data.Fighter;
+import data.Matchup;
+import data.Settings;
+import data.TierList;
+import exception.NoValidFightersException;
+import exception.TierListParseException;
 import util.Util;
 
-/**
- * The <code>MainWindow</code> class is responsible for basically managing the
- * entire program. While <code>Driver</code> is the class that actually
- * launches the program, everything else is handled as an extension of
- * <code>MainWindow</code>.
- * <br><br>
- * This class essentially <i>is</i> the UI for the main window of the program,
- * which includes the results field, tier chance settings, switch options, and
- * other buttons for accessing other parts of the program. As such, those other
- * parts of the program are handled based on the <code>ActionListener</code>
- * classes in this program. For example, when you press the generate button,
- * the generate button's <code>ActionListener</code> will be responsible for
- * using the <code>BattleGenerator</code> class to generate a battle.
- * <br><br>
- * There is debate on the internet as to whether using multiple
- * <code>JFrame</code>s in a program is good or bad practice. Many seem to think
- * it's very bad practice. However, the reason I use separate frames for each
- * aspect of the program is that the program is very modular. You do not need to
- * use the soundboard, stats menu, debug menu, or even the advanced settings
- * menu to run the program. And there is no satisfactory way to allow them to
- * be opened and closed as needed without using separate <code>JFrame</code>s.
- * <code>CardLayout</code>s, <code>InternalWindow</code>s, and simply
- * dynamically resizing a single <code>JFrame</code> have not produced the
- * functionality that I want. As such, I choose to use separate
- * <code>JFrame</code> objects for each aspect of this program.
- * 
- * @author Jordan Knapp
- */
 public class MainWindow {
 	
 	//all Swing objects are fields of the MainWindow class
@@ -156,65 +130,62 @@ public class MainWindow {
 	private JCheckBox allowSInCannotGet;
 	
 	//stats panel components
+	private JTextArea statsOutput;
 	private JLabel playerLabel;
 	private JSpinner winnerSpinner;
 	private JButton pickWinnerButton;
 	private JButton searchButton;
 	private JButton sortButton;
-	private JButton modButton;
 	private JButton reloadButton;
 	
-	private ProgramState state;
-	private BattleGenerator battleGenerator;
-	private StatsManager statsManager;
-	private LookupManager lookupManager;
+	//other variables	
+	private TierList tierList;
+	private boolean fileLoaded;
+	private int numBattles;
+	private List<Matchup> previousMatchups;
+	private int[] switchVals;
 	
-	public MainWindow() {
-		//initialize the debug first, in case errors occur later
-		Util.initDebug();
-		
-		//initialize the program state, as well as any other picker classes
-		state = new ProgramState(this);
-		statsManager = new StatsManager(state);
-		battleGenerator = new BattleGenerator(state, statsManager);
-		lookupManager = new LookupManager(state, statsManager);
-		
-		//initializing the frame that holds everything together in the main
-		//window
+	private int[] tierChances;
+	private int[] bumpChances;
+	
+	private DebugWindow dbw;
+	
+	/**
+	 * The <code>MainWindow</code> makes up the primary UI of the Smash
+	 * Character Picker. This constructor will initialize everything in the
+	 * interface, show the window, and prompt the user to load a tier list
+	 * file if one is found.
+	 * 
+	 * @throws Exception	Exceptions may occur during processes such as 
+	 * 						setting the "look and feel" of the window. Any
+	 * 						exceptions are thrown back to the <code>Driver</code>,
+	 * 						where an error message is displayed before the
+	 * 						program closes.
+	 */
+	public MainWindow() throws Exception {	
+		//initialize the frame and put it in the middle of the screen
 		frame = new JFrame("Smash Character Picker");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(1200, 450);
-		//frame.setResizable(false);
-		
-		//we want to place the window 25 pixels to the left of the center
 		frame.setLocationRelativeTo(null);
-		frame.setLocation(frame.getX() - 25, frame.getY());
 		
-		//initialize TextAreas before setting look and feel
+		//initialize textareas before setting look and feel
 		results = new JTextArea();
 		results.setEditable(false);
 		results.setFont(results.getFont().deriveFont(18f));
 		
-		//attempt to set look and feel, catching any errors
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (ClassNotFoundException e) {
-			Util.error(e);
-		} catch (InstantiationException e) {
-			Util.error(e);
-		} catch (IllegalAccessException e) {
-			Util.error(e);
-		} catch (UnsupportedLookAndFeelException e) {
-			Util.error(e);
-		}
+		statsOutput = new JTextArea();
+		statsOutput.setEditable(false);
+		statsOutput.setFont(statsOutput.getFont().deriveFont(18f));
 		
-		//GridBagConstraints object that will be used while constructing the ui
+		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		
+		//will be used to set up a majority of the UI
 		GridBagConstraints gc = new GridBagConstraints();
 		
 		//initialize resultsPanel
-		resultsPanel = new JPanel();
+		resultsPanel = new JPanel(new BorderLayout());
 		resultsPanel.setBorder(BorderFactory.createTitledBorder("Results"));
-		resultsPanel.setLayout(new BorderLayout());
 		resultsPanel.add(results);
 		resultsPanel.setPreferredSize(new Dimension(425, 260));
 		
@@ -222,32 +193,66 @@ public class MainWindow {
 		switchPanel = new JPanel();
 		switchPanel.setBorder(BorderFactory.createTitledBorder("Switch"));
 		switchPanel.setLayout(new BoxLayout(switchPanel, BoxLayout.Y_AXIS));
-		switchPanel.setToolTipText("Select 2 players and hit the switch button,"
-				+ " and they will switch fighters.");
+		switchPanel.setToolTipText("Select 2 fighters and hit the switch button, " +
+				"and they will switch fighters.");
 		
-		//initialize SwitchManager and all its related components
-		SwitchManager sm = new SwitchManager();
 		player1Box = new JCheckBox("P1");
-		player1Box.addActionListener(sm.new Player1BoxActionListener());
+		player1Box.addActionListener(new SwitchActionListener(1));
 		player2Box = new JCheckBox("P2");
-		player2Box.addActionListener(sm.new Player2BoxActionListener());
+		player2Box.addActionListener(new SwitchActionListener(2));
 		player3Box = new JCheckBox("P3");
-		player3Box.addActionListener(sm.new Player3BoxActionListener());
+		player3Box.addActionListener(new SwitchActionListener(3));
 		player4Box = new JCheckBox("P4");
-		player4Box.addActionListener(sm.new Player4BoxActionListener());
+		player4Box.addActionListener(new SwitchActionListener(4));
 		player5Box = new JCheckBox("P5");
-		player5Box.addActionListener(sm.new Player5BoxActionListener());
+		player5Box.addActionListener(new SwitchActionListener(5));
 		player6Box = new JCheckBox("P6");
-		player6Box.addActionListener(sm.new Player6BoxActionListener());
+		player6Box.addActionListener(new SwitchActionListener(6));
 		player7Box = new JCheckBox("P7");
-		player7Box.addActionListener(sm.new Player7BoxActionListener());
+		player7Box.addActionListener(new SwitchActionListener(7));
 		player8Box = new JCheckBox("P8");
-		player8Box.addActionListener(sm.new Player8BoxActionListener());
-		switchButton = new JButton("Swap");
-		switchButton.addActionListener(sm.new SwitchButtonActionListener());
+		player8Box.addActionListener(new SwitchActionListener(8));
 		
-		//add components to the switchPanel, including some boxes to make things
-		//look nicer
+		switchButton = new JButton("Switch");
+		switchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//make sure that we have 2 players selected
+				if(switchVals[0] == 0 || switchVals[1] == 0) {
+					JOptionPane.showMessageDialog(null, "Please select 2 players.",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					
+					return;
+				}
+				
+				//subtract 1 from both, since SwitchActionListener is 1-indexed
+				//(because it uses 0 as a sentinel value)
+				int p1 = switchVals[0] - 1;
+				int p2 = switchVals[1] - 1;
+				
+				//if so, we're good to switch using the last matchup
+				Matchup toSwap = previousMatchups.get(previousMatchups.size() - 1);
+				tierList.swapFighters(p1, toSwap.getFighter(p1), p2, toSwap.getFighter(p2));
+				toSwap.swapFighters(p1, p2);
+				
+				results.setText("Battle #" + numBattles + ":\n" + toSwap);
+				statsOutput.setText(toSwap.getStatsOutput());
+				
+				//now deselect all after switching and reset switchVals
+				player1Box.setSelected(false);
+				player2Box.setSelected(false);
+				player3Box.setSelected(false);
+				player4Box.setSelected(false);
+				player5Box.setSelected(false);
+				player6Box.setSelected(false);
+				player7Box.setSelected(false);
+				player8Box.setSelected(false);
+				switchVals[0] = 0;
+				switchVals[1] = 0;
+			}
+		});
+		
+		//add components to switchPanel, including some boxes to make things
+		//look a bit nicer
 		switchPanel.add(Box.createRigidArea(new Dimension(0, 25)));
 		switchPanel.add(player1Box);
 		switchPanel.add(Box.createRigidArea(new Dimension(0, 3)));
@@ -270,7 +275,6 @@ public class MainWindow {
 		//disable literally everything in the switchPanel until a battle has
 		//been generated. it can be buggy before then. besides, you literally
 		//can't switch fighters when none have been picked yet.
-		switchPanel.setEnabled(false);
 		player1Box.setEnabled(false);
 		player2Box.setEnabled(false);
 		player3Box.setEnabled(false);
@@ -281,45 +285,110 @@ public class MainWindow {
 		player8Box.setEnabled(false);
 		switchButton.setEnabled(false);
 		
-		//initialize bottomPanel
-		bottomPanel = new JPanel();
-		bottomPanel.setLayout(new GridBagLayout());
+		//set up the bottom panel
+		
+		bottomPanel = new JPanel(new GridBagLayout());
+		
 		generateButton = new JButton("Generate");
-		generateButton.addActionListener(new GenerateButtonActionListener());
+		generateButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				generateBattle(false);
+			}
+		});
+		
 		skipButton = new JButton("Skip");
 		skipButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(state.numBattles != 0) {
-					state.skipping = true;
-					if(state.fileLoaded) {
-						results.setText(battleGenerator.generateBattle());
-					}
+				generateBattle(true);
+			}
+		});
+		
+		loadButton = new JButton("Load");
+		Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
+		loadButton.setIcon(new ImageIcon(loadImage));
+		loadButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fileChooser = new JFileChooser(".");
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Documents (*.txt)", "txt");
+				fileChooser.setFileFilter(filter);
+				
+				if(fileChooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) {
+					return;
+				}
+				
+				Settings settings = null;
+				
+				try {
+					tierList = new TierList();
+					settings = tierList.loadFile(fileChooser.getSelectedFile());
+					fileLoaded = true;
+				} catch(FileNotFoundException e1) {
+					results.setText("File " + fileChooser.getSelectedFile().getName() +
+							" not found!");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
+				} catch(IOException e1) {
+					results.setText("IOException when reading " +
+							fileChooser.getSelectedFile().getName() + "!\n" +
+							"See the debug log for details.");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
+				} catch(TierListParseException e1) {
+					results.setText("TierListParseException when reading " +
+							fileChooser.getSelectedFile().getName() + "!\n" +
+							"See the debug log for details.");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
+				} catch(ClassNotFoundException e1) {
+					results.setText("ClassNotFoundException when reading " +
+							"stats data!\nSee the debug log for details.");
+					Util.error(e1);
+					
+					tierList = null;
+					fileLoaded = false;
+				}
+				
+				//if file was loaded, update the UI
+				if(fileLoaded) {
+					Util.log("The following data was loaded as the tier list:\n" + tierList.toString());
+					
+					cannotGetSizeSpinner.setValue(settings.getCannotGetSize());
+					allowSSInCannotGet.setSelected(settings.ssAllowedInCannotGet());
+					allowSInCannotGet.setSelected(settings.sAllowedInCannotGet());
+					numPlayersSpinner.setValue(settings.getNumPlayers());
+					
+					SSTierSpinner.setValue(settings.getTierChance(0));
+					STierSpinner.setValue(settings.getTierChance(1));
+					ATierSpinner.setValue(settings.getTierChance(2));
+					BTierSpinner.setValue(settings.getTierChance(3));
+					CTierSpinner.setValue(settings.getTierChance(4));
+					DTierSpinner.setValue(settings.getTierChance(5));
+					ETierSpinner.setValue(settings.getTierChance(6));
+					FTierSpinner.setValue(settings.getTierChance(7));
+					
+					bump0Spinner.setValue(settings.getBumpChance(0));
+					bump1Spinner.setValue(settings.getBumpChance(1));
+					bump2Spinner.setValue(settings.getBumpChance(2));
 				}
 			}
 		});
 		
-		//attempt to set up the load button correctly
-		loadButton = new JButton("Load");
-		try {
-			Image loadImage = ImageIO.read(getClass().getResource("/img/Open.png"));
-			loadButton.setIcon(new ImageIcon(loadImage));
-		} catch (IOException e) {
-			Util.error(e);
-		}
-		
-		//continue initializing the bottomPanel
 		debugButton = new JButton("Debug");
-		debugButton.addActionListener(new DebugButtonActionListener());
-		loadButton.addActionListener(new LoadButtonActionListener());
-		
-		numPlayersLabel = new JLabel("Number of players: ");
-		SpinnerNumberModel spinner = new SpinnerNumberModel(2, 2, 8, 1);
-		numPlayersSpinner = new JSpinner(spinner);
-		numPlayersSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.numPlayers = (int) numPlayersSpinner.getValue();
+		debugButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dbw.setVisible(true);
 			}
 		});
+		
+		numPlayersLabel = new JLabel("Number of players: ");
+		SpinnerNumberModel model = new SpinnerNumberModel(2, 2, 8, 1);
+		numPlayersSpinner = new JSpinner(model);
 		
 		//add components to the bottomPanel
 		gc.weightx = .03;
@@ -342,78 +411,46 @@ public class MainWindow {
 		gc.weightx = .05;
 		bottomPanel.add(numPlayersSpinner, gc);
 		
-		//initialize tierChanceTopPanel
-		tierChanceTopPanel = new JPanel();
-		tierChanceTopPanel.setLayout(new GridBagLayout());
-		tierChanceLabel1 = new JLabel("You can set custom chances for "
-				+ "each tier.");
+		//set up tierChanceTopPanel
+		
+		tierChanceTopPanel = new JPanel(new GridBagLayout());
+		
+		tierChanceLabel1 = new JLabel("You can set custom chances for each " +
+				"tier.");
 		tierChanceLabel2 = new JLabel("Remember to hit apply!");
-		SpinnerNumberModel SSmod = new SpinnerNumberModel(state.tierChances[0], 0, 100, 1);
-		SSTierSpinner = new JSpinner(SSmod);
-		SSTierSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newTierChances[0] = (int) SSTierSpinner.getValue();
-			}
-		});
+		
+		//i've learned an unfortunate lesson, all the spinners need to have
+		//different models. otherwise they all do exactly the same thing.
+		//so fine. also, these default values should be the same as what the
+		//default constructor for TierList does.
+		model = new SpinnerNumberModel(10, 0, 100, 1);
+		SSTierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(20, 0, 100, 1);
+		STierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(25, 0, 100, 1);
+		ATierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(25, 0, 100, 1);
+		BTierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(20, 0, 100, 1);
+		CTierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(0, 0, 100, 1);
+		DTierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(0, 0, 100, 1);
+		ETierSpinner = new JSpinner(model);
+		model = new SpinnerNumberModel(0, 0, 100, 1);
+		FTierSpinner = new JSpinner(model);
+		
+		//also create all the labels
 		SSTierLabel = new JLabel("SS tier chance: ");
-		SpinnerNumberModel Smod = new SpinnerNumberModel(state.tierChances[1], 0, 100, 1);
-		STierSpinner = new JSpinner(Smod);
-		STierSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newTierChances[1] = (int) STierSpinner.getValue();
-			}
-		});
 		STierLabel = new JLabel("S tier chance: ");
-		SpinnerNumberModel Amod = new SpinnerNumberModel(state.tierChances[2], 0, 100, 1);
-		ATierSpinner = new JSpinner(Amod);
-		ATierSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newTierChances[2] = (int) ATierSpinner.getValue();
-			}
-		});
 		ATierLabel = new JLabel("A tier chance: ");
-		SpinnerNumberModel Bmod = new SpinnerNumberModel(state.tierChances[3], 0, 100, 1);
-		BTierSpinner = new JSpinner(Bmod);
-		BTierSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newTierChances[3] = (int) BTierSpinner.getValue();
-			}
-		});
 		BTierLabel = new JLabel("B tier chance: ");
-		SpinnerNumberModel Cmod = new SpinnerNumberModel(state.tierChances[4], 0, 100, 1);
-		CTierSpinner = new JSpinner(Cmod);
-		CTierSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newTierChances[4] = (int) CTierSpinner.getValue();
-			}
-		});
 		CTierLabel = new JLabel("C tier chance: ");
-		SpinnerNumberModel Dmod = new SpinnerNumberModel(state.tierChances[5], 0, 100, 1);
-		DTierSpinner = new JSpinner(Dmod);
-		DTierSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newTierChances[5] = (int) DTierSpinner.getValue();
-			}
-		});
 		DTierLabel = new JLabel("D tier chance: ");
-		SpinnerNumberModel Emod = new SpinnerNumberModel(state.tierChances[6], 0, 100, 1);
-		ETierSpinner = new JSpinner(Emod);
-		ETierSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newTierChances[6] = (int) ETierSpinner.getValue();
-			}
-		});
 		ETierLabel = new JLabel("E tier chance: ");
-		SpinnerNumberModel Fmod = new SpinnerNumberModel(state.tierChances[7], 0, 100, 1);
-		FTierSpinner = new JSpinner(Fmod);
-		FTierSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newTierChances[7] = (int) FTierSpinner.getValue();
-			}
-		});
 		FTierLabel = new JLabel("F tier chance: ");
 		
-		//add components to tierChanceTopPanel
+		//and then add to the panel
 		gc.gridx = 0;
 		gc.gridy = 0;
 		gc.gridwidth = 2;
@@ -458,45 +495,104 @@ public class MainWindow {
 		gc.gridy = 9;
 		tierChanceTopPanel.add(FTierSpinner, gc);
 		
-		//initialize tierChanceBottomPanel
-		tierChanceBottomPanel = new JPanel();
-		tierChanceBottomPanel.setLayout(new GridBagLayout());
+		//set up tierChanceBottomPanel
+		
+		tierChanceBottomPanel = new JPanel(new GridBagLayout());
 		
 		applyButton = new JButton("Apply tier chance settings");
 		applyButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				state.applyTierChances();
+				int tierSum = (int) SSTierSpinner.getValue() +
+						(int) STierSpinner.getValue() +
+						(int) ATierSpinner.getValue() + 
+						(int) BTierSpinner.getValue() +
+						(int) CTierSpinner.getValue() +
+						(int) DTierSpinner.getValue() +
+						(int) ETierSpinner.getValue() +
+						(int) FTierSpinner.getValue();
+				
+				int bumpSum = (int) bump0Spinner.getValue() +
+						(int) bump1Spinner.getValue() +
+						(int) bump2Spinner.getValue();
+				
+				//pop up a message based on what's right and what's wrong
+				if(tierSum != 100 && bumpSum != 100) {
+					JOptionPane.showMessageDialog(null, "Neither the custom " +
+							"tier or bump chances add up to 100. They add " +
+							"up to " + tierSum + " and " + bumpSum + ", " +
+							"respectively.", "Smash Character Picker",
+							JOptionPane.ERROR_MESSAGE);
+				}
+				else if(tierSum != 100) {
+					JOptionPane.showMessageDialog(null, "The custom tier " +
+							"chances do not add up to 100, so they will not " +
+							"be applied. They currently add to " + tierSum +
+							". The bump chances are valid and will be applied.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+				}
+				else if(bumpSum != 100) {
+					JOptionPane.showMessageDialog(null, "The custom bump " +
+							"chances to not add up to 100, so they will not " +
+							"be applied. They currently add to " + bumpSum +
+							". The tier chances are valid and will be applied.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "The custom tier " +
+							"and bump chances are valid, and will be applied.",
+							"Smash Character Picker", JOptionPane.INFORMATION_MESSAGE);
+				}
+				
+				//then, set the values appropriately. either change the UI
+				//back to the old values or update our internal values to
+				//the new values
+				if(tierSum != 100) {
+					SSTierSpinner.setValue(tierChances[0]);
+					STierSpinner.setValue(tierChances[1]);
+					ATierSpinner.setValue(tierChances[2]);
+					BTierSpinner.setValue(tierChances[3]);
+					CTierSpinner.setValue(tierChances[4]);
+					DTierSpinner.setValue(tierChances[5]);
+					ETierSpinner.setValue(tierChances[6]);
+					FTierSpinner.setValue(tierChances[7]);
+				}
+				else {
+					tierChances[0] = (int) SSTierSpinner.getValue();
+					tierChances[1] = (int) STierSpinner.getValue();
+					tierChances[2] = (int) ATierSpinner.getValue();
+					tierChances[3] = (int) BTierSpinner.getValue();
+					tierChances[4] = (int) CTierSpinner.getValue();
+					tierChances[5] = (int) DTierSpinner.getValue();
+					tierChances[6] = (int) ETierSpinner.getValue();
+					tierChances[7] = (int) FTierSpinner.getValue();
+				}
+				
+				if(bumpSum != 100) {
+					bump0Spinner.setValue(bumpChances[0]);
+					bump1Spinner.setValue(bumpChances[1]);
+					bump2Spinner.setValue(bumpChances[2]);
+				}
+				else {
+					bumpChances[0] = (int) bump0Spinner.getValue();
+					bumpChances[1] = (int) bump1Spinner.getValue();
+					bumpChances[2] = (int) bump2Spinner.getValue();
+				}
 			}
 		});
-		applyButton.setToolTipText("Will ensure that the given values are "
-				+ "valid, meaning they add up to 100.");
+		
 		bumpChanceLabel = new JLabel("Chances of bumping up tiers:");
 		bump2 = new JLabel(" 2 tiers");
 		bump1 = new JLabel("  1 tier");
 		bump0 = new JLabel("Stay same");
-		SpinnerNumberModel bumpMod0 = new SpinnerNumberModel(state.bumpChances[0], 0, 100, 1);
-		bump0Spinner = new JSpinner(bumpMod0);
-		bump0Spinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newBumpChances[0] = (int) bump0Spinner.getValue();
-			}
-		});
-		SpinnerNumberModel bumpMod1 = new SpinnerNumberModel(state.bumpChances[1], 0, 100, 1);
-		bump1Spinner = new JSpinner(bumpMod1);
-		bump1Spinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newBumpChances[1] = (int) bump1Spinner.getValue();
-			}
-		});
-		SpinnerNumberModel bumpMod2 = new SpinnerNumberModel(state.bumpChances[2], 0, 100, 1);
-		bump2Spinner = new JSpinner(bumpMod2);
-		bump2Spinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.newBumpChances[2] = (int) bump2Spinner.getValue();
-			}
-		});
 		
-		//add components to tierChanceBottomPanel
+		model = new SpinnerNumberModel(50, 0, 100, 1);
+		bump0Spinner = new JSpinner(model);
+		model = new SpinnerNumberModel(25, 0, 100, 1);
+		bump1Spinner = new JSpinner(model);
+		model = new SpinnerNumberModel(25, 0, 100, 1);
+		bump2Spinner = new JSpinner(model);
+		
+		//add components to the panel
 		gc.gridx = 0;
 		gc.gridy = 0;
 		gc.gridwidth = 3;
@@ -523,10 +619,8 @@ public class MainWindow {
 		gc.anchor = GridBagConstraints.CENTER;
 		tierChanceBottomPanel.add(applyButton, gc);
 		
-		//initialize tierChancePanel
-		tierChancePanel = new JPanel();
+		tierChancePanel = new JPanel(new GridBagLayout());
 		tierChancePanel.setBorder(BorderFactory.createTitledBorder("Tier chance settings"));
-		tierChancePanel.setLayout(new GridBagLayout());
 		
 		//add components to tierChancePanel
 		gc.gridx = 0;
@@ -540,40 +634,25 @@ public class MainWindow {
 		tierChancePanel.add(tierChanceBottomPanel, gc);
 		tierChancePanel.setPreferredSize(new Dimension(240, 280));
 		
-		//initialize cannotGetPanel
-		cannotGetPanel = new JPanel();
-		cannotGetPanel.setBorder(BorderFactory.createTitledBorder("\"Cannot get\" buffer settings"));
-		cannotGetPanel.setLayout(new GridBagLayout());
-		SpinnerNumberModel cannotGetNumberModel = new SpinnerNumberModel(state.cannotGetSize, 0, 15, 1);
-		cannotGetSizeSpinner = new JSpinner(cannotGetNumberModel);
-		cannotGetSizeSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				state.cannotGetSize = (int) cannotGetSizeSpinner.getValue();
-			}
-		});
-		cannotGetSizeLabel = new JLabel("Size of the \"Cannot get\" "
-				+ "buffer: ");
-		cannotGetSizeLabel.setToolTipText("<html>If this is set too high, the "
-				+ "program could freeze, because there may be no valid "
-				+ "fighters left for it to pick.<br>5 is the recommended size. "
-				+ "Note that you have the option of whether or not S & SS "
-				+ "tiers are allowed in this buffer.</html>");
-		allowSSInCannotGet = new JCheckBox("Allow SS tiers in \"Cannot "
-				+ "get\" buffer");
-		allowSSInCannotGet.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				state.allowSSInCannotGetBuffer = !state.allowSSInCannotGetBuffer;
-			}
-		});
-		allowSSInCannotGet.setSelected(state.allowSSInCannotGetBuffer);
-		allowSInCannotGet = new JCheckBox("Allow S tiers in \"Cannot "
-				+ "get\" buffer");
-		allowSInCannotGet.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				state.allowSInCannotGetBuffer = !state.allowSInCannotGetBuffer;
-			}
-		});
-		allowSInCannotGet.setSelected(state.allowSInCannotGetBuffer);
+		//set up cannotGetPanel
+		
+		cannotGetPanel = new JPanel(new GridBagLayout());
+		cannotGetPanel.setBorder(BorderFactory.createTitledBorder("\"Cannot Get\" buffer settings"));
+		
+		//default cannot get size defined here
+		model = new SpinnerNumberModel(10, 0, 15, 1);
+		cannotGetSizeSpinner = new JSpinner(model);
+		
+		cannotGetSizeLabel = new JLabel("Size of the \"Cannot Get\" buffer: ");
+		cannotGetSizeLabel.setToolTipText("<html>If this is set too high, " +
+				"the program could freeze, because there may be no valid " +
+				"fighters left for it to pick.<br>With all fighters being " +
+				"included, it should be safe to go up to 15, assuming there " +
+				"are 2 players.<br>Note that you have the option as to " +
+				"whether S & SS tiers are allowed in the buffer.</html>");
+		
+		allowSSInCannotGet = new JCheckBox("Allow SS tiers in \"Cannot Get\" buffer");
+		allowSInCannotGet = new JCheckBox("Allow S tiers in \"Cannot Get\" buffer");
 		
 		//add components to cannotGetPanel
 		gc.gridwidth = 1;
@@ -605,71 +684,95 @@ public class MainWindow {
 		gc.gridy = 1;
 		leftPanel.add(cannotGetPanel, gc);
 		
-		//initialize upper stats panel
-		statsTopPanel = new JPanel();
-		statsTopPanel.setLayout(new BorderLayout());
+		//set up upper stats panel
+		
+		statsTopPanel = new JPanel(new BorderLayout());
 		statsTopPanel.setBorder(BorderFactory.createTitledBorder("Statistics"));
-		statsTopPanel.add(statsManager.getTextArea(), BorderLayout.CENTER);
+		statsTopPanel.add(statsOutput);
 		
-		//initialize lower stats panel
-		statsBottomPanel = new JPanel();
-		statsBottomPanel.setLayout(new GridBagLayout());
+		//set up lower stats panel
+		statsBottomPanel = new JPanel(new GridBagLayout());
+		
 		playerLabel = new JLabel("Player: ");
-		
-		SpinnerNumberModel winnerSpinnerModel = new SpinnerNumberModel(1, 1, 8, 1);
-		winnerSpinner = new JSpinner(winnerSpinnerModel);
-		winnerSpinner.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				statsManager.setSelectedWinner((int) winnerSpinner.getValue());
-			}
-		});
+		model = new SpinnerNumberModel(1, 1, 8, 1);
+		winnerSpinner = new JSpinner(model);
 		
 		pickWinnerButton = new JButton("Select winner");
 		pickWinnerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				statsManager.pickWinner();
+				if(numBattles == 0) {
+					JOptionPane.showMessageDialog(null, "There has to be " +
+							"a battle before there can be a winner!",
+							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
+					
+					return;
+				}
+				
+				Matchup last = previousMatchups.get(previousMatchups.size() - 1);
+				
+				try {
+					last.setWinner((int) winnerSpinner.getValue() - 1);
+				} catch(IndexOutOfBoundsException e1) {
+					JOptionPane.showMessageDialog(null, "There are not that many " +
+							"players in this battle.", "Smash Character Picker",
+							JOptionPane.WARNING_MESSAGE);
+				}
+				
+				statsOutput.setText(last.getStatsOutput());
 			}
 		});
 		
 		searchButton = new JButton("Search");
 		searchButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String searchTarget = (String) JOptionPane.showInputDialog(frame, "Enter fighter to search:",
-						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
+				String toSearch = (String) JOptionPane.showInputDialog(null,
+						"Enter fighter to search:", "Smash Character Picker",
+						JOptionPane.QUESTION_MESSAGE, null, null, null);
 				
-				if(searchTarget != null) {
-					lookupManager.lookup(searchTarget);
+				if(toSearch == null) {
+					return;
 				}
+				
+				Fighter fighter = tierList.getFighter(toSearch);
+				
+				if(fighter == null) {
+					statsOutput.setText("Fighter " + toSearch + " not found!");
+					return;
+				}
+				
+				statsOutput.setText(fighter.getStatsData());
 			}
 		});
 		
 		sortButton = new JButton("Sort");
 		sortButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String[] options = {"Fighters' overall win rate", "Players' overall win rate", 
-						"P1 win rate", "P2 win rate", "P3 win rate", "P4 win rate", 
-						"P5 win rate", "P6 win rate", "P7 win rate", "P8 win rate", 
-						"Total battles"};
+				String[] options = {"Fighters' Overall Winrate", "Players' Overall Winrate", 
+						"P1 Winrate", "P2 Winrate", "P3 Winrate", "P4 Winrate", 
+						"P5 Winrate", "P6 Winrate", "P7 Winrate", "P8 Winrate", 
+						"Total Battles"};
+				
 				String choice = (String) JOptionPane.showInputDialog(frame, "Sort by:", "Smash Character Picker",
 						JOptionPane.QUESTION_MESSAGE, null, options, "Fighters' overall win rate");
 				
 				int choiceVal = Arrays.asList(options).indexOf(choice);
 				
-				Util.log("val " + choiceVal);
+				//cancel was hit
+				if(choiceVal == -1) {
+					return;
+				}
 				
-				lookupManager.sort(choiceVal);
-			}
-		});
-		
-		modButton = new JButton("Mod");
-		modButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String choice = (String) JOptionPane.showInputDialog(frame, "Enter fighter to mod:",
-						"Smash Character Picker", JOptionPane.QUESTION_MESSAGE, null, null, null);
+				if(choiceVal == 1) {
+					statsOutput.setText(tierList.getPlayerWinrateString());
+					return;
+				}
 				
-				if(choice != null) {
-					@SuppressWarnings("unused")
-					ModifyWindow mw = new ModifyWindow(state, statsManager, choice);
+				ComparableArray[] lookupResult = tierList.getLookupResults(choiceVal);
+				
+				statsOutput.setText("Sorted by " + options[choiceVal] + ":\n");
+				for(int at = 0; at < lookupResult.length; at++)
+				{
+					statsOutput.append((at + 1) + ". " + lookupResult[at] + "\n");
 				}
 			}
 		});
@@ -677,12 +780,14 @@ public class MainWindow {
 		reloadButton = new JButton("⭯");
 		reloadButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				statsManager.updateStatsScreen();
+				if(numBattles > 0) {
+					Matchup last = previousMatchups.get(previousMatchups.size() - 1);
+					statsOutput.setText(last.getStatsOutput());
+				}
 			}
 		});
 		
-		statsPanel = new JPanel();
-		statsPanel.setLayout(new GridBagLayout());
+		statsPanel = new JPanel(new GridBagLayout());
 		gc.gridx = 0;
 		gc.gridy = 0;
 		gc.weighty = 1;
@@ -696,15 +801,13 @@ public class MainWindow {
 		gc.weightx = .3;
 		statsBottomPanel.add(Box.createRigidArea(new Dimension(3, 0)), gc);
 		gc.gridx = 3;
-		gc.weightx = .35;
+		gc.weightx = .4;
 		statsBottomPanel.add(pickWinnerButton, gc);
 		gc.gridx = 4;
-		gc.weightx = .25;
+		gc.weightx = .2;
 		statsBottomPanel.add(searchButton, gc);
 		gc.gridx = 5;
 		statsBottomPanel.add(sortButton, gc);
-		gc.gridx = 6;
-		statsBottomPanel.add(modButton, gc);
 		gc.gridx = 7;
 		statsBottomPanel.add(reloadButton, gc);
 		
@@ -756,530 +859,301 @@ public class MainWindow {
 		
 		frame.addWindowListener(new MainWindowListener());
 		
+		dbw = new DebugWindow(frame.getWidth(), frame.getHeight(), frame.getX(), frame.getY());
+		
 		Util.log("Finished initializing MainWindow UI");
+		
+		fileLoaded = false;
+		numBattles = 0;
+		previousMatchups = new ArrayList<Matchup>();
+		switchVals = new int[2];
+		
+		tierChances = new int[] {10, 20, 25, 25, 20, 0, 0, 0};
+		bumpChances = new int[] {50, 25, 25};
 		
 		frame.setVisible(true);
 		
-		//after initializing everything, see if there's a tier list file to load
+		//ask to load a "tier list.txt" file if it exists
 		File tierListMaybe = new File("tier list.txt");
-		if(tierListMaybe.exists()) {
-			if(JOptionPane.showConfirmDialog(frame, "Found 'tier list.txt' file.\n"
-						+ "Load it?", "Smash Character Picker",
-						JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-				FileLoaderParser loader = new FileLoaderParser(this, state, statsManager);
-				loader.parseFile(tierListMaybe);
+		if(tierListMaybe.exists() && JOptionPane.showConfirmDialog(null,
+				"Found 'tier list.txt' file.\nLoad it?", "Smash Character Picker",
+				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+			//same file loading code as the ActionListener above
+			Settings settings = null;
+			
+			try {
+				tierList = new TierList();
+				settings = tierList.loadFile(tierListMaybe);
+				fileLoaded = true;
+			} catch(FileNotFoundException e1) {
+				results.setText("File " + tierListMaybe.getName() +
+						" not found!");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			} catch(IOException e1) {
+				results.setText("IOException when reading " +
+						tierListMaybe.getName() + "!\n" +
+						"See the debug log for details.");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			} catch(TierListParseException e1) {
+				results.setText("TierListParseException when reading " +
+						tierListMaybe.getName() + "!\n" +
+						"See the debug log for details.");
+				Util.error(e1);
+				
+				tierList = null;
+				fileLoaded = false;
+			}
+			
+			//if file was loaded, update the UI
+			if(fileLoaded) {
+				Util.log("The following data was loaded as the tier list:\n" + tierList.toString());
+				
+				cannotGetSizeSpinner.setValue(settings.getCannotGetSize());
+				allowSSInCannotGet.setSelected(settings.ssAllowedInCannotGet());
+				allowSInCannotGet.setSelected(settings.sAllowedInCannotGet());
+				numPlayersSpinner.setValue(settings.getNumPlayers());
+				
+				SSTierSpinner.setValue(settings.getTierChance(0));
+				STierSpinner.setValue(settings.getTierChance(1));
+				ATierSpinner.setValue(settings.getTierChance(2));
+				BTierSpinner.setValue(settings.getTierChance(3));
+				CTierSpinner.setValue(settings.getTierChance(4));
+				DTierSpinner.setValue(settings.getTierChance(5));
+				ETierSpinner.setValue(settings.getTierChance(6));
+				FTierSpinner.setValue(settings.getTierChance(7));
+				
+				bump0Spinner.setValue(settings.getBumpChance(0));
+				bump1Spinner.setValue(settings.getBumpChance(1));
+				bump2Spinner.setValue(settings.getBumpChance(2));
 			}
 		}
 	}
 	
-	private class GenerateButtonActionListener implements ActionListener {
+	/**
+	 * Generates a battle using the current tier list. If all goes well,
+	 * the results from the <code>Matchup</code> are printed to the main
+	 * text field. Debug info and any potential errors will be printed to
+	 * the debug log.
+	 * <br><br>
+	 * A running log of all <code>Matchups</code> is kept, to prevent the
+	 * same battle from being generated twice.
+	 * 
+	 * @param skipping	Whether or not the previous battle was skipped. The
+	 * 					matchup counter is not incremented if this is
+	 * 					<code>true</code>. In <code>TierList</code>, the
+	 * 					previous results are also removed from the
+	 * 					"Cannot Get" queue system if a battle is skipped.
+	 */
+	private void generateBattle(boolean skipping) {
+		if(!fileLoaded) {
+			JOptionPane.showMessageDialog(null, "You must load a tier " +
+					"list first!", "Smash Character Picker",
+					JOptionPane.WARNING_MESSAGE);
+			
+			return;
+		}
+		
+		//can't skip if there are no battles
+		if(skipping && numBattles == 0) {
+			JOptionPane.showMessageDialog(null, "You must generate a battle " +
+					"before you can skip.", "Smash Character Picker",
+					JOptionPane.WARNING_MESSAGE);
+			
+			return;
+		}
+		
+		double startTime = System.currentTimeMillis();
+		
+		if(!skipping) {
+			numBattles++;
+			Util.log("========== BEGINNING GENERATION OF BATTLE " + numBattles + " ==========");
+		}
+		else {
+			Util.log("========== RESULT FOR BATTLE " + numBattles + " SKIPPED, GENERATING AGAIN ==========");
+		}
+		
+		Matchup result = null;
+		Settings settings = new Settings((int) numPlayersSpinner.getValue(),
+				tierChances, bumpChances,
+				(int) cannotGetSizeSpinner.getValue(),
+				allowSInCannotGet.isSelected(), allowSSInCannotGet.isSelected());
+		int tries = 0;
+		
+		do {
+			tries++;
+			Util.log("======= Try " + tries + " =======");
+			
+			try {
+				result = tierList.generateBattle(settings, skipping);
+			} catch(NoValidFightersException e) {
+				Util.error(e);
+				
+				//depending on whether this happened before or after
+				//generating a tier tells us whether we can continue
+				if(!e.tierRangeSelected()) {
+					Util.log("With no valid fighters for a player, battle " +
+							"generation must halt.");
+					
+					return;
+				}
+			}
+		} while(result == null && !previousMatchups.contains(result) && tries < 100);
+		
+		Util.log("========== End battle generation process ==========");
+		
+		String resultString;
+		if(tries == 100 || result == null) {
+			resultString = "No valid battles found after 100 tries.";
+			statsOutput.setText("");
+		}
+		else {
+			previousMatchups.add(result);
+			resultString = "Battle #" + numBattles + ":\n" + result.toString();
+			statsOutput.setText(result.getStatsOutput());
+		}
+		
+		results.setText(resultString);
+		
+		//finally, enable all the stats stuff if that was the first battle
+		if(numBattles == 1) {
+			switchPanel.setEnabled(true);
+            player1Box.setEnabled(true);
+            player2Box.setEnabled(true);
+            player3Box.setEnabled(true);
+            player4Box.setEnabled(true);
+            player5Box.setEnabled(true);
+            player6Box.setEnabled(true);
+            player7Box.setEnabled(true);
+            player8Box.setEnabled(true);
+            switchButton.setEnabled(true); 
+		}
+		
+		double delta = System.currentTimeMillis() - startTime;
+		Util.log("Generation of this battle took " + delta + "ms.");
+	}
+
+	/**
+	 * The <code>SwitchActionListener</code> acts as an <code>ActionListener</code>
+	 * for all of the switch checkboxes. It will manipulate values in the
+	 * <code>MainWindow</code> class (this is why it is a private inner
+	 * class) that allow the switch button to know what to do.
+	 * 
+	 * @author Jordan Knapp
+	 *
+	 */
+	private class SwitchActionListener implements ActionListener {
+		private int player;
+		private int indexSet;
+		
+		/**
+		 * Creates a <code>SwitchActionListener</code> for the given player.
+		 * 
+		 * @param player	The checkbox (representing a player) for which
+		 * 					this <code>ActionListener</code> will act.
+		 */
+		public SwitchActionListener(int player) {
+			this.player = player;
+			indexSet = -1;
+		}
+		
 		public void actionPerformed(ActionEvent e) {
-			if(!state.fileLoaded) {
-				JOptionPane.showMessageDialog(frame, "You must load a tier "
-						+ "list first!", "Smash Character Picker", 
-						JOptionPane.ERROR_MESSAGE);
-				state.skipping = false;
+			JCheckBox clicked = ((JCheckBox) e.getSource());
+			
+			//if we're unchecking, need to remove the current value from
+			//switchVals
+			if(!clicked.isSelected()) {
+				switchVals[indexSet] = 0;
+				indexSet = -1;
 				return;
 			}
 			
-			state.numBattles++;
-			
-			Util.log("========== BEGINNING GENERATION OF BATTLE " + state.numBattles + " ==========");
-			
-			//generateBattle will now return a blank string if it generates
-			//a battle that's invalid. at least we can try a LOT of times
-			//without worrying about a stack overflow error if we do it this
-			//way
-			String result = "";
-			int tries = 0;
-			while(result == "" && tries < 100) {
-				tries++;
-				Util.log("======= Try " + tries + " =======");
+			//make sure there are this many players present
+			if(player > (int) numPlayersSpinner.getValue()) {
+				JOptionPane.showMessageDialog(null, "There are not that many " +
+						"players present.", "Smash Character Picker",
+						JOptionPane.WARNING_MESSAGE);
 				
-				result = battleGenerator.generateBattle();
+				clicked.setSelected(false);
 			}
-			
-			Util.log("========== End battle generation process ==========");
-			
-			if(result == "") {
-				result = "No valid battles found after 100 tries.";
-			}
-			
-			results.setText(result);
-			
-			//the last thing we're gonna do is enable all the switch panel
-			//stuff, now that it won't cause errors and whatnot.
-			switchPanel.setEnabled(true);
-			player1Box.setEnabled(true);
-			player2Box.setEnabled(true);
-			player3Box.setEnabled(true);
-			player4Box.setEnabled(true);
-			player5Box.setEnabled(true);
-			player6Box.setEnabled(true);
-			player7Box.setEnabled(true);
-			player8Box.setEnabled(true);
-			switchButton.setEnabled(true);
-		}
-	}
-	
-	private class LoadButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if(state.fileLoaded) {
-				if(JOptionPane.showConfirmDialog(frame, "You already have a file "
-						+ "loaded.\nLoad another one?", "Smash Character Picker",
-						JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
-					return;
-				}
-				else {
-					//if we are loading a new file, we first need to clear out
-					//all information about the previous file
-					state.linesOfFile.clear();
-					for(int at = 0; at < 39; at++) {
-						state.linesOfFile.add(new ArrayList<String>());
-					}
-				}
-			}
-			
-			FileLoaderParser flp = new FileLoaderParser(MainWindow.this, state, statsManager);
-			flp.loadFile();
-		}
-	}
-	
-	private class DebugButtonActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if(!state.openedDebug) {
-				new DebugWindow(MainWindow.this, state);
-			}
-		}
-	}
-	
-	/**
-	 * A class to handle the logic for switching players. This is part of the
-	 * <code>MainWindow</code> class because switching logic is directly
-	 * connected to the UI elements that make up the <code>SwitchPanel</code>,
-	 * which is part of the <code>MainWindow</code> class.
-	 * 
-	 * @author Jordan Knapp
-	 */
-	private class SwitchManager {
-		private int numSelected;
-		private ArrayList<Integer> selected;
-		
-		private SwitchManager() {
-			numSelected = 0;
-			selected = new ArrayList<Integer>();
-		}
-		
-		private class Player1BoxActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(numSelected == 2 && player1Box.isSelected()) {
-					JOptionPane.showMessageDialog(null, "Only select 2 players.",
-							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-					player1Box.setSelected(false);
-				}
-				else {
-					if(selected.contains(1)) {
-						selected.remove(Integer.valueOf(1));
-						numSelected--;
-					}
-					else {
-						selected.add(1);
-						numSelected++;
-					}
-				}
-			}
-		}
-		
-		private class Player2BoxActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(numSelected == 2 && player2Box.isSelected()) {
-					JOptionPane.showMessageDialog(null, "Only select 2 players.",
-							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-					player2Box.setSelected(false);
-				}
-				else {
-					if(selected.contains(2)) {
-						selected.remove(Integer.valueOf(2));
-						numSelected--;
-					}
-					else {
-						selected.add(2);
-						numSelected++;
-					}
-				}
-			}
-		}
-		
-		private class Player3BoxActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(state.numPlayers < 3) {
-					JOptionPane.showMessageDialog(null, "There are not that "
-							+ "many players present.", "Smash Character Picker",
-							JOptionPane.WARNING_MESSAGE);
-					player3Box.setSelected(false);
-				}
-				else if(numSelected == 2 && player3Box.isSelected()) {
-					JOptionPane.showMessageDialog(null, "Only select 2 players.",
-							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-					player3Box.setSelected(false);
-				}
-				else {
-					if(selected.contains(3)) {
-						selected.remove(Integer.valueOf(3));
-						numSelected--;
-					}
-					else {
-						selected.add(3);
-						numSelected++;
-					}
-				}
-			}
-		}
-		
-		private class Player4BoxActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(state.numPlayers < 4) {
-					JOptionPane.showMessageDialog(null, "There are not that "
-							+ "many players present.", "Smash Character Picker",
-							JOptionPane.WARNING_MESSAGE);
-					player4Box.setSelected(false);
-				}
-				else if(numSelected == 2 && player4Box.isSelected()) {
-					JOptionPane.showMessageDialog(null, "Only select 2 players.",
-							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-					player4Box.setSelected(false);
-				}
-				else {
-					if(selected.contains(4)) {
-						selected.remove(Integer.valueOf(4));
-						numSelected--;
-					}
-					else {
-						selected.add(4);
-						numSelected++;
-					}
-				}
-			}
-		}
-		
-		private class Player5BoxActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(state.numPlayers < 5) {
-					JOptionPane.showMessageDialog(null, "There are not that "
-							+ "many players present.", "Smash Character Picker",
-							JOptionPane.WARNING_MESSAGE);
-					player5Box.setSelected(false);
-				}
-				else if(numSelected == 2 && player5Box.isSelected()) {
-					JOptionPane.showMessageDialog(null, "Only select 2 players.",
-							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-					player5Box.setSelected(false);
-				}
-				else {
-					if(selected.contains(5)) {
-						selected.remove(Integer.valueOf(5));
-						numSelected--;
-					}
-					else {
-						selected.add(5);
-						numSelected++;
-					}
-				}
-			}
-		}
-		
-		private class Player6BoxActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(state.numPlayers < 6) {
-					JOptionPane.showMessageDialog(null, "There are not that "
-							+ "many players present.", "Smash Character Picker",
-							JOptionPane.WARNING_MESSAGE);
-					player6Box.setSelected(false);
-				}
-				else if(numSelected == 2 && player6Box.isSelected()) {
-					JOptionPane.showMessageDialog(null, "Only select 2 players.",
-							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-					player6Box.setSelected(false);
-				}
-				else {
-					if(selected.contains(6)) {
-						selected.remove(Integer.valueOf(6));
-						numSelected--;
-					}
-					else {
-						selected.add(6);
-						numSelected++;
-					}
-				}
-			}
-		}
-		
-		private class Player7BoxActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(state.numPlayers < 7) {
-					JOptionPane.showMessageDialog(null, "There are not that "
-							+ "many players present.", "Smash Character Picker",
-							JOptionPane.WARNING_MESSAGE);
-					player7Box.setSelected(false);
-				}
-				else if(numSelected == 2 && player7Box.isSelected()) {
-					JOptionPane.showMessageDialog(null, "Only select 2 players.",
-							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-					player7Box.setSelected(false);
-				}
-				else {
-					if(selected.contains(7)) {
-						selected.remove(Integer.valueOf(7));
-						numSelected--;
-					}
-					else {
-						selected.add(7);
-						numSelected++;
-					}
-				}
-			}
-		}
-		
-		private class Player8BoxActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				if(state.numPlayers < 8) {
-					JOptionPane.showMessageDialog(null, "There are not that "
-							+ "many players present.", "Smash Character Picker",
-							JOptionPane.WARNING_MESSAGE);
-					player8Box.setSelected(false);
-				}
-				else if(numSelected == 2 && player8Box.isSelected()) {
-					JOptionPane.showMessageDialog(null, "Only select 2 players.",
-							"Smash Character Picker", JOptionPane.WARNING_MESSAGE);
-					player8Box.setSelected(false);
-				}
-				else {
-					if(selected.contains(8)) {
-						selected.remove(Integer.valueOf(8));
-						numSelected--;
-					}
-					else {
-						selected.add(8);
-						numSelected++;
-					}
-				}
-			}
-		}
-		
-		private class SwitchButtonActionListener implements ActionListener {
-			public void actionPerformed(ActionEvent e) {
-				int p1 = selected.get(0) - 1;
-				int p2 = selected.get(1) - 1;
-				String char1 = state.gotten.get(p1);
-				String char2 = state.gotten.get(p2);
-				int tier1 = state.individualCannotGet[p1].getAndRemoveLastTier();
-				int tier2 = state.individualCannotGet[p2].getAndRemoveLastTier();
+			//then check how many are already selected based on what's set
+			//in the switchVals array
+			else if(switchVals[0] != 0 && switchVals[1] != 0) {
+				JOptionPane.showMessageDialog(null, "You can select up to " +
+						"two players.", "Smash Character Picker",
+						JOptionPane.WARNING_MESSAGE);
 				
-				Util.log("Swapping player " + (p1 + 1) + " (" + char1 + "),");
-				Util.log("and player " + (p2 + 1) + " (" + char2 + ").");
+				clicked.setSelected(false);
+			}
+			//otherwise, just need to determine whether we're setting index 0 or 1
+			else if(switchVals[0] == 0) {
+				switchVals[0] = player;
+				indexSet = 0;
 				
-				state.individualCannotGet[p1].add(char2, tier2);
-				state.individualCannotGet[p2].add(char1, tier1);
+				Util.log("Selected player " + player + " in index " + indexSet + " to switch.");
+			}
+			else {
+				switchVals[1] = player;
+				indexSet = 1;
 				
-				state.gotten.remove(char1);
-				state.gotten.remove(char2);
-				if(p2 > p1) {
-					state.gotten.add(p1, char2);
-					state.gotten.add(p2, char1);
-				}
-				else {
-					state.gotten.add(p2, char1);
-					state.gotten.add(p1, char2);
-				}
-				
-				//refresh the screen
-				results.setText("");
-				results.setText("Battle #" + state.numBattles + ":\n");
-				for(int at = 0; at < state.numPlayers; at++) {
-					results.append("Player " + (at + 1) + " got "
-							+ state.gotten.get(at) + ", "
-							+ Util.tierToString(state.individualCannotGet[at].getLastTier())
-							+ ".\n");
-				}
-				
-				Util.log("Player " + (p1 + 1) + " now cannot get " + state.individualCannotGet[p1]);
-				Util.log("Player " + (p2 + 1) + " now cannot get " + state.individualCannotGet[p2]);
-				
-				statsManager.updateStatsScreen();
-				
-				player1Box.setSelected(false);
-				player2Box.setSelected(false);
-				player3Box.setSelected(false);
-				player4Box.setSelected(false);
-				player5Box.setSelected(false);
-				player6Box.setSelected(false);
-				player7Box.setSelected(false);
-				player8Box.setSelected(false);
-				numSelected = 0;
-				selected.clear();
+				Util.log("Selected player " + player + " in index " + indexSet + " to switch.");
 			}
 		}
-	}
-	
-	/**
-	 * A simple getter for the <code>MainWindow</code>'s <code>JFrame</code>'s
-	 * x position.
-	 * 
-	 * @return	The x position of the <code>MainWindow</code>.
-	 */
-	public int getX() {
-		return frame.getX();
-	}
-	
-	/**
-	 * A simple getter for the <code>MainWindow</code>'s <code>JFrame</code>'s
-	 * y position.
-	 * 
-	 * @return	The y position of the <code>MainWindow</code>.
-	 */
-	public int getY() {
-		return frame.getY();
-	}
-	
-	/**
-	 * A simple getter for the <code>MainWindow</code>'s <code>JFrame</code>'s
-	 * width.
-	 * 
-	 * @return	The width of the <code>MainWindow</code>.
-	 */
-	public int getWidth() {
-		return frame.getWidth();
-	}
-	
-	/**
-	 * A simple getter for the <code>MainWindow</code>'s <code>JFrame</code>'s
-	 * height.
-	 * 
-	 * @return	The height of the <code>MainWindow</code>.
-	 */
-	public int getHeight() {
-		return frame.getHeight();
-	}
-	
-	/**
-	 * A method that allows printed messages directly to the results field in
-	 * the main window. Primarily used by the <code>FileLoaderParser</code> in
-	 * the event of critical errors when loading files, because the user should
-	 * be aware of those regardless of whether or not they have the debug
-	 * window open.
-	 * <br><br>
-	 * Note that the results field will be cleared beforehand.
-	 * 
-	 * @param toPrint	The message to be printed. A newline will be appended
-	 * 					to it.
-	 */
-	public void printToResult(String toPrint) {
-		results.setText("");
-		results.append(toPrint + "\n");
-	}
-	
-	/**
-	 * Method that updates the value in the cannot get spinner to whatever the
-	 * current cannot get size is. Used by the <code>FileLoaderParser</code>
-	 * when it parses this setting from a tier list file.
-	 */
-	public void updateCannotGetSpinner() {
-		cannotGetSizeSpinner.setValue(state.cannotGetSize);
-	}
-	
-	/**
-	 * Method that updates the value in the checkbox representing whether SS
-	 * tiers are allowed in the cannot get buffer. Used by the
-	 * <code>FileLoaderParser</code> when it parses this setting from a tier
-	 * list file.
-	 */
-	public void updateSSAllowedInCannotGet() {
-		allowSSInCannotGet.setSelected(state.allowSSInCannotGetBuffer);
-	}
-	
-	/**
-	 * Method that updates the value in the checkbox representing whether S
-	 * tiers are allowed in the cannot get buffer. Used by the
-	 * <code>FileLoaderParser</code> when it parses this setting from a tier
-	 * list file.
-	 */
-	public void updateSAllowedInCannotGet() {
-		allowSInCannotGet.setSelected(state.allowSInCannotGetBuffer);
-	}
-	
-	/**
-	 * Method that updates the value in the spinner representing the number of
-	 * players to whatever the number of players is. Used by the
-	 * <code>FileLoaderParser</code> when it parses this setting from a tier
-	 * list file.
-	 */
-	public void updateNumPlayersSpinner() {
-		numPlayersSpinner.setValue(state.numPlayers);
-	}
-	
-	/**
-	 * Method that updates the values in the spinners representing the chances
-	 * for each tier to whatever the current values are. Used by the
-	 * <code>FileLoaderParser</code> when it parses this setting from a tier
-	 * list file. Also used by the <code>ProgramState</code> when you update the
-	 * tier chances.
-	 */
-	public void updateTierChances() {
-		SSTierSpinner.setValue(state.newTierChances[0]);
-		STierSpinner.setValue(state.newTierChances[1]);
-		ATierSpinner.setValue(state.newTierChances[2]);
-		BTierSpinner.setValue(state.newTierChances[3]);
-		CTierSpinner.setValue(state.newTierChances[4]);
-		DTierSpinner.setValue(state.newTierChances[5]);
-		ETierSpinner.setValue(state.newTierChances[6]);
-		FTierSpinner.setValue(state.newTierChances[7]);
-		
-		bump0Spinner.setValue(state.bumpChances[0]);
-		bump1Spinner.setValue(state.bumpChances[1]);
-		bump2Spinner.setValue(state.bumpChances[2]);
 	}
 	
 	private class MainWindowListener implements WindowListener {
-
 		public void windowOpened(WindowEvent e) {
-
 		}
 
-		public void windowClosing(WindowEvent e) {
-			if(state.needToSaveStats) {
+		public void windowClosing(WindowEvent e) {	
+			if(!fileLoaded) {
+				return;
+			}
+			
+			File statsFile = new File("smash stats.sel");
+			
+			if(!statsFile.exists()) {
 				try {
-					FileOutputStream fos = new FileOutputStream(state.statsFile);
-					ObjectOutputStream oos = new ObjectOutputStream(fos);
-					oos.writeObject(state.stats);
-					oos.close();
-					fos.close();
-				} catch (FileNotFoundException e1) {
-					Util.error(e1);
+					statsFile.createNewFile();
 				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(null, "IOException when " +
+							"saving stats! Could not create stats file.",
+							"Smash Character Picker", JOptionPane.ERROR_MESSAGE);
+					
 					Util.error(e1);
+					return;
 				}
+			}
+			
+			try {
+				ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(statsFile));
+				oos.writeObject(tierList.getStatsMap());
+				oos.close();
+			} catch(IOException e1) {
+				JOptionPane.showMessageDialog(null, "IOException when " +
+						"saving stats!", "Smash Character Picker",
+						JOptionPane.ERROR_MESSAGE);
 			}
 		}
 
 		public void windowClosed(WindowEvent e) {
-
 		}
 
 		public void windowIconified(WindowEvent e) {
-
 		}
 
 		public void windowDeiconified(WindowEvent e) {
-
 		}
 
 		public void windowActivated(WindowEvent e) {
-
 		}
 
 		public void windowDeactivated(WindowEvent e) {
-			
 		}
 	}
-
 }
